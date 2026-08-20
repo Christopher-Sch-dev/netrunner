@@ -33,3 +33,6 @@ coverage/
 
 # Auditoría interna (nunca se commitea)
 .doc/
+
+# Metadata interna del sistema
+.engram/
