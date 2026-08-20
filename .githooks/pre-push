@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# rol: git hook pre-push — red de seguridad DX (DEC-003).
-# Corre tests + mutation (timeboxed) antes de pushear a main/develop.
+# rol: git hook pre-push — gate completo antes de pushear a main/develop.
+# Corre el CI LOCAL completo (incluye mutation + act). Bloquea si falla.
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
@@ -9,9 +9,8 @@ cd "$(git rev-parse --show-toplevel)"
 BRANCH="${1:-}"
 case "$BRANCH" in
   refs/heads/main|refs/heads/develop)
-    echo "▶ pre-push: tests + mutation (timeboxed)"
-    pnpm test
-    timeout 300 pnpm mutate
+    echo "▶ pre-push: CI LOCAL completo (main/develop)"
+    ./scripts/ci-local.sh
     echo "✓ pre-push OK"
     ;;
   *)
