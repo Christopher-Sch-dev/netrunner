@@ -9,7 +9,7 @@
 
 - **Por qué**:
   - El ecosistema de agentes/MCP/dsh es TypeScript → TS evita fricción.
-  - Bun da 2–4x Node + binario standalone (distribución del CLI simple).
+  - Bun da 2-4x Node + binario standalone (distribución del CLI simple).
   - pnpm es más seguro (allowBuilds, minimumReleaseAge, blockExoticSubdeps).
   - Reutilizar estándares (AI SDK v7, MCP, Agent Plugins) maximiza compatibilidad con cualquier agente y minimiza superficie propia a mantener; la capa propia (init/policy/router) es lo que diferencia a Netrunner.
   - dsh da plugin tree reversible + session log traceable (andamiaje probado). AXI (agent-native CLI) supera a MCP en precisión/costo para tools.

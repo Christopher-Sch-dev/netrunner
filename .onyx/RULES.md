@@ -1,32 +1,36 @@
 # REGLAS — Netrunner — Universal Agent CDK
 
-> Reglas y convenciones ESPECÍFICAS de este proyecto (no globales).
-> Las reglas globales del agente viven en ENGINEERING-RULES-COMPACT.md.
+> Reglas y convenciones específicas de este proyecto (metodología de desarrollo).
+> Son públicas y las siguen todos los contribuidores (humanos y agentes).
 
 ## Convenciones
-- _(completar: naming, estilo, estructura de commits)_
+- **Lenguaje**: TypeScript + Bun + pnpm (DEC-001). Target hosting: T0 (local, sin servidores).
+- **Commits**: conventional commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`).
+- **Estructura**: monorepo pnpm (`packages/*`), un solo binario `netrunner`.
+- **Ramas**: GitFlow (main protegida → develop → feature/* / release/* / hotfix/*).
 
-## Comandos de verificación (los que SIEMPRE se corren)
-- Test: _(completar: p.ej. npx vitest run)_
-- Mutation: _(completar: p.ej. npx stryker run / onyx-mutate.sh)_
-- Build: _(completar: p.ej. npx astro build)_
-- Stack guard: `~/.hermes/bin/onyx-stack-guard.sh .` (falla si propone stack fuera del matrimonio D-333)
-- Target check: `~/.hermes/bin/onyx-target-check.sh .` (exige target T0|T1|T2 en spec)
-- Tenant guard: `~/.hermes/bin/onyx-tenant-guard.sh .` (aislamiento single-tenant: 1 cliente = 1 PG + 1 secrets + 1 dominio)
-- Security: `~/.hermes/bin/onyx-security-scan.sh .` (detecta secrets + npm audit)
+## Flujo de verificación (los que SIEMPRE se corren)
+1. **Spec primero** — toda feature parte de `spec.md` con formato *Como/quiero/para* + Acceptance Criteria.
+2. **Gherkin** — cada historia se traduce a `features/*.feature` (Given/When/Then) ejecutable.
+3. **TDD** — test que falla (RED) → implementación mínima (GREEN) → refactor.
+4. **Mutation testing** — verificar que los tests realmente testean (Stryker, timeout 300s, nunca en hot path).
+5. **E2E escenario** — al menos 1 test end-to-end por user story (PROHIBIDO deploy sin esto).
+6. **Verificación externa** — tests/exit codes reales. NUNCA auto-crítica como verificación.
 
-## Security Maxing (Mandamiento 7 — las 8 reglas de Cris)
-1. API keys y secretos SOLO en el servidor (NUNCA en código cliente).
-2. Row-level security en TODAS las tablas (Supabase/Postgres: ENABLE ROW LEVEL SECURITY).
-3. Variables de entorno FUERA del repositorio (.env en .gitignore, NUNCA commiteado).
-4. Validación y limpieza de TODOS los datos de usuario (input sanitization, Zod/Pydantic).
-5. Ninguna tabla de BD accesible públicamente (REVOKE ALL, grants explícitos).
-6. Autenticación en TODAS las rutas protegidas (middleware auth, nunca confiar en frontend).
-7. Mensajes de error NO muestran info sensible (genéricos al cliente, detallados en logs).
-8. Sistema de logs para detectar ataques (auth failures, rate limits, patrones sospechosos).
+## Reglas de calidad (metodología de desarrollo)
+1. **Modularización** — archivo >200 líneas se divide; función >30 líneas se divide.
+2. **Mantenibilidad** — documentar código interno (`// rol: qué hace`), usar Dependency Injection (nunca `new Dep()` hardcodeado).
+3. **Extensibilidad** — diseñar para el cambio: núcleo estable + conectores como plugins (adapters).
+4. **Observabilidad** — medir: latencia p50/p95/p99, error rate, throughput. OpenTelemetry.
+5. **Performance** — caching con TTL, índices en queries, streams para archivos grandes, serialización mínima.
+6. **Testing** — unit + escenario (1 por user story) + integration. Test o muerte.
+7. **Security** — API keys solo en servidor, validación de input (Zod), nunca secrets en repo público, errores genéricos al cliente, logs para detectar ataques.
+8. **Loop engineering** — OBSERVE → PLAN → ACT → VERIFY → REFLECT → REPEAT.
+9. **Escalabilidad 0→1B** — stateless-first, backpressure, idempotencia, choke points.
 
 ## Prohibiciones locales
-- _(completar: qué NO hacer en este repo específico)_
-- PROHIBIDO commitear secrets (API keys, tokens, passwords, private keys)
-- PROHIBIDO proponer otro core language (Go/Rust/Elixir) sin D-NNN de Cris (D-333)
-- PROHIBIDO multi-tenant en una sola DB compartida entre clientes (D-333 single-tenant)
+- PROHIBIDO commitear secrets (API keys, tokens, passwords, private keys, .env).
+- PROHIBIDO escribir código fuente sin spec previo (Mandamiento 0).
+- PROHIBIDO deploy sin test de escenario.
+- PROHIBIDO auto-crítica como verificación.
+- PROHIBIDO romper el contrato de tools `src/core` sin versionarlo (mandamiento 3).
