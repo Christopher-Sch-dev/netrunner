@@ -26,3 +26,6 @@ netrc
 # Testing
 .nyc_output/
 stryker.conf.json.results/
+
+# Auditoría interna (nunca se commitea)
+.doc/
