@@ -1,20 +1,27 @@
 #!/usr/bin/env bash
 # rol: git hook pre-push — gate completo antes de pushear a main/develop.
 # Corre el CI LOCAL completo (incluye mutation + act). Bloquea si falla.
+# NOTA: pre-push recibe los refs por STDIN (no por $1):
+#   <local ref> <local sha> <remote ref> <remote sha>
 set -euo pipefail
 
 cd "$(git rev-parse --show-toplevel)"
 
-# Solo en pushes a main/develop (los feature/* pueden ir más rápido)
-BRANCH="${1:-}"
-case "$BRANCH" in
-  refs/heads/main|refs/heads/develop)
-    echo "▶ pre-push: CI LOCAL completo (main/develop)"
-    ./scripts/ci-local.sh
-    echo "✓ pre-push OK"
-    ;;
-  *)
-    echo "▶ pre-push: solo tests (rama no protegida)"
-    pnpm test
-    ;;
-esac
+# Determina si el push incluye main/develop (cualquier línea que apunte a ellos)
+TARGETS_PROTEGIDOS=false
+while read -r _local_ref _local_sha remote_ref _remote_sha; do
+  case "$remote_ref" in
+    refs/heads/main|refs/heads/develop)
+      TARGETS_PROTEGIDOS=true
+      ;;
+  esac
+done
+
+if $TARGETS_PROTEGIDOS; then
+  echo "▶ pre-push: CI LOCAL completo (push a main/develop)"
+  ./scripts/ci-local.sh
+  echo "✓ pre-push OK"
+else
+  echo "▶ pre-push: solo tests (rama no protegida)"
+  pnpm test
+fi
