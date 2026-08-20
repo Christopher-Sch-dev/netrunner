@@ -1,0 +1,28 @@
+# Dependencias
+node_modules/
+.bun/
+
+# Build
+dist/
+build/
+coverage/
+*.tsbuildinfo
+
+# Entorno y secrets — PROHIBIDO commitear (Mandamiento 7)
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+.credentials
+netrc
+.onyx/agent-state/
+
+# Logs / runtime
+*.log
+.DS_Store
+
+# Testing
+.nyc_output/
+stryker.conf.json.results/
