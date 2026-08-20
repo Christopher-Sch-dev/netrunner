@@ -12,6 +12,7 @@
 - Este repo es OPEN-SOURCE público: NUNCA commitear secrets, .env ni credenciales.
 - El motor se construye en fases posteriores. Esta inicialización (repo + .onyx + spec.md + DEC-001) es el CONTRATO BASE — no inventar código fuera de las fases.
 - El contrato de tools `src/core` es el núcleo: no romperlo sin versionar (extensibilidad).
+- **CI**: GitHub Actions está DESACTIVADO (billing de la cuenta). El gate real es el CI local (`scripts/ci-local.sh` + hooks). Workflows versionados en `scripts/ci-github/` (restaurar cuando se resuelva billing).
 
 ## Data importante para recordar
 - Repo: github.com/Christopher-Sch-dev/netrunner (público, main).
