@@ -23,3 +23,4 @@
 ## Historia reciente
 - 2026-08-20: inicialización del repo — .onyx (PROJECT/RULES/DECISIONS/TESTING/CONTEXT), spec.md raíz (destraba target-check), DEC-001 (decisión fundacional).
 - 2026-08-20: re-validación 2026 (3 auditorías) → DEC-002: se mantiene TS+Bun+pnpm + motor-unificado + pipeline, con ajustes (MCP 2026-07-28 stateless, ACP v2, sandbox separado, context-graph+MemGPT, property-based+golden, Vitest). Reportes en `.doc/auditoria/` (gitignored).
+- 2026-08-20: `src/context/detect.ts` — detección determinista de stack por manifestos (package.json+lockfiles→ts/js pnpm/npm/yarn/bun + framework astro/react/next/vite, pyproject/requirements→python pip/poetry/uv, Cargo→rust, go.mod→go; manifiesto ilegible→ausente). `detectStack(dir): Promise<StackInfo>` (consume types.ts). Tests `tests/detect.test.ts` (16 casos, AC-D1..D7), mutation 82.88%.
