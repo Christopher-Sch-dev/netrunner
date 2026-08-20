@@ -36,11 +36,11 @@ echo "▶ [4/6] mutation (stryker, timeboxed 300s)"
 timeout 300 pnpm mutate || fail "mutation"
 
 # 5. actionlint (valida los workflows)
-echo "▶ [5/6] actionlint (workflows)"
-actionlint .github/workflows/*.yml || fail "actionlint"
+echo "▶ [5/6] actionlint (workflows en scripts/ci-github/)"
+actionlint scripts/ci-github/*.yml || fail "actionlint"
 
 # 6. act (corre el workflow ci.yml localmente en Docker)
-echo "▶ [6/6] act (corre ci.yml en Docker, job quality-gates)"
-act -j quality-gates --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest || fail "act"
+echo "▶ [6/6] act (corre ci.yml desde scripts/ci-github/ en Docker, job quality-gates)"
+act -W scripts/ci-github/ci.yml -j quality-gates --container-architecture linux/amd64 -P ubuntu-latest=catthehacker/ubuntu:act-latest || fail "act"
 
 echo "✓✓ CI LOCAL OK — todos los gates pasaron"
