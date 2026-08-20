@@ -21,3 +21,4 @@
 
 ## Historia reciente
 - 2026-08-20: inicialización del repo — .onyx (PROJECT/RULES/DECISIONS/TESTING/CONTEXT), spec.md raíz (destraba target-check), DEC-001 (decisión fundacional).
+- 2026-08-20: re-validación 2026 (3 auditorías) → DEC-002: se mantiene TS+Bun+pnpm + motor-unificado + pipeline, con ajustes (MCP 2026-07-28 stateless, ACP v2, sandbox separado, context-graph+MemGPT, property-based+golden, Vitest). Reportes en `.doc/auditoria/` (gitignored).
