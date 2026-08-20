@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# rol: git hook pre-commit — red de seguridad DX (DEC-003).
+# Corre lint + typecheck antes de cada commit. Bloquea si falla.
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "▶ pre-commit: typecheck + lint"
+pnpm typecheck
+pnpm lint
+echo "✓ pre-commit OK"

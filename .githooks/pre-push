@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+# rol: git hook pre-push — red de seguridad DX (DEC-003).
+# Corre tests + mutation (timeboxed) antes de pushear a main/develop.
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+# Solo en pushes a main/develop (los feature/* pueden ir más rápido)
+BRANCH="${1:-}"
+case "$BRANCH" in
+  refs/heads/main|refs/heads/develop)
+    echo "▶ pre-push: tests + mutation (timeboxed)"
+    pnpm test
+    timeout 300 pnpm mutate
+    echo "✓ pre-push OK"
+    ;;
+  *)
+    echo "▶ pre-push: solo tests (rama no protegida)"
+    pnpm test
+    ;;
+esac
