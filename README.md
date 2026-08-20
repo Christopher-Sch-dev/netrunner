@@ -2,7 +2,7 @@
 
 **The universal jack.** Connect every project, every agent, one net.
 
-Netrunner is an open-source, MIT-licensed **universal agent CDK**: a single binary that turns *any* project into something *any* AI agent can understand, operate, and control — with one command.
+Netrunner is an open-source, MIT-licensed **universal agent SDK**: a single binary that turns *any* project into something *any* AI agent can understand, operate, and control — with one command.
 
 Inspired by the netrunners of Night City: the ones who jack into *any* system. Netrunner is that jack for your codebase.
 

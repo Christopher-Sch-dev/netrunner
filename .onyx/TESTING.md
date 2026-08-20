@@ -1,4 +1,4 @@
-# TESTING — Netrunner — Universal Agent CDK
+# TESTING — Netrunner — Universal Agent SDK
 
 > Los tests y POR QUÉ existen. Qué validan, qué responden, qué prueban.
 > Actualizar cada vez que cambien tests o se agreguen.

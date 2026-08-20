@@ -1,10 +1,10 @@
-# CONTEXTO — Netrunner — Universal Agent CDK
+# CONTEXTO — Netrunner — Universal Agent SDK
 
 > Funcionalidades excepcionales, gotchas, data importante para recordar
 > cuando se trabaja en ESTE repo. (No estado — conocimiento.)
 
 ## Funcionalidades excepcionales
-- CDK universal: un solo binario convierte CUALQUIER proyecto en agente-operable para CUALQUIER agente.
+- SDK universal: un solo binario convierte CUALQUIER proyecto en agente-operable para CUALQUIER agente.
 - Un solo motor es a la vez AI SDK + MCP server + skill + plugin + grafo + control agéntico (vistas del mismo contrato de tools).
 - Auto-mejora interna (background review fork + curator determinista + Memento-Skills) anclada a señal externa.
 

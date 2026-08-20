@@ -3,7 +3,7 @@
 - **Fecha**: 2026-08-20
 - **Decisión** (Given/When/Then):
 
-  **GIVEN** un motor CDK que debe conectar cualquier proyecto a cualquier agente (Claude Code, Codex, Hermes, OpenCode, Cursor, MCP) sin reinventar protocolo y con auto-mejora,
+  **GIVEN** un motor SDK que debe conectar cualquier proyecto a cualquier agente (Claude Code, Codex, Hermes, OpenCode, Cursor, MCP) sin reinventar protocolo y con auto-mejora,
   **WHEN** se define la arquitectura fundacional del motor Netrunner,
   **THEN** se adopta: (1) capa de orquestación SOBRE estándares (Vercel AI SDK v7 harness-adapters + MCP server + Agent Plugins 1.0) con capa propia de generador `init`, policy cross-client y router de harnesses; (2) stack TypeScript + Bun + pnpm; (3) DeepSeek Harness (dsh) como andamiaje y AXI (kunchenguid/axi) como estándar de tools; (4) auto-mejora = background review fork + curator determinista + Memento-Skills anclado a señal externa.
 

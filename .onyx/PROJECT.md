@@ -1,11 +1,11 @@
-# PROYECTO — Netrunner — Universal Agent CDK
+# PROYECTO — Netrunner — Universal Agent SDK
 
 > Contexto de conocimiento local de este repo (versionado, committeado).
 > Este repo es **open-source público**: todo el contrato y contexto de desarrollo vive aquí, versionado, para que cualquier contribuidor (humano o agente) trabaje sin contexto previo.
 
 ## Propósito
 
-**CDK universal que, con un solo binario, convierte CUALQUIER proyecto/app/demo en agente-operable para CUALQUIER agente** (Claude Code, Codex, Hermes, OpenCode, Cursor, MCP), + auto-mejora interna.
+**SDK universal que, con un solo binario, convierte CUALQUIER proyecto/app/demo en agente-operable para CUALQUIER agente** (Claude Code, Codex, Hermes, OpenCode, Cursor, MCP), + auto-mejora interna.
 
 - **Diferenciador** (tagline): *"Plug any project into any agent."*
 - Con un solo comando, el motor le da al agente **contexto** (grafo de conocimiento del proyecto), **uso** (operaciones deterministas) y **control agéntico** (operar el sistema), en una sola pieza — no fragmentado en N herramientas.

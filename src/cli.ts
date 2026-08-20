@@ -39,7 +39,7 @@ async function main(): Promise<void> {
     }
     default: {
       // AC-4: dashboard content-first (sin argumentos).
-      console.log('netrunner — universal agent CDK')
+      console.log('netrunner — universal agent SDK')
       console.log('uso: netrunner init <dir> | netrunner plan "<goal>" | netrunner --mcp')
       process.exit(0)
     }

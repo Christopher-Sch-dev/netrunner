@@ -1,4 +1,4 @@
-# DECISIONES — Netrunner — Universal Agent CDK
+# DECISIONES — Netrunner — Universal Agent SDK
 
 > Cada decisión de este proyecto se documenta en Gherkin (Given/When/Then)
 > con contexto y razón. Formato:

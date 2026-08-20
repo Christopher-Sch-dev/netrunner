@@ -2,7 +2,7 @@
   "name": "netrunner",
   "version": "0.1.0",
   "type": "module",
-  "description": "Universal agent CDK — plug any project into any agent.",
+  "description": "Universal agent SDK — plug any project into any agent.",
   "license": "MIT",
   "bin": {
     "netrunner": "./dist/netrunner"
