@@ -31,9 +31,9 @@ if [[ "$FAST" == "--fast" ]]; then
   exit 0
 fi
 
-# 4. Mutation testing (timeboxed)
-echo "▶ [4/6] mutation (stryker, timeboxed 300s)"
-timeout 300 pnpm mutate || fail "mutation"
+# 4. Mutation testing (timeboxed; incremental: 1ª corrida lenta, siguientes rápidas)
+echo "▶ [4/6] mutation (stryker, timeboxed 600s)"
+timeout 600 pnpm mutate || fail "mutation"
 
 # 5. actionlint (valida los workflows)
 echo "▶ [5/6] actionlint (workflows en scripts/ci-github/)"
