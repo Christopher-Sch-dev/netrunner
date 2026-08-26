@@ -6,24 +6,29 @@
  * DIFERENCIADOR DE TOKENS (AC-9, progressive disclosure): NO expone todas las
  * tools de golpe. Expone solo META-tools al conectar, y al habilitar un toolset
  * (derivado del stack del proyecto) registra dinámicamente sus tools. El agente
- * no ve 500 tools → no quema >400k tokens en schemas. (evidencia: 85-100x
- * ahorro tokens, +9-25pt precisión — auditoría 2026-08-26 extensibilidad.)
+ * no ve 500 tools → no quema >400k tokens en schemas.
+ *
+ * CONTRATO ÚNICO (DEC-005 §3, cierra desvío del auditor): esta vista NO
+ * reimplementa handlers. Proyecta el ToolRegistry central (buildNetrunnerRegistry):
+ * cada ToolSpec se traduce a un registerTool del SDK MCP, y el execute delega en
+ * registry.call(id, input, ctx). Si se agrega una tool al contrato, aparece sola.
  *
  * SPEC (Mandamiento 0):
  *   Como un agente que se conecta a un proyecto Netrunner,
- *   quiero descubrir y habilitar SOLO los toolsets relevantes al stack del proyecto,
- *   para no pagar tokens por tools que no necesito y responder más rápido.
+ *   quiero descubrir y habilitar SOLO los toolsets relevantes al stack,
+ *   para no pagar tokens por tools que no necesito.
  *
  * AC:
  *   AC-M1 al conectar expongo meta-tools: net_available_toolsets, net_enable_toolset.
  *   AC-M2 net_enable_toolset registra dinámicamente las tools del toolset (stack).
- *   AC-M3 idempotente: habilitar el mismo toolset dos veces no duplica tools.
+ *   AC-M3 idempotente: habilitar el mismo toolset dos veces no duplica.
  */
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import { detectStack } from '../context/detect'
-import { explore, callers, callees, impact } from '../context/queries'
+import { buildNetrunnerRegistry } from '../core/registry-factory'
+import type { ToolRegistry, ToolSpec, ToolContext } from '../core/registry'
 
 /** Un toolset: grupo de tools activadas por stack del proyecto (determinista). */
 interface Toolset {
@@ -33,7 +38,7 @@ interface Toolset {
   triggers: string[]
 }
 
-/** Catálogo determinista de toolsets (extensible: se agregan plugins por stack). */
+/** Catálogo determinista de toolsets (agrupación de tools del registry). */
 const TOOLSETS: Toolset[] = [
   {
     id: 'graph',
@@ -47,20 +52,58 @@ const TOOLSETS: Toolset[] = [
   },
 ]
 
-/** rol: decide qué toolsets están disponibles para un proyecto según su stack (determinista). */
+/** rol: decide qué toolsets están disponibles según el stack (determinista). */
 export function toolsetsFor(stack: { language: string; framework: string }): Toolset[] {
   return TOOLSETS.filter((t) => t.triggers.includes(stack.language) || t.triggers.includes(stack.framework))
 }
 
+/** rol: mapea una family del contrato al id de toolset que la proyecta. */
+function familyToToolset(family: string): string | null {
+  if (family === 'graph') return 'graph'
+  if (family === 'read') return 'stack' // stack.info es family 'read'
+  return null
+}
+
+/** rol: convierte un ToolSpec a un registro MCP y delega el execute en el registry. */
+function registerSpec(server: McpServer, registry: ToolRegistry, spec: ToolSpec, ctx: ToolContext): void {
+  // id "graph.explore" → "explore"; id "stack.info" → "stack" (proyección del contrato)
+  const toolName = spec.id.startsWith('stack.') ? 'stack' : spec.id.split('.')[1] ?? spec.id
+  const inputSchema = Object.fromEntries(Object.entries(spec.inputSchema).map(([k, v]) => [k, vToZod(v)]))
+  server.registerTool(
+    `net_${toolName}`,
+    {
+      description: spec.description,
+      inputSchema,
+    },
+    async (input) => {
+      const result = await registry.call(spec.id, input as Record<string, unknown>, ctx)
+      return { content: [{ type: 'text' as const, text: JSON.stringify(result) }] }
+    },
+  )
+}
+
+/** rol: convierte un JSON Schema primitivo a schema zod (compatible con el SDK MCP). */
+function vToZod(v: unknown): z.ZodType {
+  if (v && typeof v === 'object' && 'type' in v) {
+    const t = (v as { type: string }).type
+    if (t === 'string') return z.string()
+    if (t === 'integer' || t === 'number') return z.number()
+    if (t === 'boolean') return z.boolean()
+  }
+  return z.any()
+}
+
 /**
- * rol: construye el McpServer (testable). projectDir es el proyecto a operar.
- * Exponer progressive disclosure: meta-tools + enable_toolset que registra dinámico.
+ * rol: construye el McpServer proyectando el registry (testable).
+ * projectDir es el proyecto a operar. Expone progressive disclosure.
  */
 export async function createServer(projectDir: string): Promise<McpServer> {
   const server = new McpServer({ name: 'netrunner', version: '0.1.0' })
+  const registry = buildNetrunnerRegistry()
   const stack = await detectStack(projectDir)
   const available = toolsetsFor(stack)
   const enabled = new Set<string>()
+  const ctx: ToolContext = { projectDir, secrets: {}, profile: 'explore' }
 
   // --- META-TOOL: lista toolsets disponibles (por stack del proyecto) ---
   server.registerTool(
@@ -74,7 +117,7 @@ export async function createServer(projectDir: string): Promise<McpServer> {
     }),
   )
 
-  // --- META-TOOL: habilita un toolset, registrando sus tools dinámicamente ---
+  // --- META-TOOL: habilita un toolset, proyectando sus tools desde el registry ---
   server.registerTool(
     'net_enable_toolset',
     {
@@ -89,7 +132,12 @@ export async function createServer(projectDir: string): Promise<McpServer> {
         return { content: [{ type: 'text' as const, text: `toolset '${toolset}' ya estaba habilitado` }] }
       }
       enabled.add(toolset)
-      registerToolsetTools(server, toolset, projectDir)
+      // proyección: registra las tools del registry cuya family matchea el toolset
+      for (const spec of registry.discover('explore')) {
+        if (familyToToolset(spec.family) === toolset) {
+          registerSpec(server, registry, spec, ctx)
+        }
+      }
       return { content: [{ type: 'text' as const, text: `toolset '${toolset}' habilitado` }] }
     },
   )
@@ -102,47 +150,4 @@ export async function serveMCP(projectDir: string): Promise<void> {
   const server = await createServer(projectDir)
   const transport = new StdioServerTransport()
   await server.connect(transport)
-}
-
-/** rol: registra las tools del toolset 'graph' (explore/callers/callees/impact). */
-function registerGraphTools(server: McpServer, projectDir: string): void {
-  const text = (r: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(r) }] })
-  server.registerTool('net_explore', {
-    description: 'Busca símbolos del proyecto por nombre.',
-    inputSchema: { name: z.string() },
-  }, async ({ name }) => text(await explore(name, projectDir)))
-
-  server.registerTool('net_callers', {
-    description: 'Quiénes llaman a un símbolo.',
-    inputSchema: { symbol: z.string() },
-  }, async ({ symbol }) => text(await callers(symbol, projectDir)))
-
-  server.registerTool('net_callees', {
-    description: 'A quién llama un símbolo.',
-    inputSchema: { symbol: z.string() },
-  }, async ({ symbol }) => text(await callees(symbol, projectDir)))
-
-  server.registerTool('net_impact', {
-    description: 'Blast radius de un símbolo (BFS acotado).',
-    inputSchema: { symbol: z.string(), depth: z.number().optional() },
-  }, async ({ symbol, depth }) => text(await impact(symbol, projectDir, depth ?? 2)))
-}
-
-/** rol: registra la tool 'net_stack' (información del stack del proyecto). */
-function registerStackTool(server: McpServer, projectDir: string): void {
-  server.registerTool('net_stack', {
-    description: 'Información del stack detectado del proyecto.',
-    inputSchema: {},
-  }, async () => ({
-    content: [{ type: 'text' as const, text: JSON.stringify(await detectStack(projectDir)) }],
-  }))
-}
-
-/** rol: registra las tools reales de un toolset en el server MCP (dinámico). */
-function registerToolsetTools(server: McpServer, toolset: string, projectDir: string): void {
-  if (toolset === 'graph') {
-    registerGraphTools(server, projectDir)
-  } else if (toolset === 'stack') {
-    registerStackTool(server, projectDir)
-  }
 }
