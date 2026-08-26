@@ -27,7 +27,7 @@
 import { createRequire } from 'node:module'
 import Parser from 'web-tree-sitter'
 import type { SyntaxNode, Tree } from 'web-tree-sitter'
-import { WASM_FILES, SPECS, FUNC_TYPES, CALL_TYPES } from './parse-specs'
+import { WASM_FILES, SPECS, FUNC_TYPES, CALL_TYPES, forEachNode } from './parse-specs'
 import type { ParsedImport } from './parse-specs'
 import { parseImportsFromTree } from './parse-imports'
 
@@ -82,12 +82,6 @@ async function createParser(language: string): Promise<Parser> {
   const parser = new Parser()
   parser.setLanguage(lang)
   return parser
-}
-
-/** rol: recorre cada nodo del árbol aplicando fn (incluye el propio root). */
-function forEachNode(node: SyntaxNode, fn: (n: SyntaxNode) => void): void {
-  fn(node)
-  for (const child of node.namedChildren) forEachNode(child, fn)
 }
 
 /** rol: devuelve el texto del primer hijo cuyo tipo esté en types, o null. */

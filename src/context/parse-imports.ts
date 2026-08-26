@@ -4,6 +4,7 @@
  * Cada lenguaje (ts/js/python/go/rust) delega en su propio extractor.
  */
 import type { SyntaxNode } from 'web-tree-sitter'
+import { forEachNode } from './parse-specs'
 import type { ParsedImport } from './parse-specs'
 
 /** rol: extrae el módulo fuente de un nodo import (string sin comillas). */
@@ -61,12 +62,6 @@ function importsFromRust(node: SyntaxNode): ParsedImport[] {
   const source = path.text
   const name = source.split('::').pop() ?? source
   return [{ name, source }]
-}
-
-/** rol: recorre cada nodo del árbol aplicando fn (incluye el propio root). */
-function forEachNode(node: SyntaxNode, fn: (n: SyntaxNode) => void): void {
-  fn(node)
-  for (const child of node.namedChildren) forEachNode(child, fn)
 }
 
 /** rol: extrae todos los imports de un archivo dado su árbol (AC-G2), por lenguaje. */

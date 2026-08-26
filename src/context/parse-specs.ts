@@ -4,11 +4,18 @@
  * Especifica qué nodos son definiciones, cómo se nombran, y qué import types
  * existen por lenguaje — sin parsear nada.
  */
+import type { SyntaxNode } from 'web-tree-sitter'
 
 /** Import plano: nombre importado + módulo fuente. */
 export interface ParsedImport {
   name: string
   source: string
+}
+
+/** rol: recorre cada nodo del árbol aplicando fn (incluye el propio root). */
+export function forEachNode(node: SyntaxNode, fn: (n: SyntaxNode) => void): void {
+  fn(node)
+  for (const child of node.namedChildren) forEachNode(child, fn)
 }
 
 /** Nombre del archivo WASM de cada gramática soportada. */
