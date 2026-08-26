@@ -3,6 +3,8 @@
  * Sin I/O ni persistencia: parsea un string y devuelve estructuras planas que graph.ts
  * convierte en GraphNode/GraphEdge y persiste. Gramáticas: typescript/tsx/javascript,
  * python, go, rust (gramáticas WASM de tree-sitter-wasms, cargadas vía web-tree-sitter).
+ * Config de gramáticas y extractor de imports viven en parse-specs.ts y parse-imports.ts
+ * (Mandamiento 1: módulos <200 líneas, <30 por función).
  *
  * SPEC (Mandamiento 0):
  *   Como netrunner, quiero extraer definiciones (class/function/const/type/import),
@@ -25,6 +27,9 @@
 import { createRequire } from 'node:module'
 import Parser from 'web-tree-sitter'
 import type { SyntaxNode, Tree } from 'web-tree-sitter'
+import { WASM_FILES, SPECS, FUNC_TYPES, CALL_TYPES } from './parse-specs'
+import type { ParsedImport } from './parse-specs'
+import { parseImportsFromTree } from './parse-imports'
 
 /** Símbolo plano extraído de una definición (sin id ni file: se asignan en graph.ts). */
 export interface ParsedSymbol {
@@ -32,12 +37,6 @@ export interface ParsedSymbol {
   kind: string
   line: number
   endLine: number
-}
-
-/** Import plano: nombre importado + módulo fuente. */
-export interface ParsedImport {
-  name: string
-  source: string
 }
 
 /** Llamada plana: callee + caller (función envolvente, o null si es top-level). */
@@ -53,90 +52,7 @@ export interface ParsedFile {
   calls: ParsedCall[]
 }
 
-/** Nombre del archivo WASM de cada gramática soportada. */
-const WASM_FILES: Record<string, string> = {
-  typescript: 'tree-sitter-typescript.wasm',
-  tsx: 'tree-sitter-tsx.wasm',
-  javascript: 'tree-sitter-javascript.wasm',
-  python: 'tree-sitter-python.wasm',
-  go: 'tree-sitter-go.wasm',
-  rust: 'tree-sitter-rust.wasm',
-}
-
-/** Configuración por lenguaje: qué nodos son definiciones y cómo se llama al nombre. */
-const SPECS: Record<string, { defs: Record<string, string>; names: string[]; importTypes: string[] }> = {
-  typescript: {
-    defs: {
-      function_declaration: 'function',
-      method_definition: 'function',
-      generator_function: 'function',
-      class_declaration: 'class',
-      interface_declaration: 'type',
-      type_alias_declaration: 'type',
-      variable_declarator: 'const',
-    },
-    names: ['identifier', 'type_identifier'],
-    importTypes: ['import_statement'],
-  },
-  javascript: {
-    defs: {
-      function_declaration: 'function',
-      method_definition: 'function',
-      generator_function: 'function',
-      class_declaration: 'class',
-      variable_declarator: 'const',
-    },
-    names: ['identifier'],
-    importTypes: ['import_statement'],
-  },
-  python: {
-    defs: {
-      function_definition: 'function',
-      class_definition: 'class',
-    },
-    names: ['identifier'],
-    importTypes: ['import_statement', 'import_from_statement'],
-  },
-  go: {
-    defs: {
-      function_declaration: 'function',
-      method_declaration: 'function',
-      type_spec: 'type',
-      const_spec: 'const',
-    },
-    names: ['identifier', 'type_identifier'],
-    importTypes: ['import_declaration'],
-  },
-  rust: {
-    defs: {
-      function_item: 'function',
-      struct_item: 'class',
-      enum_item: 'type',
-      type_item: 'type',
-      const_item: 'const',
-    },
-    names: ['identifier', 'type_identifier'],
-    importTypes: ['use_declaration'],
-  },
-}
-
-/** Tipos de nodo que abren un contexto de función (para resolver el caller de una llamada). */
-const FUNC_TYPES = new Set([
-  'function_declaration',
-  'method_definition',
-  'generator_function',
-  'arrow_function',
-  'function_definition',
-  'class_definition',
-  'function_item',
-  'method_declaration',
-  'func_literal',
-  'impl_item',
-  'trait_item',
-])
-
-/** Tipos de nodo que representan una llamada a función. */
-const CALL_TYPES = new Set(['call_expression', 'call'])
+export type { ParsedImport }
 
 let initPromise: Promise<void> | null = null
 
@@ -207,66 +123,12 @@ export async function parseDefinitions(code: string, language: string): Promise<
   return out
 }
 
-/** rol: extrae el módulo fuente de un nodo import (string sin comillas). */
-function sourceOf(node: SyntaxNode): string {
-  const str = node.namedChildren.find((c) => c.type === 'string')
-  if (!str) return ''
-  const frag = str.namedChildren.find((c) => c.type === 'string_fragment')
-  return frag ? frag.text : str.text.replace(/^['"]|['"]$/g, '')
-}
-
-/** rol: extrae imports de un archivo (AC-G2). */
+/** rol: extrae imports de un archivo (AC-G2), delegando en parse-imports. */
 export async function parseImports(code: string, language: string): Promise<ParsedImport[]> {
   const tree = await parse(code, language)
   if (!tree) return []
   const spec = SPECS[language]
-  const out: ParsedImport[] = []
-  forEachNode(tree.rootNode, (n) => {
-    if (!spec.importTypes.includes(n.type)) return
-    if (language === 'typescript' || language === 'javascript' || language === 'tsx') {
-      const source = sourceOf(n)
-      const names = new Set<string>()
-      const clause = n.namedChildren.find((c) => c.type === 'import_clause')
-      if (clause) {
-        forEachNode(clause, (c) => {
-          if (c.type === 'identifier') names.add(c.text)
-        })
-      }
-      for (const name of names) out.push({ name, source })
-    } else if (language === 'python') {
-      const rel = n.namedChildren.find((c) => c.type === 'relative_import')
-      // módulo = primer dotted_name (o el del relative_import); el resto son símbolos importados
-      const dottedNames = n.namedChildren.filter((c) => c.type === 'dotted_name')
-      const relMod = rel?.namedChildren.find((c) => c.type === 'dotted_name')
-      const source = relMod ? relMod.text : dottedNames[0]?.text ?? ''
-      const imported = rel ? dottedNames : dottedNames.slice(1)
-      for (const dn of imported) out.push({ name: dn.text, source })
-      if (n.type === 'import_statement') {
-        out.push({ name: source, source })
-      } else {
-        // import_from: además los identifiers directos (ej. alias) que no estén en dottedNames
-        for (const c of n.namedChildren) {
-          if (c.type === 'identifier') out.push({ name: c.text, source })
-        }
-      }
-    } else if (language === 'go') {
-      for (const spec of n.namedChildren.filter((c) => c.type === 'import_spec')) {
-        const lit = spec.namedChildren.find((c) => c.type === 'interpreted_string_literal')
-        const source = lit ? lit.text.replace(/^"|"$/g, '') : ''
-        const alias = spec.namedChildren.find((c) => c.type === 'identifier')
-        const name = alias ? alias.text : source.split('/').pop() ?? source
-        if (source) out.push({ name, source })
-      }
-    } else if (language === 'rust') {
-      const path = n.namedChildren.find((c) => c.type === 'scoped_identifier' || c.type === 'identifier')
-      if (path) {
-        const source = path.text
-        const name = source.split('::').pop() ?? source
-        out.push({ name, source })
-      }
-    }
-  })
-  return out
+  return parseImportsFromTree(tree.rootNode, language, spec.importTypes)
 }
 
 /** rol: extrae llamadas con su función envolvente (AC-G3). */

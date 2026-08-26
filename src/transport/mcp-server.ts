@@ -104,47 +104,45 @@ export async function serveMCP(projectDir: string): Promise<void> {
   await server.connect(transport)
 }
 
+/** rol: registra las tools del toolset 'graph' (explore/callers/callees/impact). */
+function registerGraphTools(server: McpServer, projectDir: string): void {
+  const text = (r: unknown) => ({ content: [{ type: 'text' as const, text: JSON.stringify(r) }] })
+  server.registerTool('net_explore', {
+    description: 'Busca símbolos del proyecto por nombre.',
+    inputSchema: { name: z.string() },
+  }, async ({ name }) => text(await explore(name, projectDir)))
+
+  server.registerTool('net_callers', {
+    description: 'Quiénes llaman a un símbolo.',
+    inputSchema: { symbol: z.string() },
+  }, async ({ symbol }) => text(await callers(symbol, projectDir)))
+
+  server.registerTool('net_callees', {
+    description: 'A quién llama un símbolo.',
+    inputSchema: { symbol: z.string() },
+  }, async ({ symbol }) => text(await callees(symbol, projectDir)))
+
+  server.registerTool('net_impact', {
+    description: 'Blast radius de un símbolo (BFS acotado).',
+    inputSchema: { symbol: z.string(), depth: z.number().optional() },
+  }, async ({ symbol, depth }) => text(await impact(symbol, projectDir, depth ?? 2)))
+}
+
+/** rol: registra la tool 'net_stack' (información del stack del proyecto). */
+function registerStackTool(server: McpServer, projectDir: string): void {
+  server.registerTool('net_stack', {
+    description: 'Información del stack detectado del proyecto.',
+    inputSchema: {},
+  }, async () => ({
+    content: [{ type: 'text' as const, text: JSON.stringify(await detectStack(projectDir)) }],
+  }))
+}
+
 /** rol: registra las tools reales de un toolset en el server MCP (dinámico). */
 function registerToolsetTools(server: McpServer, toolset: string, projectDir: string): void {
   if (toolset === 'graph') {
-    server.registerTool('net_explore', {
-      description: 'Busca símbolos del proyecto por nombre.',
-      inputSchema: { name: z.string() },
-    }, async ({ name }) => {
-      const r = await explore(name, projectDir)
-      return { content: [{ type: 'text' as const, text: JSON.stringify(r) }] }
-    })
-
-    server.registerTool('net_callers', {
-      description: 'Quiénes llaman a un símbolo.',
-      inputSchema: { symbol: z.string() },
-    }, async ({ symbol }) => {
-      const r = await callers(symbol, projectDir)
-      return { content: [{ type: 'text' as const, text: JSON.stringify(r) }] }
-    })
-
-    server.registerTool('net_callees', {
-      description: 'A quién llama un símbolo.',
-      inputSchema: { symbol: z.string() },
-    }, async ({ symbol }) => {
-      const r = await callees(symbol, projectDir)
-      return { content: [{ type: 'text' as const, text: JSON.stringify(r) }] }
-    })
-
-    server.registerTool('net_impact', {
-      description: 'Blast radius de un símbolo (BFS acotado).',
-      inputSchema: { symbol: z.string(), depth: z.number().optional() },
-    }, async ({ symbol, depth }) => {
-      const r = await impact(symbol, projectDir, depth ?? 2)
-      return { content: [{ type: 'text' as const, text: JSON.stringify(r) }] }
-    })
+    registerGraphTools(server, projectDir)
   } else if (toolset === 'stack') {
-    server.registerTool('net_stack', {
-      description: 'Información del stack detectado del proyecto.',
-      inputSchema: {},
-    }, async () => {
-      const stack = await detectStack(projectDir)
-      return { content: [{ type: 'text' as const, text: JSON.stringify(stack) }] }
-    })
+    registerStackTool(server, projectDir)
   }
 }

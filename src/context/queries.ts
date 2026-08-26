@@ -126,40 +126,49 @@ export async function callees(symbolId: string, projectDir: string): Promise<Que
   }
 }
 
+/** rol: expande el blast radius BFS acotado por depth, truncado a LIMIT (AC-5.4). */
+function expandBfs(
+  db: Database,
+  symbolId: string,
+  depth: number,
+): { nodes: GraphNode[]; edges: GraphEdge[]; truncated: boolean } {
+  const outStmt = db.query('SELECT * FROM edges WHERE "from" = ?')
+  const outEdges = (id: string) => outStmt.all(id) as Record<string, unknown>[]
+  const nodes: GraphNode[] = []
+  const edges: GraphEdge[] = []
+  const visited = new Set<string>([symbolId])
+  let frontier = [symbolId]
+  let truncated = false
+
+  for (let level = 0; level <= depth; level++) {
+    const next: string[] = []
+    for (const id of frontier) {
+      if (nodes.length >= LIMIT) { truncated = true; break }
+      nodes.push(...nodesByIds(db, [id]))
+      // solo expande edges hacia el siguiente nivel si no es la última capa
+      if (level >= depth) continue
+      const found = outEdges(id) as Record<string, unknown>[]
+      for (const row of found) {
+        const edge = toEdge(row)
+        if (!visited.has(edge.to)) {
+          visited.add(edge.to)
+          next.push(edge.to)
+        }
+        edges.push(edge)
+      }
+    }
+    if (truncated) break
+    frontier = next
+    if (frontier.length === 0) break
+  }
+  return { nodes, edges, truncated }
+}
+
 /** IMPACT: blast radius por BFS acotado por depth (default 2), truncado a 100. */
 export async function impact(symbolId: string, projectDir: string, depth = 2): Promise<QueryResult> {
   const db = openDb(projectDir)
   try {
-    const outStmt = db.query('SELECT * FROM edges WHERE "from" = ?')
-    const outEdges = (id: string) => outStmt.all(id) as Record<string, unknown>[]
-    const nodes: GraphNode[] = []
-    const edges: GraphEdge[] = []
-    const visited = new Set<string>([symbolId])
-    let frontier = [symbolId]
-    let truncated = false
-
-    for (let level = 0; level <= depth; level++) {
-      const next: string[] = []
-      for (const id of frontier) {
-        if (nodes.length >= LIMIT) { truncated = true; break }
-        nodes.push(...nodesByIds(db, [id]))
-        // solo expande edges hacia el siguiente nivel si no es la última capa
-        if (level >= depth) continue
-        const found = outEdges(id) as Record<string, unknown>[]
-        for (const row of found) {
-          const edge = toEdge(row)
-          if (!visited.has(edge.to)) {
-            visited.add(edge.to)
-            next.push(edge.to)
-          }
-          edges.push(edge)
-        }
-      }
-      if (truncated) break
-      frontier = next
-      if (frontier.length === 0) break
-    }
-    return { nodes, edges, truncated }
+    return expandBfs(db, symbolId, depth)
   } finally {
     db.close()
   }

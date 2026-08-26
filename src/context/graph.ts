@@ -17,11 +17,11 @@
  *   AC-G3 incremental: solo re-indexa archivos cuyo mtime cambió.
  *   AC-G4 devuelve { nodes, edges } totales.
  */
-import { Database } from 'bun:sqlite'
+import { Database, type Statement } from 'bun:sqlite'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, extname } from 'node:path'
 import type { GraphEdge, GraphNode } from './types'
-import { parseFile } from './parse'
+import { parseFile, type ParsedSymbol, type ParsedImport, type ParsedCall } from './parse'
 
 /** Mapea extensión → lenguaje tree-sitter (mismos que parse.ts). */
 const EXT_TO_LANG: Record<string, string> = {
@@ -80,6 +80,37 @@ function ensureSchema(db: Database): void {
   `)
 }
 
+/** rol: persiste defs/imports/calls de un archivo parseado en el grafo (AC-G2/G3). */
+function applyParsed(
+  parsed: { defs: ParsedSymbol[]; imports: ParsedImport[]; calls: ParsedCall[] },
+  rel: string,
+  nodeInsert: Statement,
+  edgeInsert: Statement,
+  nodes: GraphNode[],
+  edges: GraphEdge[],
+): void {
+  for (const def of parsed.defs) {
+    const id = `def:${def.name}`
+    nodeInsert.run(id, def.name, def.kind, rel, def.line, def.endLine)
+    nodes.push({ id, name: def.name, kind: def.kind, file: rel, line: def.line, endLine: def.endLine })
+  }
+  for (const imp of parsed.imports) {
+    const impId = `import:${rel}:${imp.name}`
+    nodeInsert.run(impId, imp.name, 'import', rel, 0, 0)
+    nodes.push({ id: impId, name: imp.name, kind: 'import', file: rel, line: 0, endLine: 0 })
+    const toId = `mod:${imp.source}`
+    edgeInsert.run(impId, toId, 'imports', 'EXTRACTED')
+    edges.push({ from: impId, to: toId, kind: 'imports', provenance: 'EXTRACTED' })
+  }
+  for (const call of parsed.calls) {
+    if (!call.caller) continue
+    const from = `rel:${rel}:${call.caller}`
+    const to = `rel:${call.callee}`
+    edgeInsert.run(from, to, 'calls', 'EXTRACTED')
+    edges.push({ from, to, kind: 'calls', provenance: 'EXTRACTED' })
+  }
+}
+
 /**
  * rol: indexa el proyecto y persiste el grafo en <proyecto>/.netrunner/index.db.
  * incremental=true: solo re-indexa archivos cuyo mtime cambió (tabla index_meta).
@@ -127,29 +158,7 @@ export async function indexProject(
     const code = readFileSync(abs, 'utf8')
     const parsed = await parseFile(code, lang)
 
-    for (const def of parsed.defs) {
-      const id = `def:${def.name}`
-      nodeInsert.run(id, def.name, def.kind, rel, def.line, def.endLine)
-      nodes.push({ id, name: def.name, kind: def.kind, file: rel, line: def.line, endLine: def.endLine })
-    }
-
-    for (const imp of parsed.imports) {
-      const impId = `import:${rel}:${imp.name}`
-      nodeInsert.run(impId, imp.name, 'import', rel, 0, 0)
-      nodes.push({ id: impId, name: imp.name, kind: 'import', file: rel, line: 0, endLine: 0 })
-      const toId = `mod:${imp.source}`
-      edgeInsert.run(impId, toId, 'imports', 'EXTRACTED')
-      edges.push({ from: impId, to: toId, kind: 'imports', provenance: 'EXTRACTED' })
-    }
-
-    for (const call of parsed.calls) {
-      if (!call.caller) continue
-      const from = `rel:${rel}:${call.caller}`
-      const to = `rel:${call.callee}`
-      edgeInsert.run(from, to, 'calls', 'EXTRACTED')
-      edges.push({ from, to, kind: 'calls', provenance: 'EXTRACTED' })
-    }
-
+    applyParsed(parsed, rel, nodeInsert, edgeInsert, nodes, edges)
     upsertMeta.run(abs, mtime)
   }
 
