@@ -1,9 +1,27 @@
-import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { indexProject } from '../src/context/graph'
+
+// mock bun:sqlite → node:sqlite (mismo API) para que vitest (node) resuelva graph.ts
+vi.mock('bun:sqlite', () => {
+  const { DatabaseSync } = require('node:sqlite')
+  return {
+    Database: class extends DatabaseSync {
+      constructor(path: string) { super(path) }
+      query(sql: string) {
+        const db = this
+        return {
+          get: (...args: unknown[]) => (db.prepare(sql) as { get: (...a: unknown[]) => unknown }).get(...args),
+          all: (...args: unknown[]) => (db.prepare(sql) as { all: (...a: unknown[]) => unknown }).all(...args),
+          run: (...args: unknown[]) => (db.prepare(sql) as { run: (...a: unknown[]) => unknown }).run(...args),
+        }
+      }
+    },
+  }
+})
 
 // rol: crea un proyecto temporal con un archivo TS, corre indexProject, verifica el index.db.
 

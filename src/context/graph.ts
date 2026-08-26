@@ -2,7 +2,7 @@
  * rol: Indexador del grafo de conocimiento de Netrunner (AC-1/AC-5).
  * Recorre los archivos fuente de un proyecto, extrae símbolos/llamadas/imports
  * con parse.ts (tree-sitter wasm) y los persiste en un grafo local
- * (<proyecto>/.netrunner/index.db) usando node:sqlite (funciona bajo bun y vitest).
+ * (<proyecto>/.netrunner/index.db) usando bun:sqlite (runtime Bun; vitest lo mockea).
  * queries.ts lee este index.db con el mismo schema.
  *
  * SPEC (Mandamiento 0):
@@ -17,7 +17,7 @@
  *   AC-G3 incremental: solo re-indexa archivos cuyo mtime cambió.
  *   AC-G4 devuelve { nodes, edges } totales.
  */
-import { DatabaseSync } from 'node:sqlite'
+import { Database } from 'bun:sqlite'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, extname } from 'node:path'
 import type { GraphEdge, GraphNode } from './types'
@@ -28,7 +28,7 @@ const EXT_TO_LANG: Record<string, string> = {
   '.ts': 'typescript',
   '.tsx': 'tsx',
   '.js': 'javascript',
-  '.jsx': 'tsx', // jsx se parsea con gramática tsx
+  '.jsx': 'tsx',
   '.mjs': 'javascript',
   '.cjs': 'javascript',
   '.py': 'python',
@@ -44,10 +44,7 @@ const IGNORED_DIRS = new Set([
 
 const IGNORED_FILES = new Set(['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lockb'])
 
-/**
- * rol: devuelve la lista de archivos fuente a indexar (determinista, sin .gitignore parse).
- * Recursivo, ignora dirs como node_modules/dist. Devuelve rutas absolutas.
- */
+/** rol: devuelve la lista de archivos fuente a indexar (determinista). */
 function sourceFiles(root: string): string[] {
   const out: string[] = []
   const walk = (dir: string): void => {
@@ -67,7 +64,7 @@ function sourceFiles(root: string): string[] {
 }
 
 /** rol: crea el schema (CREATE TABLE IF NOT EXISTS) si no existe. */
-function ensureSchema(db: DatabaseSync): void {
+function ensureSchema(db: Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS nodes (
       id TEXT PRIMARY KEY, name TEXT NOT NULL, kind TEXT NOT NULL,
@@ -85,8 +82,8 @@ function ensureSchema(db: DatabaseSync): void {
 
 /**
  * rol: indexa el proyecto y persiste el grafo en <proyecto>/.netrunner/index.db.
- * incremental=true: solo re-indexa archivos cuyo mtime cambió (se guarda el último
- * mtime por archivo en la tabla de control). Idempotente: re-ejecutar no duplica.
+ * incremental=true: solo re-indexa archivos cuyo mtime cambió (tabla index_meta).
+ * Idempotente: re-ejecutar no duplica.
  */
 export async function indexProject(
   projectDir: string,
@@ -97,10 +94,9 @@ export async function indexProject(
   const { mkdirSync } = await import('node:fs')
   try { mkdirSync(dbDir, { recursive: true }) } catch { /* ya existe */ }
 
-  const db = new DatabaseSync(join(dbDir, 'index.db'))
+  const db = new Database(join(dbDir, 'index.db'))
   ensureSchema(db)
 
-  // control de incremental: tabla mtimes (file → last_indexed_mtime)
   db.exec('CREATE TABLE IF NOT EXISTS index_meta (file TEXT PRIMARY KEY, mtime REAL)')
   const getMeta = db.prepare('SELECT mtime FROM index_meta WHERE file = ?')
   const upsertMeta = db.prepare(

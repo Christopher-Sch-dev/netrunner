@@ -1,49 +1,127 @@
+#!/usr/bin/env node
 /**
- * rol: Entrypoint del binario netrunner (T1.1, T2.4).
+ * rol: CLI de Netrunner (AC-4 dashboard, AC-6 ops deterministas, AC-14 agent-friendly).
+ * Sigue la spec ai-native-cli (JSON output por defecto, exit codes, --human).
  *
- * Un solo binario que despacha por subcomando/modo (DEC-002):
- *   netrunner                → dashboard content-first del proyecto (AC-4)
- *   netrunner init <dir>     → indexa el proyecto + genera la conectividad (AC-1)
- *   netrunner --mcp          → modo MCP server (stdio) (AC-3)
- *   netrunner plan "<goal>"  → plan determinista por objetivo (AC-9)
+ *   netrunner                    → dashboard content-first (JSON)
+ *   netrunner init <dir>         → indexa el grafo del proyecto
+ *   netrunner plan "<goal>"      → genera plan desde el contexto (dashboard)
+ *   netrunner --mcp              → arranca el servidor MCP por stdio
+ *   netrunner --version / --help → self-description
  *
- * Minimalista por ahora: el motor se construye por fases. Este CLI enruta
- * los subcomandos y delega a los módulos que van entrando.
+ * SPEC (Mandamiento 0):
+ *   Como un agente que se conecta a un proyecto Netrunner,
+ *   quiero invocar el motor por CLI con salida JSON estable,
+ *   para operar el proyecto de forma determinista y pipe-friendly.
+ *
+ * AC:
+ *   AC-4 dashboard content-first (stack + capabilities + counts).
+ *   AC-14 output JSON por defecto, exit 0/1/2, stderr para errores.
  */
-import { ToolRegistry } from './core/registry'
+import { detectStack } from './context/detect'
+import { indexProject } from './context/graph'
 
-// registry compartido por todas las vistas (un contrato, 4 vistas)
-export const registry = new ToolRegistry()
-
-async function main(): Promise<void> {
-  const [cmd, ...args] = Bun.argv.slice(2)
-
-  switch (cmd) {
-    case '--mcp': {
-      // T2.1 — MCP server. Stub por ahora, se implementa en su fase.
-      console.error('MCP mode: not yet implemented (Fase 2).')
-      process.exit(1)
+/** rol: parsea argv (flags --flag, --flag=val). Devuelve {subcommand, flags, args}. */
+function parseArgs(argv: string[]): { subcommand: string; flags: Record<string, string>; args: string[] } {
+  const flags: Record<string, string> = {}
+  const args: string[] = []
+  let subcommand = ''
+  for (const a of argv) {
+    if (a.startsWith('--')) {
+      const eq = a.indexOf('=')
+      if (eq > -1) flags[a.slice(2, eq)] = a.slice(eq + 1)
+      else flags[a.slice(2)] = 'true'
+    } else if (!subcommand) {
+      subcommand = a
+    } else {
+      args.push(a)
     }
+  }
+  return { subcommand, flags, args }
+}
+
+/** rol: imprime JSON estable a stdout (agente). --human produce texto simple. */
+function emit(data: unknown, human: boolean): void {
+  if (human) {
+    console.log(typeof data === 'string' ? data : JSON.stringify(data, null, 2))
+  } else {
+    console.log(JSON.stringify(data))
+  }
+}
+
+/** rol: imprime error estructurado a stderr y sale con exit code. */
+function fail(code: string, message: string, suggestion: string, exitCode = 1): never {
+  process.stderr.write(JSON.stringify({ error: true, code, message, suggestion }) + '\n')
+  process.exit(exitCode)
+}
+
+/** rol: dashboard content-first del proyecto (AC-4). */
+async function dashboard(projectDir: string): Promise<Record<string, unknown>> {
+  const stack = await detectStack(projectDir)
+  const { nodes, edges } = await indexProject(projectDir, { incremental: true })
+  const symbols = nodes.filter((n) => n.kind !== 'import').length
+  const files = new Set(nodes.map((n) => n.file)).size
+  return {
+    project: projectDir,
+    stack,
+    capabilities: ['graph', 'ops'],
+    counts: { symbols: symbols, files, edges: edges.length },
+    nextSteps: ['netrunner explore <sym>', 'netrunner install'],
+  }
+}
+
+/** rol: entrypoint del binario. */
+export async function main(argv: string[]): Promise<never> {
+  const { subcommand, flags, args } = parseArgs(argv)
+  const human = flags.human === 'true' || flags.human === '1'
+  const projectDir = process.cwd()
+
+  if (flags['version'] || subcommand === 'version') {
+    emit({ name: 'netrunner', version: '0.1.0' }, human)
+    process.exit(0)
+  }
+
+  if (flags['mcp'] || subcommand === 'mcp') {
+    // --mcp arranca el servidor MCP por stdio (no responde JSON de vuelta).
+    const { serveMCP } = await import('./transport/mcp-server')
+    await serveMCP(projectDir)
+    process.exit(0)
+  }
+
+  switch (subcommand) {
     case 'init': {
-      const dir = args[0] ?? '.'
-      // AC-1: indexar + generar conectividad (Fase 1 posterior).
-      console.log(`netrunner init ${dir} — índice generado en ${dir}/.netrunner/`)
+      const dir = args[0] ?? projectDir
+      const { nodes, edges } = await indexProject(dir)
+      emit({ indexed: dir, nodes: nodes.length, edges: edges.length }, human)
       process.exit(0)
     }
     case 'plan': {
       const goal = args.join(' ') || '(sin objetivo)'
-      // AC-9: determinismo por objetivo. Stub por ahora.
-      console.log(`plan para: "${goal}"`)
-      console.log(`tools registradas: ${registry.listIds().length}`)
+      emit({ plan: { goal, context: await dashboard(projectDir) } }, human)
+      process.exit(0)
+    }
+    case 'explore': {
+      const { explore } = await import('./context/queries')
+      const name = args[0]
+      if (!name) fail('MISSING_REQUIRED', 'explore requiere un nombre', 'netrunner explore <sym>', 2)
+      const r = await explore(name, projectDir)
+      emit(r, human)
+      process.exit(0)
+    }
+    case '--help':
+    case 'help': {
+      emit({ help: 'netrunner — plug any project into any agent', commands: ['init', 'plan', 'explore', '--mcp', '--version'] }, true)
       process.exit(0)
     }
     default: {
-      // AC-4: dashboard content-first (sin argumentos).
-      console.log('netrunner — universal agent SDK')
-      console.log('uso: netrunner init <dir> | netrunner plan "<goal>" | netrunner --mcp')
+      // sin subcomando → dashboard
+      emit(await dashboard(projectDir), human)
       process.exit(0)
     }
   }
 }
 
-main()
+// Ejecuta solo si es el entrypoint directo (no importado en tests).
+if (import.meta.main) {
+  main(process.argv.slice(2)).catch((e) => fail('INTERNAL', String(e?.message ?? e), 'revisa los logs', 1))
+}
