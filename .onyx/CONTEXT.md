@@ -13,6 +13,7 @@
 - El motor se construye en fases posteriores. Esta inicialización (repo + .onyx + spec.md + DEC-001) es el CONTRATO BASE — no inventar código fuera de las fases.
 - El contrato de tools `src/core` es el núcleo: no romperlo sin versionar (extensibilidad).
 - **CI**: GitHub Actions está DESACTIVADO (billing de la cuenta). El gate real es el CI local (`scripts/ci-local.sh` + hooks). Workflows versionados en `scripts/ci-github/` (restaurar cuando se resuelva billing).
+- **CI local NO revienta la PC (OOM fix 2026-08-26):** `pre-push` corre SOLO el gate rápido (typecheck+lint+test, ~4s). Mutation+act se corren bajo demanda con `./scripts/ci-local.sh --full` (release/merge), NO en cada push. Stryker `concurrency: 2` + reporters solo clear-text. Vitest `maxWorkers: 4`.
 
 ## Data importante para recordar
 - Repo: github.com/Christopher-Sch-dev/netrunner (público, main).

@@ -6,11 +6,12 @@ export default defineConfig({
   testRunner: 'vitest',
   mutator: 'typescript',
   packageManager: 'pnpm',
-  reporters: ['clear-text', 'html'],
+  // reporters: solo clear-text (sin html: genera .stryker/ pesado)
+  reporters: ['clear-text'],
   coverageAnalysis: 'perTest',
-  // cap de recursos (OOM fix 2026-08-26): concurrency default = n-1 cores (11) →
-  // 51 workers tinypool. 4 controla RAM sin perder realismo del score.
-  concurrency: 4,
+  // cap de recursos (OOM fix 2026-08-26): concurrency 2 → RAM liviana,
+  // no revienta la PC aunque corran otros proyectos.
+  concurrency: 2,
   maxTestRunnerReuse: 100,
   cleanTempDir: 'always',
   mutate: ['src/**/*.ts'],
