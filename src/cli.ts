@@ -319,7 +319,8 @@ export async function main(argv: string[]): Promise<never> {
     case 'plan': {
       const goal = args.join(' ').trim()
       if (!goal) fail('MISSING_REQUIRED', 'plan requiere un goal', 'netrunner plan "<goal>"', 2)
-      // TOON: returns ONLY { goal, steps } (no verbose context field) — AC-3
+      // plan real basado en el grafo (W1.B1.3 — fix juez: no stub genérico)
+      const { generatePlan } = await import('./plan/index')
       emit({ plan: await generatePlan(goal, projectDir) }, human)
       process.exit(0)
     }
