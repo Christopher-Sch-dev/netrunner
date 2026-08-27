@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { rgSearch, type RgMatch } from '../src/tools/rg'
 
-// rol: tests del conector ripgrep (AC-1..4 de features/rg.feature).
+// role: tests for the ripgrep connector (AC-1..4 of features/rg.feature).
 
 describe('rgSearch (conector ripgrep)', () => {
   let dir: string
@@ -39,7 +39,7 @@ describe('rgSearch (conector ripgrep)', () => {
 
     const matches = await rgSearch('login', dir)
 
-    // node_modules excluido determinista (--glob), src sí se busca
+    // node_modules excluded deterministically (--glob), src is searched
     expect(matches.some((m) => m.file.includes('src/a.js'))).toBe(true)
     expect(matches.every((m) => !m.file.includes('node_modules'))).toBe(true)
   })
@@ -52,6 +52,6 @@ describe('rgSearch (conector ripgrep)', () => {
 
     const matches = await rgSearch('match_', dir)
 
-    expect(matches.length).toBeLessThanOrEqual(200) // límite TOON
+    expect(matches.length).toBeLessThanOrEqual(200) // TOON limit
   })
 })

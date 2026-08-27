@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { ToolRegistry } from '../src/core/registry'
 import { loadPlugin, unloadPlugin, type Plugin, type PluginContext } from '../src/core/plugin'
 
-// rol: tests del plugin system (AC-1..6 de features/plugin-system.feature).
-// Extension-points + efectos reversibles (patrón Cordis).
+// role: tests for the plugin system (AC-1..6 of features/plugin-system.feature).
+// Extension-points + reversible effects.
 
 describe('plugin system (extension-points + reversible)', () => {
   it('cargar un plugin registra sus tools (AC-1/2/3)', () => {
@@ -74,7 +74,7 @@ describe('plugin system (extension-points + reversible)', () => {
     }
 
     loadPlugin(plugin, registry, { projectDir: '/tmp' })
-    // segunda carga: idempotente (no duplica, no lanza)
+    // second load: idempotent (does not duplicate, does not throw)
     expect(() => loadPlugin(plugin, registry, { projectDir: '/tmp' })).not.toThrow()
     expect(registry.listIds().filter((id) => id === 'op.test').length).toBe(1)
   })

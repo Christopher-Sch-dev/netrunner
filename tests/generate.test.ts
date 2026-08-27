@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { generateDocs } from '../src/generate/index'
 
-// rol: tests del generador de doc viva (AC-1..4 de features/generate.feature).
+// role: tests for the live doc generator (AC-1..4 of features/generate.feature).
 
 describe('generador de doc viva', () => {
   let dir: string

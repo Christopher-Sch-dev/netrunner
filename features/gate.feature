@@ -3,7 +3,7 @@
 ## SPEC (Mandamiento 0)
 **Como** el motor Netrunner,
 **quiero** que el curator acepte un Memento-Skill SOLO si tiene señal externa clara,
-**para** que un Memento malo no se propague (riesgo #1 del Juez 2 — robar de SkillOpt:
+**para** que un Memento malo no se propague (riesgo #1 del Juez 2 — validation gate:
 el caso ungated cayó de 55.4%→2.6%).
 
 ## Acceptance Criteria

@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { depthQuery } from '../src/depth/index'
 
-// mock bun:sqlite → node:sqlite (para que queries.ts resuelva)
+// mock bun:sqlite → node:sqlite (so queries.ts can resolve)
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -23,7 +23,7 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-// rol: tests de depth (AC-1..4 de features/depth.feature). Disclosure por niveles (floors).
+// role: tests for depth (AC-1..4 of features/depth.feature). Disclosure by levels (floors).
 
 describe('depth (disclosure por niveles)', () => {
   let dir: string

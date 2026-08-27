@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-// mock bun:sqlite → node:sqlite (mismo API) para que vitest (node) resuelva graph.ts/queries.ts
+// mock bun:sqlite → node:sqlite (same API) so vitest (node) can resolve graph.ts/queries.ts
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -21,7 +21,7 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-/** Helper: corre main() capturando console.log; intercepta process.exit como throw. */
+/** Helper: runs main() capturing console.log; intercepts process.exit as a throw. */
 async function runCli(args: string[]): Promise<string[]> {
   const { main } = await import('../src/cli')
   const logged: string[] = []
@@ -41,7 +41,7 @@ async function runCli(args: string[]): Promise<string[]> {
   return logged
 }
 
-// rol: tests del CLI plan real + TOON (AC-1..4 del features/cli-plan.feature)
+// role: tests for the real CLI plan + TOON (AC-1..4 of features/cli-plan.feature)
 
 describe('cli plan (real + TOON)', () => {
   let dir: string
@@ -69,10 +69,10 @@ describe('cli plan (real + TOON)', () => {
     const parsed = JSON.parse(json!)
     expect(parsed.plan).toBeDefined()
     expect(parsed.plan.goal).toBe('agregar login')
-    // steps[] accionables
+    // actionable steps[]
     expect(Array.isArray(parsed.plan.steps)).toBe(true)
     expect(parsed.plan.steps.length).toBeGreaterThan(0)
-    // cada step tiene action + target concreto
+    // each step has a concrete action + target
     for (const step of parsed.plan.steps) {
       expect(step.action).toBeTruthy()
       expect(step.target).toBeTruthy()
@@ -83,15 +83,15 @@ describe('cli plan (real + TOON)', () => {
     const logged = await runCli(['plan', 'hacer X'])
     const json = logged.find((l) => l.startsWith('{'))
     const parsed = JSON.parse(json!)
-    // TOON: no hay campo "context" duplicando el dashboard verboso
+    // TOON: no "context" field duplicating the verbose dashboard
     expect(parsed.plan.context).toBeUndefined()
-    // campos mínimos y útiles
+    // minimal and useful fields
     expect(parsed.plan.steps).toBeDefined()
   })
 
   it('plan sin goal → error estructurado (AC-4)', async () => {
-    // sin goal → plan lanza fail() que imprime error a stderr y hace exit(2)
+    // without a goal → plan calls fail() which prints an error to stderr and exits(2)
     const logged = await runCli(['plan'])
-    expect(logged).toEqual([]) // no imprime JSON a stdout
+    expect(logged).toEqual([]) // does not print JSON to stdout
   })
 })

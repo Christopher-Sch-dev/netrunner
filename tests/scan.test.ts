@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { scanProject } from '../src/scan/index'
 
-// rol: tests de scan (AC-1..4 de features/scan.feature). Overlay de info del proyecto.
+// role: tests for scan (AC-1..4 of features/scan.feature). Project info overlay.
 
 describe('scan (overlay de info)', () => {
   let dir: string

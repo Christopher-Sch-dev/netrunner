@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { consolidateMementos, rememberRejected, isRejected } from '../src/auto/consolidate'
 
-// rol: tests de consolidación + rejected-buffer (AC-1..4 de features/consolidate.feature).
-// Evita drift de la auto-mejora (validador #3, robar de SkillOpt).
+// role: tests for consolidation + rejected-buffer (AC-1..4 of features/consolidate.feature).
+// Prevents drift in self-improvement (validator #3).
 
 describe('consolidación de Mementos + rejected-buffer', () => {
   it('consolida Mementos duplicados del mismo símbolo (AC-1)', () => {
@@ -14,7 +14,7 @@ describe('consolidación de Mementos + rejected-buffer', () => {
 
     const consolidated = consolidateMementos(mementos)
 
-    // login consolidado en uno, auth intacto
+    // login consolidated into one, auth untouched
     expect(consolidated.length).toBe(2)
     const login = consolidated.find((m) => m.symbol === 'login')
     expect(login).toBeDefined()

@@ -4,7 +4,7 @@
 **Como** el motor Netrunner,
 **quiero** un log append-only de resultados del curator (TSV parseable),
 **para** que la auto-mejora quede anclada a señal externa medible y comparable
-(validador #5 — patrón `log.md` de Karpathy + `results.tsv` de autoresearch).
+(validador #5 — patrón log append-only + TSV).
 
 ## Acceptance Criteria
 - **AC-1**: `appendResult(log, entry)` agrega una línea TSV (timestamp | symbol | action | ok).

@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { indexProject } from '../src/context/graph'
 
-// mock bun:sqlite → node:sqlite (mismo API) para que vitest (node) resuelva graph.ts
+// mock bun:sqlite → node:sqlite (same API) so vitest (node) can resolve graph.ts
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -23,7 +23,7 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-// rol: tests del fix Bug A (features/graph-fix.feature): colisión de IDs + .stryker-tmp.
+// role: tests for the Bug A fix (features/graph-fix.feature): ID collision + .stryker-tmp.
 
 describe('graph fix Bug A (colisión de IDs)', () => {
   let dir: string
@@ -48,7 +48,7 @@ describe('graph fix Bug A (colisión de IDs)', () => {
     const rows = db.prepare(`SELECT id, file FROM nodes WHERE name = 'login'`).all() as { id: string; file: string }[]
     db.close()
 
-    // dos nodos distintos, cada uno con su archivo en el id
+    // two distinct nodes, each with its own file in the id
     expect(rows.length).toBe(2)
     const ids = rows.map((r) => r.id)
     expect(ids).toContain('def:src/a.ts:login')
@@ -68,9 +68,9 @@ describe('graph fix Bug A (colisión de IDs)', () => {
     const rows = db.prepare(`SELECT file FROM nodes`).all() as { file: string }[]
     db.close()
 
-    // ningún nodo proviene de .stryker-tmp
+    // no node comes from .stryker-tmp
     expect(rows.every((r) => !r.file.includes('.stryker-tmp'))).toBe(true)
-    // el real sí está
+    // the real one is present
     expect(rows.some((r) => r.file.includes('src/real.ts'))).toBe(true)
   })
 })

@@ -1,21 +1,21 @@
 /**
- * rol: Indexador del grafo de conocimiento de Netrunner (AC-1/AC-5).
- * Recorre los archivos fuente de un proyecto, extrae símbolos/llamadas/imports
- * con parse.ts (tree-sitter wasm) y los persiste en un grafo local
- * (<proyecto>/.netrunner/index.db) usando bun:sqlite (runtime Bun; vitest lo mockea).
- * queries.ts lee este index.db con el mismo schema.
+ * rol: Netrunner knowledge-graph indexer (AC-1/AC-5).
+ * Walks a project's source files, extracts symbols/calls/imports
+ * with parse.ts (tree-sitter wasm) and persists them in a local graph
+ * (<project>/.netrunner/index.db) using bun:sqlite (Bun runtime; vitest mocks it).
+ * queries.ts reads this index.db with the same schema.
  *
  * SPEC (Mandamiento 0):
- *   Como un agente que opera un proyecto,
- *   quiero indexar sus definiciones/llamadas/imports a un grafo persistente,
- *   para que las queries (explore/callers/callees/impact) respondan en pocas
- *   llamadas sin grep/read masivo.
+ *   As an agent operating a project,
+ *   I want to index its definitions/calls/imports into a persistent graph,
+ *   so that the queries (explore/callers/callees/impact) answer in few
+ *   calls without massive grep/read.
  *
  * AC (features/graph.feature):
- *   AC-G1 crea tablas nodes(id,name,kind,file,line,endLine) y edges(from,to,kind,provenance).
- *   AC-G2 extrae definiciones→GraphNode y imports/llamadas→GraphEdge (EXTRACTED/INFERRED).
- *   AC-G3 incremental: solo re-indexa archivos cuyo mtime cambió.
- *   AC-G4 devuelve { nodes, edges } totales.
+ *   AC-G1 creates tables nodes(id,name,kind,file,line,endLine) and edges(from,to,kind,provenance).
+ *   AC-G2 extracts definitions→GraphNode and imports/calls→GraphEdge (EXTRACTED/INFERRED).
+ *   AC-G3 incremental: only re-indexes files whose mtime changed.
+ *   AC-G4 returns { nodes, edges } totals.
  */
 import { Database, type Statement } from 'bun:sqlite'
 import { readdirSync, readFileSync, statSync } from 'node:fs'
@@ -23,7 +23,7 @@ import { join, relative, extname } from 'node:path'
 import type { GraphEdge, GraphNode } from './types'
 import { parseFile, type ParsedSymbol, type ParsedImport, type ParsedCall } from './parse'
 
-/** Mapea extensión → lenguaje tree-sitter (mismos que parse.ts). */
+/** Maps extension → tree-sitter language (same as parse.ts). */
 const EXT_TO_LANG: Record<string, string> = {
   '.ts': 'typescript',
   '.tsx': 'tsx',
@@ -36,16 +36,16 @@ const EXT_TO_LANG: Record<string, string> = {
   '.rs': 'rust',
 }
 
-/** Rutas/dirs a ignorar al indexar (determinista, evita ruido). */
+/** Paths/dirs to ignore when indexing (deterministic, avoids noise). */
 const IGNORED_DIRS = new Set([
   'node_modules', '.git', '.netrunner', 'dist', 'build', 'coverage',
   '.next', '.nuxt', 'vendor', '.venv', 'target', '.onyx', '.doc', '.engram',
-  '.stryker-tmp', // Stryker crea copias de sandbox → colisionan IDs (Bug A)
+  '.stryker-tmp', // the mutation-testing sandbox creates copies → collide IDs (Bug A)
 ])
 
 const IGNORED_FILES = new Set(['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lockb'])
 
-/** rol: devuelve la lista de archivos fuente a indexar (determinista). */
+/** rol: returns the list of source files to index (deterministic). */
 function sourceFiles(root: string): string[] {
   const out: string[] = []
   const walk = (dir: string): void => {
@@ -64,7 +64,7 @@ function sourceFiles(root: string): string[] {
   return out
 }
 
-/** rol: crea el schema (CREATE TABLE IF NOT EXISTS) si no existe. */
+/** rol: creates the schema (CREATE TABLE IF NOT EXISTS) if it does not exist. */
 function ensureSchema(db: Database): void {
   db.exec(`
     CREATE TABLE IF NOT EXISTS nodes (
@@ -81,7 +81,7 @@ function ensureSchema(db: Database): void {
   `)
 }
 
-/** rol: persiste defs/imports/calls de un archivo parseado en el grafo (AC-G2/G3). */
+/** rol: persists defs/imports/calls of a parsed file into the graph (AC-G2/G3). */
 function applyParsed(
   parsed: { defs: ParsedSymbol[]; imports: ParsedImport[]; calls: ParsedCall[] },
   rel: string,
@@ -91,7 +91,7 @@ function applyParsed(
   edges: GraphEdge[],
 ): void {
   for (const def of parsed.defs) {
-    // namespacing por archivo: def:<rel_path>:<name> (Bug A — evita colisión entre archivos)
+    // per-file namespacing: def:<rel_path>:<name> (Bug A — avoids collisions between files)
     const id = `def:${rel}:${def.name}`
     nodeInsert.run(id, def.name, def.kind, rel, def.line, def.endLine)
     nodes.push({ id, name: def.name, kind: def.kind, file: rel, line: def.line, endLine: def.endLine })
@@ -114,9 +114,9 @@ function applyParsed(
 }
 
 /**
- * rol: indexa el proyecto y persiste el grafo en <proyecto>/.netrunner/index.db.
- * incremental=true: solo re-indexa archivos cuyo mtime cambió (tabla index_meta).
- * Idempotente: re-ejecutar no duplica.
+ * rol: indexes the project and persists the graph in <project>/.netrunner/index.db.
+ * incremental=true: only re-indexes files whose mtime changed (index_meta table).
+ * Idempotent: re-running does not duplicate.
  */
 export async function indexProject(
   projectDir: string,
@@ -125,7 +125,7 @@ export async function indexProject(
   const { incremental = false } = options
   const dbDir = join(projectDir, '.netrunner')
   const { mkdirSync } = await import('node:fs')
-  try { mkdirSync(dbDir, { recursive: true }) } catch { /* ya existe */ }
+  try { mkdirSync(dbDir, { recursive: true }) } catch { /* already exists */ }
 
   const db = new Database(join(dbDir, 'index.db'))
   ensureSchema(db)
@@ -151,7 +151,7 @@ export async function indexProject(
     const mtime = stat.mtimeMs
     if (incremental) {
       const meta = getMeta.get(abs) as { mtime: number } | undefined
-      if (meta && meta.mtime === mtime) continue // sin cambios
+      if (meta && meta.mtime === mtime) continue // no changes
     }
 
     const rel = relative(projectDir, abs)

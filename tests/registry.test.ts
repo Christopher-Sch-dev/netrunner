@@ -1,16 +1,16 @@
 /**
- * rol: Test de humo del contrato de tools (T1.2).
+ * role: Smoke test of the tools contract (T1.2).
  *
- * Valida las invariantes del núcleo (spec.md AC-1..14, DEC-001):
- * - registrar una tool dos veces lanza error (idempotencia).
- * - discover filtra por capability + perfil (determinismo AC-9).
- * - call ejecuta la tool con contexto inyectado (DI, Mandamiento 2).
- * - separación read vs mutate (readOnly, AC-6).
+ * Validates the core invariants (spec.md AC-1..14, DEC-001):
+ * - registering a tool twice throws an error (idempotency).
+ * - discover filters by capability + profile (determinism AC-9).
+ * - call executes the tool with injected context (DI).
+ * - read vs mutate separation (readOnly, AC-6).
  *
  * Gherkin:
- *   GIVEN un ToolRegistry vacío
- *   WHEN registro una tool con capability "explore"
- *   THEN discover("explore") la devuelve y discover("ops") no.
+ *   GIVEN an empty ToolRegistry
+ *   WHEN I register a tool with capability "explore"
+ *   THEN discover("explore") returns it and discover("ops") does not.
  */
 import { describe, expect, it } from 'vitest'
 import { ToolRegistry, type ToolSpec, type ToolContext } from '../src/core/registry'
@@ -78,7 +78,7 @@ describe('ToolRegistry (contrato de tools)', () => {
     const read = registry.discover('explore').filter((t) => t.readOnly)
     const ops = registry.discover('ops').filter((t) => !t.readOnly)
 
-    // ambas son readOnly en este smoke; la separación se garantiza por el flag
+    // both are readOnly in this smoke; the separation is guaranteed by the flag
     expect(read.length).toBeGreaterThanOrEqual(1)
     expect(ops.length).toBeGreaterThanOrEqual(0)
   })

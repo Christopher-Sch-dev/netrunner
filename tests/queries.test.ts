@@ -1,22 +1,22 @@
 /**
- * rol: Tests TDD de src/context/queries.ts — queries del grafo SQLite (AC-5).
+ * role: TDD tests for src/context/queries.ts — SQLite graph queries (AC-5).
  *
- * SPEC (Mandamiento 0):
- *   Como un agente que opera un proyecto,
- *   quiero consultar el grafo de conocimiento indexado en <proyecto>/.netrunner/index.db
- *   para responder (explore/callers/callees/impact) en pocas llamadas, sin grep/read masivo.
+ * SPEC:
+ *   As an agent operating a project,
+ *   I want to query the knowledge graph indexed in <project>/.netrunner/index.db
+ *   to answer (explore/callers/callees/impact) in few calls, without massive grep/read.
  *
  * AC (Acceptance Criteria):
- *   AC-5.1 explore(name) devuelve los nodos cuyo nombre matchea (LIKE) + los edges que los conectan.
- *   AC-5.2 callers(symbolId) devuelve quién llama a un símbolo (edges con to=symbolId) + nodos caller.
- *   AC-5.3 callees(symbolId) devuelve a quién llama un símbolo (edges con from=symbolId) + nodos callee.
- *   AC-5.4 impact(symbolId, depth) devuelve el blast radius acotado por BFS de profundidad depth.
- *   AC-5.5 Toda query trunca a 100 nodos máx y marca truncated=true si hay más.
+ *   AC-5.1 explore(name) returns the nodes whose name matches (LIKE) + the edges that connect them.
+ *   AC-5.2 callers(symbolId) returns who calls a symbol (edges with to=symbolId) + caller nodes.
+ *   AC-5.3 callees(symbolId) returns who a symbol calls (edges with from=symbolId) + callee nodes.
+ *   AC-5.4 impact(symbolId, depth) returns the blast radius bounded by BFS of depth depth.
+ *   AC-5.5 Every query truncates to 100 nodes max and sets truncated=true if there are more.
  *
  * GHERKIN:
- *   GIVEN un index.db con nodos/edges indexados
- *   WHEN  consulto explore/callers/callees/impact
- *   THEN  devuelve los nodos y edges esperados, truncando a 100 y marcando truncated.
+ *   GIVEN an index.db with indexed nodes/edges
+ *   WHEN  I query explore/callers/callees/impact
+ *   THEN  it returns the expected nodes and edges, truncating to 100 and marking truncated.
  */
 import { describe, expect, it, vi } from 'vitest'
 import { mkdtempSync, mkdirSync, rmSync } from 'node:fs'
@@ -24,8 +24,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 
-// Fake bun:sqlite.Database respaldado por node:sqlite (mismo API prepare().get/all/run).
-// Permite que la fuente use bun:sqlite (runtime bun) mientras vitest corre bajo node.
+// Fake bun:sqlite.Database backed by node:sqlite (same prepare().get/all/run API).
+// Lets the source use bun:sqlite (bun runtime) while vitest runs under node.
 vi.mock('bun:sqlite', () => ({
   Database: class {
     private db: DatabaseSync
@@ -51,7 +51,7 @@ vi.mock('bun:sqlite', () => ({
   },
 }))
 
-// rol: crea un proyecto temporal con un index.db sembrado (mismo schema de graph.ts).
+// role: creates a temporary project with a seeded index.db (same schema as graph.ts).
 function seedProject(nodes: [string, string, string][], edges: [string, string, string, string][]) {
   const dir = mkdtempSync(join(tmpdir(), 'netrunner-q-'))
   const netDir = join(dir, '.netrunner')
@@ -86,7 +86,7 @@ describe('src/context/queries (grafo SQLite, AC-5)', () => {
       const res = await explore('login', dir)
       expect(res.nodes.map((n) => n.name)).toEqual(['login'])
       expect(res.truncated).toBe(false)
-      // el edge que conecta a login (user.service→login y login→logout)
+      // the edge that connects to login (user.service→login and login→logout)
       expect(res.edges.length).toBe(2)
     } finally {
       rmSync(dir, { recursive: true, force: true })
@@ -153,7 +153,7 @@ describe('src/context/queries (grafo SQLite, AC-5)', () => {
   })
 
   it('impact: blast radius por BFS hasta profundidad depth, truncando a 100', async () => {
-    // app -> a -> b -> c -> d (cadena de 5). depth 2 desde app alcanza a,b.
+    // app -> a -> b -> c -> d (chain of 5). depth 2 from app reaches a,b.
     const dir = seedProject(
       [
         ['def:app', 'app', 'const'],

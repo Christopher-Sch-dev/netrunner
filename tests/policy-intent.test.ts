@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { evaluatePolicy, resolveSecrets, type PolicyContext } from '../src/policy/index'
 
-// rol: tests de policy por intención + secrets scopeados (AC-1..4 de features/policy-intent.feature).
+// role: tests for policy by intent + scoped secrets (AC-1..4 of features/policy-intent.feature).
 
 describe('policy por intención + secrets', () => {
   let dir: string
@@ -36,7 +36,7 @@ describe('policy por intención + secrets', () => {
 
     const a = resolveSecrets(dir, 'toolA')
     expect(a).toEqual({ KEY: 'secret-a' })
-    // toolB no filtra secret de toolA
+    // toolB does not leak toolA's secret
     const b = resolveSecrets(dir, 'toolB')
     expect(b).toEqual({ KEY: 'secret-b' })
   })

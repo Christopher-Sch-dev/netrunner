@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { lintSnapshot } from '../src/auto/lint'
 
-// rol: tests del lint periódico (AC-1..4 de features/lint.feature).
-// Health-check del snapshot (idea de Karpathy — el lint del LLM Wiki).
+// role: tests for the periodic lint (AC-1..4 of features/lint.feature).
+// Health-check of the snapshot.
 
 describe('lint periódico del snapshot', () => {
   it('detecta stale (coverage 0 con tests presentes) (AC-1/2)', () => {

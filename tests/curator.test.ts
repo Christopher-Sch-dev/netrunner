@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { curate, type Observation } from '../src/auto/curator'
 
-// rol: tests del curator determinista (AC-1..5 de features/curator.feature).
-// Función PURE (sin I/O), auto-mejora con señal EXTERNA, nunca auto-crítica.
+// role: tests for the deterministic curator (AC-1..5 of features/curator.feature).
+// PURE function (no I/O), self-improvement driven by EXTERNAL signal, never self-critique.
 
 describe('curator determinista', () => {
   it('observación exitosa genera un memento de skill (AC-1/3)', () => {
@@ -28,7 +28,7 @@ describe('curator determinista', () => {
   it('skill stale (sin uso) → mark needs_review, NO borra (AC-2)', () => {
     const obs: Observation[] = [{ tipo: 'stale', symbol: 'old_fn', ok: false, veces: 0 }]
     const actions = curate(obs)
-    // mark, nunca delete (el tipo no tiene 'delete' — fail-safe de diseño)
+    // mark, never delete (the type has no 'delete' — fail-safe by design)
     expect(actions.some((a) => a.type === 'mark_review')).toBe(true)
   })
 })

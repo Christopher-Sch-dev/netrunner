@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import * as acp from '@agentclientprotocol/sdk'
 import { buildNetrunnerRegistry } from '../src/core/registry-factory'
 
-// mock bun:sqlite → node:sqlite (registry → queries usa bun:sqlite)
+// mock bun:sqlite → node:sqlite (registry → queries uses bun:sqlite)
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -20,15 +20,15 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-// rol: tests del adapter ACP (features/acp.feature).
-// Verifica que la vista ACP proyecta el MISMO ToolRegistry (AC-4, DEC-005 §3)
-// y que el agente registra los handlers del protocolo (AC-2).
+// role: tests for the ACP adapter (features/acp.feature).
+// Verifies that the ACP view projects the SAME ToolRegistry (AC-4, DEC-005 §3)
+// and that the agent registers the protocol handlers (AC-2).
 
 describe('acp adapter (proyección del contrato)', () => {
   it('el registry proyecta las tools del contrato (AC-4)', () => {
     const registry = buildNetrunnerRegistry()
     const ids = registry.listIds()
-    // las 5 tools del contrato (explore/callers/callees/impact/stack/rg)
+    // the 5 contract tools (explore/callers/callees/impact/stack/rg)
     expect(ids).toContain('graph.explore')
     expect(ids).toContain('graph.callers')
     expect(ids).toContain('graph.callees')
@@ -37,7 +37,7 @@ describe('acp adapter (proyección del contrato)', () => {
   })
 
   it('los handlers del protocolo ACP están en el SDK (AC-2)', () => {
-    // el SDK 1.4.0 expone los métodos del agente que registramos
+    // the SDK 1.4.0 exposes the agent methods we registered
     const methods = acp.AGENT_METHODS as Record<string, string>
     expect(methods).toBeDefined()
     expect(methods.session_new).toBe('session/new')

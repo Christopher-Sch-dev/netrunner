@@ -4,8 +4,8 @@
 **Como** el motor Netrunner,
 **quiero** que cada operación emita un evento durable reconstruible y que el registry
 tenga hooks pre/post-ejecución,
-**para** que el agente pueda *replay* qué pasó (invariante "model-visible ⟺ logged" de
-deepseek-harness) y que policy/telemetry/guard sean seams intercambiables (Juez 2).
+**para** que el agente pueda *replay* qué pasó (invariante "model-visible ⟺ logged")
+y que policy/telemetry/guard sean seams intercambiables (Juez 2).
 
 ## Acceptance Criteria
 - **AC-1**: `emitEvent(log, event)` agrega un evento durable (op/start, op/result, op/error).

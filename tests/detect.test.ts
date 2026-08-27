@@ -1,28 +1,28 @@
 /**
- * rol: Test de detección de stack por manifestos (T1.3 — AC-4 stack del dashboard).
+ * role: Stack detection test by manifests (T1.3 — AC-4 dashboard stack).
  *
  * Spec:
- *   Como desarrollador/creador con cualquier proyecto,
- *   quiero que netrunner detecte lenguaje/framework/packageManager leyendo
- *   los manifestos reales del proyecto de forma determinista,
- *   para que el dashboard (AC-4) muestre el stack correcto sin preguntar.
+ *   As a developer/creator with any project,
+ *   I want netrunner to detect language/framework/packageManager by reading
+ *   the project's real manifests deterministically,
+ *   so that the dashboard (AC-4) shows the correct stack without asking.
  *
  * AC detect:
- *   - AC-D1: project con package.json + pnpm-lock.yaml → typescript|javascript, pnpm.
- *   - AC-D2: framework por deps de package.json (astro/react/next/vite) → framework.
+ *   - AC-D1: project with package.json + pnpm-lock.yaml → typescript|javascript, pnpm.
+ *   - AC-D2: framework by package.json deps (astro/react/next/vite) → framework.
  *   - AC-D3: package.json + npm/yarn/bun lockfile → npm/yarn/bun.
- *   - AC-D4: pyproject.toml o requirements.txt → python, pip/poetry/uv.
+ *   - AC-D4: pyproject.toml or requirements.txt → python, pip/poetry/uv.
  *   - AC-D5: Cargo.toml → rust, cargo. go.mod → go, go mod.
- *   - AC-D6: sin manifiesto → language/framework/packageManager/unknown + manifestPath ''.
- *   - AC-D7: manifiesto ilegible/no parseable → tratado como ausente (no lanza).
+ *   - AC-D6: no manifest → language/framework/packageManager/unknown + manifestPath ''.
+ *   - AC-D7: unreadable/unparseable manifest → treated as absent (does not throw).
  *
  * Gherkin:
- *   GIVEN un directorio con package.json y pnpm-lock.yaml
- *   WHEN llamo a detectStack(dir)
- *   THEN language es typescript/javascript y packageManager pnpm.
- *   GIVEN un directorio sin ningún manifiesto
- *   WHEN llamo a detectStack(dir)
- *   THEN devuelve language/framework/packageManager 'unknown' y manifestPath ''.
+ *   GIVEN a directory with package.json and pnpm-lock.yaml
+ *   WHEN I call detectStack(dir)
+ *   THEN language is typescript/javascript and packageManager pnpm.
+ *   GIVEN a directory with no manifest
+ *   WHEN I call detectStack(dir)
+ *   THEN it returns language/framework/packageManager 'unknown' and manifestPath ''.
  */
 import { mkdtemp, rm, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'

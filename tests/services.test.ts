@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { servicesInfo } from '../src/context/services'
 
-// rol: tests del detector de servicios (AC-1..4 de features/services.feature).
+// role: tests for the services detector (AC-1..4 of features/services.feature).
 
 describe('detector de servicios', () => {
   let dir: string

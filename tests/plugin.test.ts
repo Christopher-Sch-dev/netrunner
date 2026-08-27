@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { generatePlugin } from '../src/plugin/generate'
 
-// rol: tests del Agent Plugin generator (AC-1..4 de features/plugin.feature).
+// role: tests for the Agent Plugin generator (AC-1..4 of features/plugin.feature).
 
 describe('Agent Plugin generator', () => {
   let dir: string

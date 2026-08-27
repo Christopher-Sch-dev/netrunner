@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { join, sep, isAbsolute } from 'node:path'
 
-// rol: tests cross-OS (w5a3). Validan que el motor no hardcodea separadores de
-// path ni depende de OS específico — los paths se construyen con node:path.
+// role: cross-OS tests. They validate that the engine does not hardcode path
+// separators nor depend on a specific OS — paths are built with node:path.
 
 describe('cross-OS portability', () => {
   it('los paths del proyecto se construyen con node:path (no strings hardcodeados)', () => {

@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { indexProject } from '../src/context/graph'
 
-// mock bun:sqlite → node:sqlite (mismo API) para que vitest (node) resuelva graph.ts
+// mock bun:sqlite → node:sqlite (same API) so vitest (node) can resolve graph.ts
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -23,7 +23,7 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-// rol: crea un proyecto temporal con un archivo TS, corre indexProject, verifica el index.db.
+// role: creates a temporary project with a TS file, runs indexProject, verifies the index.db.
 
 describe('graph (indexación del grafo)', () => {
   let dir: string

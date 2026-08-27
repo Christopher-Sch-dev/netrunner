@@ -1,7 +1,7 @@
 /**
- * rol: Auto-sync del grafo de Netrunner (Fase 3 — uso continuo, lección de Ponytail).
+ * rol: Auto-sync del grafo de Netrunner (Fase 3 — uso continuo).
  * El grafo se refresca SOLO cuando cambian los archivos fuente, sin exigir
- * `netrunner init` manual ("no index, no value" — robar de codegraph). Compara
+ * `netrunner init` manual ("no index, no value"). Compara
  * el mtime de los archivos fuente vs el mtime del index.db.
  *
  * SPEC (Mandamiento 0):

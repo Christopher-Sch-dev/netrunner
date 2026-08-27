@@ -5,8 +5,8 @@ import { join } from 'node:path'
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { registerMetaResources } from '../src/transport/mcp-resources'
 
-// rol: tests de MCP resources (AC-1..4 de features/mcp-resources.feature).
-// Exponer el snapshot como recursos net://meta/* (spec MCP 2026-07-28).
+// role: tests for MCP resources (AC-1..4 of features/mcp-resources.feature).
+// Expose the snapshot as net://meta/* resources (MCP spec 2026-07-28).
 
 describe('MCP resources (net://meta/*)', () => {
   let dir: string
@@ -24,7 +24,7 @@ describe('MCP resources (net://meta/*)', () => {
   it('registra los recursos meta (AC-1)', () => {
     const server = new McpServer({ name: 'netrunner', version: '0.3.1' })
     registerMetaResources(server, dir)
-    // no lanza → registró los recursos
+    // does not throw → the resources were registered
     expect(true).toBe(true)
   })
 
@@ -32,7 +32,7 @@ describe('MCP resources (net://meta/*)', () => {
     const server = new McpServer({ name: 'netrunner', version: '0.3.1' })
     registerMetaResources(server, dir)
 
-    // lee el recurso vía el callback registrado (accedemos al snapshot directamente)
+    // reads the resource via the registered callback (we access the snapshot directly)
     const { buildSnapshot } = await import('../src/context/snapshot')
     const snap = await buildSnapshot(dir)
     expect(snap.git.branch).toBe('develop')
@@ -41,7 +41,7 @@ describe('MCP resources (net://meta/*)', () => {
   it('net://meta/stack devuelve el stack real, no remoteUrl (mata el mutante M10)', async () => {
     const { buildSnapshot } = await import('../src/context/snapshot')
     const snap = await buildSnapshot(dir)
-    // el stack es un objeto con language/framework, NO la URL del remoto
+    // the stack is an object with language/framework, NOT the remote URL
     expect(snap.stack).toBeDefined()
     expect(typeof snap.stack.language).toBe('string')
     expect(snap.stack.language).not.toContain('github.com')

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { coverageInfo } from '../src/context/coverage'
 
-// rol: tests del detector de cobertura (AC-1..4 de features/coverage.feature).
+// role: tests for the coverage detector (AC-1..4 of features/coverage.feature).
 
 describe('detector de cobertura', () => {
   let dir: string
@@ -37,7 +37,7 @@ describe('detector de cobertura', () => {
     expect(info.functions).toBe(70)
     expect(info.branches).toBe(60)
     expect(info.statements).toBe(80)
-    // son números, no strings
+    // they are numbers, not strings
     expect(typeof info.lines).toBe('number')
   })
 

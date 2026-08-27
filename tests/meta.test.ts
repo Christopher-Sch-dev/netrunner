@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest'
 import { emit } from '../src/cli'
 
-// mock bun:sqlite → node:sqlite (para que cli.ts resuelva graph.ts)
+// mock bun:sqlite → node:sqlite (so cli.ts can resolve graph.ts)
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -19,8 +19,8 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-// rol: tests de _meta + schema version (AC-1..4 de features/meta.feature).
-// El LLM sabe qué estructura esperar y de dónde viene el output.
+// role: tests for _meta + schema version (AC-1..4 of features/meta.feature).
+// The LLM knows what structure to expect and where the output comes from.
 
 describe('_meta + schema version', () => {
   it('output incluye _meta con schemaVersion y tool (AC-1/2)', () => {
@@ -35,7 +35,7 @@ describe('_meta + schema version', () => {
     expect(parsed._meta).toBeDefined()
     expect(parsed._meta.schemaVersion).toBe('1.0')
     expect(parsed._meta.tool).toBe('status')
-    expect(parsed.ok).toBe(true) // no rompe el output
+    expect(parsed.ok).toBe(true) // does not break the output
   })
 
   it('--human no agrega _meta (AC-4)', () => {

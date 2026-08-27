@@ -4,7 +4,7 @@
 **Como** un agente que opera un proyecto Netrunner,
 **quiero** que el grafo se refresque SOLO cuando cambian los archivos,
 **para** que el agente no tenga que correr `netrunner init` manualmente (uso continuo,
-la lección de Ponytail — "no index, no value", robar de codegraph).
+"no index, no value").
 
 ## Acceptance Criteria
 - **AC-1**: `needsSync(projectDir)` devuelve true si algún archivo fuente cambió desde el último index.

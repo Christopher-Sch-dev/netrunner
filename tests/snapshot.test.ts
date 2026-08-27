@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { buildSnapshot, saveSnapshot, loadSnapshot } from '../src/context/snapshot'
 
-// rol: tests del snapshot store (AC-1..4 de features/snapshot.feature).
-// El "sticky note" vivo que une los detectores.
+// role: tests for the snapshot store (AC-1..4 of features/snapshot.feature).
+// The live "sticky note" that ties the detectors together.
 
 describe('snapshot store', () => {
   let dir: string
