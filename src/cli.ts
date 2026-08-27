@@ -137,7 +137,7 @@ export async function main(argv: string[]): Promise<never> {
       name: 'netrunner',
       version: '0.3.1',
       usage: 'netrunner <cmd> [args] [--dir <path>] [--human]',
-      commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'install', 'plugin', 'dump', '--mcp'],
+      commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'plugin', '--mcp', '--acp'],
     }, human)
     process.exit(0)
   }
@@ -309,7 +309,7 @@ export async function main(argv: string[]): Promise<never> {
     }
     case '--help':
     case 'help': {
-      emit({ help: 'netrunner — plug any project into any agent', commands: ['init', 'plan', 'explore', '--mcp', '--version'] }, true)
+      emit({ help: 'netrunner — plug any project into any agent', commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'plugin', '--mcp', '--acp', '--version'] }, true)
       process.exit(0)
     }
     default: {
