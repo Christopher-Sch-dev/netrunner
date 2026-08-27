@@ -95,7 +95,7 @@ export async function main(argv: string[]): Promise<never> {
   const projectDir = process.cwd()
 
   if (flags['version'] || subcommand === 'version') {
-    emit({ name: 'netrunner', version: '0.1.0' }, human)
+    emit({ name: 'netrunner', version: '0.2.0' }, human)
     process.exit(0)
   }
 
@@ -107,6 +107,43 @@ export async function main(argv: string[]): Promise<never> {
   }
 
   switch (subcommand) {
+    case 'map': {
+      const { exportMap } = await import('./map/index')
+      emit(exportMap(projectDir), human)
+      process.exit(0)
+    }
+    case 'depth': {
+      const { depthQuery } = await import('./depth/index')
+      const symbol = args[0] ?? ''
+      const level = Number(args[1] ?? 0)
+      emit(await depthQuery(symbol, level, projectDir), human)
+      process.exit(0)
+    }
+    case 'scan': {
+      const { scanProject } = await import('./scan/index')
+      emit(await scanProject(projectDir), human)
+      process.exit(0)
+    }
+    case 'guard': {
+      const { guardCheck } = await import('./guard/index')
+      emit(guardCheck(projectDir), human)
+      process.exit(0)
+    }
+    case 'persist': {
+      const { persistDecision } = await import('./persist/index')
+      const decision = args.join(' ') || 'decisión'
+      emit(persistDecision(projectDir, decision, 'netrunner'), human)
+      process.exit(0)
+    }
+    case 'rollback': {
+      const { listSnapshots, createSnapshot } = await import('./rollback/index')
+      if (args[0] === 'create') {
+        emit(createSnapshot(projectDir), human)
+      } else {
+        emit(listSnapshots(projectDir), human)
+      }
+      process.exit(0)
+    }
     case 'status': {
       const { buildSnapshot } = await import('./context/snapshot')
       const { generateDocs } = await import('./generate/index')

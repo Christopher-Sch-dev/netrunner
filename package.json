@@ -1,8 +1,8 @@
 {
   "name": "netrunner",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "type": "module",
-  "description": "Universal agent SDK — plug any project into any agent.",
+  "description": "Universal agent SDK \u2014 plug any project into any agent.",
   "license": "MIT",
   "bin": {
     "netrunner": "./dist/netrunner"
