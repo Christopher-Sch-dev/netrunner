@@ -140,6 +140,8 @@ export async function main(argv: string[]): Promise<never> {
   switch (subcommand) {
     case 'map': {
       const { exportMap } = await import('./map/index')
+      const { syncIfNeeded } = await import('./context/sync')
+      await syncIfNeeded(projectDir) // auto-sync: el grafo se mantiene solo (Fase 3)
       emit(exportMap(projectDir), human)
       process.exit(0)
     }
