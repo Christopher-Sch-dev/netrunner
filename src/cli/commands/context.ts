@@ -48,6 +48,13 @@ export async function path(ctx: HandlerContext): Promise<void> {
   process.exit(0)
 }
 
+/** rol: god nodes — nodos más conectados del grafo (gap Graphify: god nodes). */
+export async function godNodes(ctx: HandlerContext): Promise<void> {
+  const { godNodes } = await import('../../god-nodes/index')
+  ctx.emit({ godNodes: await godNodes(ctx.projectDir) }, ctx.human)
+  process.exit(0)
+}
+
 /** rol: escaneo del proyecto. */
 export async function scan(ctx: HandlerContext): Promise<void> {
   const { scanProject } = await import('../../scan/index')

@@ -121,6 +121,7 @@ const HANDLERS: Record<string, (ctx: HandlerContext) => Promise<void>> = {
   uninstall: integration.uninstall,
   explore: context.explore,
   path: context.path,
+  'god-nodes': context.godNodes,
 }
 
 /** rol: binary entrypoint — router que delega en handlers por dominio. */
