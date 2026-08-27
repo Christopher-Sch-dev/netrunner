@@ -169,11 +169,32 @@ export async function main(argv: string[]): Promise<never> {
       process.exit(0)
     }
     case 'rollback': {
-      const { listSnapshots, createSnapshot } = await import('./rollback/index')
+      const { listSnapshots, createSnapshot, restoreSnapshot } = await import('./rollback/index')
       if (args[0] === 'create') {
         emit(createSnapshot(projectDir), human)
+      } else if (args[0] === 'restore') {
+        const id = args[1]
+        if (!id) {
+          emit({ error: true, code: 'MISSING_REQUIRED', message: 'rollback restore <id> requiere un id de snapshot' }, human)
+          process.exit(2)
+        }
+        restoreSnapshot(projectDir, id)
+        emit({ restored: id }, human)
       } else {
         emit(listSnapshots(projectDir), human)
+      }
+      process.exit(0)
+    }
+    case 'snapshot': {
+      const { buildSnapshot, saveSnapshot, loadSnapshot } = await import('./context/snapshot')
+      if (args[0] === 'save') {
+        const snap = await buildSnapshot(projectDir)
+        const path = saveSnapshot(projectDir, snap)
+        emit({ saved: path }, human)
+      } else if (args[0] === 'load') {
+        emit(loadSnapshot(projectDir), human)
+      } else {
+        emit(await buildSnapshot(projectDir), human)
       }
       process.exit(0)
     }
