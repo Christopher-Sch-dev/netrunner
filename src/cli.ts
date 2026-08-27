@@ -268,9 +268,10 @@ export async function main(argv: string[]): Promise<never> {
     }
     case 'init': {
       const dir = args[0] ?? projectDir
-      const { nodes, edges } = await indexProject(dir)
-      // consistent output: nested counts (does not collide with map which uses nodes:[...])
-      emit({ indexed: dir, counts: { nodes: nodes.length, edges: edges.length } }, human)
+      // vision (AC-1): init indexa Y genera el conectable layer (mcp.json + SKILL.md + AGENTS.md)
+      const { initProject } = await import('./init')
+      const result = await initProject(dir)
+      emit({ indexed: dir, counts: result.counts, written: result.written }, human)
       process.exit(0)
     }
     case 'plan': {
