@@ -107,6 +107,16 @@ export async function main(argv: string[]): Promise<never> {
   }
 
   switch (subcommand) {
+    case 'status': {
+      const { buildSnapshot } = await import('./context/snapshot')
+      const { generateDocs } = await import('./generate/index')
+      const snap = buildSnapshot(projectDir)
+      if (flags['docs'] === 'true' || flags['docs'] === '1') {
+        generateDocs(projectDir)
+      }
+      emit(snap, human)
+      process.exit(0)
+    }
     case 'init': {
       const dir = args[0] ?? projectDir
       const { nodes, edges } = await indexProject(dir)
