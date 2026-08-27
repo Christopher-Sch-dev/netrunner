@@ -21,6 +21,7 @@ vi.mock('bun:sqlite', () => {
 })
 
 import { shortestPath } from '../src/path/index'
+import { indexProject } from '../src/context/graph'
 
 // role: tests for path (AC-1..4 of features/path.feature).
 // Shortest-path entre dos símbolos (gap Graphify: graphify path A B).
@@ -41,6 +42,7 @@ describe('path (shortest-path)', () => {
   })
 
   it('camino existe → devuelve [a, b, c] (AC-1)', async () => {
+    await indexProject(dir) // indexar primero (path lee del index.db)
     const path = await shortestPath(dir, 'a', 'c')
     expect(path.length).toBeGreaterThan(0)
     expect(path[0]).toBe('a')

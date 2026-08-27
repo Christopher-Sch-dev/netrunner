@@ -14,15 +14,25 @@
  *   AC-3 sin grafo → ''.
  *   AC-4 determinista.
  */
-import { indexProject } from '../context/graph'
-import { godNodes } from '../god-nodes/index'
-
-/** rol: genera el reporte markdown del grafo (AC-1..4). */
+/** rol: genera el reporte markdown del grafo (AC-1..4). Lee del index.db (no re-indexa). */
 export async function graphReport(projectDir: string): Promise<string> {
-  // indexar completo siempre (garantiza ver el grafo; incremental puede devolver vacío)
-  const { nodes, edges } = await indexProject(projectDir, { incremental: false })
-  if (nodes.length === 0) return '' // AC-3
-  // calcular god nodes desde los nodos/edges en memoria (no leer del disco)
+  const { Database } = await import('bun:sqlite')
+  const { existsSync } = await import('node:fs')
+  const { join } = await import('node:path')
+  const path = join(projectDir, '.netrunner', 'index.db')
+  if (!existsSync(path)) return '' // AC-3
+  let nodes: Array<{ id: string; name: string }> = []
+  let edges: Array<{ from: string; to: string }> = []
+  try {
+    const db = new Database(path)
+    nodes = db.query('SELECT id, name FROM nodes').all() as Array<{ id: string; name: string }>
+    edges = db.query('SELECT "from", "to" FROM edges').all() as Array<{ from: string; to: string }>
+    db.close()
+  } catch {
+    return ''
+  }
+  if (nodes.length === 0) return ''
+  // calcular god nodes desde los edges del index.db (ya normalizados)
   const degree = new Map<string, number>()
   for (const n of nodes) degree.set(n.id, 0)
   for (const e of edges) {
@@ -31,7 +41,7 @@ export async function graphReport(projectDir: string): Promise<string> {
   }
   const gods = nodes
     .filter((n) => n.id.startsWith('def:'))
-    .map((n) => ({ name: n.id.split(':').pop() ?? n.id, degree: degree.get(n.id) ?? 0 }))
+    .map((n) => ({ name: n.id.split(':').pop() ?? n.name, degree: degree.get(n.id) ?? 0 }))
     .sort((a, b) => b.degree - a.degree)
   const lines = [
     '# Graph Report',

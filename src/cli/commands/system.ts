@@ -6,7 +6,7 @@ import type { HandlerContext } from './types'
 
 /** rol: --version / version. */
 export async function version(ctx: HandlerContext): Promise<void> {
-  ctx.emit({ name: 'netrunner', version: '0.3.1' }, ctx.human)
+  ctx.emit({ name: 'netrunner', version: '0.7.1' }, ctx.human)
   process.exit(0)
 }
 
@@ -24,9 +24,9 @@ export async function help(ctx: HandlerContext): Promise<void> {
   }
   ctx.emit({
     name: 'netrunner',
-    version: '0.3.1',
+    version: '0.7.1',
     usage: 'netrunner <cmd> [args] [--dir <path>] [--human]',
-    commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'plugin', '--mcp', '--acp', '--a2a'],
+    commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'path', 'god-nodes', 'graph-report', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'uninstall', 'plugin', 'breach', 'deck', 'mode', 'quickhacks', 'resume', 'sleeve', 'doctor', 'history', 'mcp-orchestrate', '--mcp', '--acp', '--a2a'],
   }, ctx.human)
   process.exit(0)
 }
@@ -53,10 +53,12 @@ export async function a2a(ctx: HandlerContext): Promise<void> {
 /** rol: el recuerdo que se re-adhiere al reconectar (W1). */
 export async function resume(ctx: HandlerContext): Promise<void> {
   const { resume } = await import('../../resume/index')
-  const { pendingSignals } = await import('../../hooks/index')
+  const { pendingSignals, markSignalsRead } = await import('../../hooks/index')
   const state = await resume(ctx.projectDir)
   // hook (Wave B): el agente ve las señales pendientes al reconectar
   const signals = pendingSignals(ctx.projectDir)
+  // fix auditor: el agente las vio → marcar como leídas (cierra el ciclo de memoria viva)
+  markSignalsRead(ctx.projectDir)
   ctx.emit({ ...state, signals }, ctx.human)
   process.exit(0)
 }

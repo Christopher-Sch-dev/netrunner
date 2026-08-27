@@ -41,6 +41,7 @@ describe('graph-report (dashboard humano)', () => {
   })
 
   it('genera markdown con god nodes + resumen (AC-1/2)', async () => {
+    await indexProject(dir) // indexar primero (graphReport lee del index.db)
     const report = await graphReport(dir)
     expect(report).toContain('God Nodes')
     expect(report).toContain('Nodes')

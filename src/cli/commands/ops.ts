@@ -24,7 +24,8 @@ export async function ops(ctx: HandlerContext): Promise<void> {
     emitSignal(ctx.projectDir, 'canon-pendiente', `la op ${kind} puede requerir actualizar el canon`)
   }
   ctx.emit(r, ctx.human)
-  process.exit(0)
+  // fix auditor (bug 9): propagar el exit code real de la op (el agente no se engaña)
+  process.exit(r.ok ? 0 : 1)
 }
 
 /** rol: quickhacks con costo/cooldown (W3.D3.3, mina #8). */

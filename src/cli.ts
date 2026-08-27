@@ -19,7 +19,7 @@
  *   AC-4 content-first dashboard (stack + capabilities + counts).
  *   AC-14 JSON output by default, exit 0/1/2, stderr for errors.
  */
-import { existsSync } from 'node:fs'
+import { existsSync, statSync } from 'node:fs'
 import type { HandlerContext } from './cli/commands/types'
 // imports estáticos de handlers (Bun bundlea imports estáticos; import() con string
 // variable NO se bundlea y rompe el build — fix: dispatch table de funciones).
@@ -144,8 +144,14 @@ export async function main(argv: string[]): Promise<void> {
     fail('INVALID_DIR', `directorio no existe: '${projectDir}'`, 'usa un path válido con --dir', 2)
   }
 
-  // fix juez hacker (#8): bloquear directorios de sistema en --dir (no filtrar estructura del OS)
-  const FORBIDDEN_DIRS = ['/etc', '/usr', '/var', '/proc', '/sys', '/boot', '/bin', '/sbin', '/lib', '/lib64', '/root', '/dev']
+  // fix auditor (bug 7): --dir a un archivo (no directorio) → error
+  if (flags.dir && existsSync(projectDir) && !statSync(projectDir).isDirectory()) {
+    fail('INVALID_DIR', `'${projectDir}' no es un directorio`, 'usa un directorio de proyecto con --dir', 2)
+  }
+
+  // fix juez hacker (#8) + auditor (bug 6): bloquear directorios de sistema en --dir
+  // (incluye / raíz — escanear todo el FS es DoS/leak)
+  const FORBIDDEN_DIRS = ['/', '/etc', '/usr', '/var', '/proc', '/sys', '/boot', '/bin', '/sbin', '/lib', '/lib64', '/root', '/dev']
   if (flags.dir && FORBIDDEN_DIRS.some((d) => projectDir === d || projectDir.startsWith(d + '/'))) {
     fail('FORBIDDEN_DIR', `directorio de sistema no operable: '${projectDir}'`, 'usa un directorio de proyecto (código), no del sistema', 2)
   }

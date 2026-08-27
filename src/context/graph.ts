@@ -217,6 +217,31 @@ export async function indexProject(
     }
   }
 
+  // fix auditor (bugs 4/5): normalizar AMBOS extremos de edges a IDs de nodos reales.
+  // Los edges apuntan a rel:<name>/mod:<path> que no son nodos → callers/impact/graph-report
+  // no matchean. Borra el edge viejo + inserta el normalizado (ON CONFLICT IGNORE evita
+  // duplicados que violan UNIQUE(from,to,kind)).
+  const allNodes = db.query('SELECT id, name FROM nodes').all() as { id: string; name: string }[]
+  const nameToDef = new Map<string, string>()
+  for (const n of allNodes) {
+    if (n.id.startsWith('def:')) nameToDef.set(n.name, n.id)
+  }
+  const allEdges = db.query('SELECT "from", "to", kind, provenance, file FROM edges').all() as { from: string; to: string; kind: string; provenance: string; file: string | null }[]
+  const delEdge = db.prepare('DELETE FROM edges WHERE "from" = ? AND "to" = ? AND kind = ?')
+  const insEdge = db.prepare('INSERT OR IGNORE INTO edges ("from", "to", kind, provenance, file) VALUES (?, ?, ?, ?, ?)')
+  for (const e of allEdges) {
+    const fromName = e.from.split(':').pop() ?? e.from
+    const destName = e.to.split(':').pop() ?? e.to
+    const fromDef = nameToDef.get(fromName)
+    const toDef = nameToDef.get(destName)
+    const newFrom = fromDef ?? e.from
+    const newTo = toDef ?? e.to
+    if (newFrom !== e.from || newTo !== e.to) {
+      delEdge.run(e.from, e.to, e.kind)
+      insEdge.run(newFrom, newTo, e.kind, e.provenance, e.file)
+    }
+  }
+
   db.close()
   return { nodes, edges, changed: { nodes: changedNodes, edges: changedEdges } }
 }

@@ -33,7 +33,8 @@ export async function depthQuery(symbol: string, level: number, projectDir: stri
     throw new Error(`nivel inválido: '${level}' (usa 0-3)`)
   }
   const res = await explore(symbol, projectDir)
-  const node = res.nodes?.[0]
+  // fix auditor (bug 4): priorizar el nodo def: sobre el import: (el import no tiene callers)
+  const node = res.nodes?.find((n) => n.id.startsWith('def:')) ?? res.nodes?.[0]
   if (!node) return { found: false }
 
   const base: DepthResult = {

@@ -14,11 +14,24 @@
  *   AC-3 determinista.
  *   AC-4 reutiliza el grafo indexado.
  */
-import { indexProject } from '../context/graph'
+import { Database } from 'bun:sqlite'
+import { existsSync } from 'node:fs'
+import { join } from 'node:path'
 
-/** rol: shortest-path BFS entre dos símbolos (AC-1..4). */
+/** rol: shortest-path BFS entre dos símbolos (AC-1..4). Lee del index.db (no re-indexa). */
 export async function shortestPath(projectDir: string, from: string, to: string): Promise<string[]> {
-  const { nodes, edges } = await indexProject(projectDir, { incremental: true })
+  const path = join(projectDir, '.netrunner', 'index.db')
+  if (!existsSync(path)) return [] // AC-2
+  let nodes: Array<{ id: string }> = []
+  let edges: Array<{ from: string; to: string }> = []
+  try {
+    const db = new Database(path)
+    nodes = db.query('SELECT id FROM nodes').all() as Array<{ id: string }>
+    edges = db.query('SELECT "from", "to" FROM edges').all() as Array<{ from: string; to: string }>
+    db.close()
+  } catch {
+    return []
+  }
   // resolver símbolos a IDs de nodo, priorizando definiciones (def:) sobre imports
   const resolve = (sym: string): string | null => {
     const def = nodes.find((n) => n.id.startsWith('def:') && n.id.endsWith(`:${sym}`))
