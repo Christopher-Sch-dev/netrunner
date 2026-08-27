@@ -29,6 +29,7 @@ import * as security from './cli/commands/security'
 import * as persistence from './cli/commands/persistence'
 import * as integration from './cli/commands/integration'
 import * as system from './cli/commands/system'
+import { estimateTokens } from './tokens/index'
 
 /** rol: parses argv (flags --flag, --flag=val, --dir <path>). Returns {subcommand, flags, args}. */
 function parseArgs(argv: string[]): { subcommand: string; flags: Record<string, string>; args: string[] } {
@@ -69,7 +70,10 @@ export function emit(data: unknown, human: boolean, tool = ''): void {
   } else {
     // _meta: schema version + tool (validator #4 — the LLM knows what to expect)
     const withMeta = { _meta: { schemaVersion: '1.0', tool: tool || currentTool }, ...(data as Record<string, unknown>) }
-    console.log(JSON.stringify(withMeta))
+    const out = JSON.stringify(withMeta)
+    // token-counting (W6): el agente sabe cuántos tokens paga por este output
+    const withTokens = { ...withMeta, _meta: { ...withMeta._meta, tokens: estimateTokens(out) } }
+    console.log(JSON.stringify(withTokens))
   }
 }
 
