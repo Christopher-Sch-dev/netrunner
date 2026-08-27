@@ -56,6 +56,14 @@ export async function doctor(ctx: HandlerContext): Promise<void> {
   process.exit(0)
 }
 
+/** rol: net mode — el modo del deck (W6, Wintermute/Neuromancer). */
+export async function mode(ctx: HandlerContext): Promise<void> {
+  const { netMode } = await import('../../net-mode/index')
+  const profile = ctx.args[0] ?? 'explore'
+  ctx.emit({ profile, tools: netMode(profile) }, ctx.human)
+  process.exit(0)
+}
+
 /** rol: daemon residente (--watch) o tick único (W2.C2.2). */
 export async function daemon(ctx: HandlerContext): Promise<void> {
   const { daemonTick } = await import('../../daemon/index')

@@ -108,6 +108,7 @@ const HANDLERS: Record<string, (ctx: HandlerContext) => Promise<void>> = {
   op: ops.ops,
   quickhacks: ops.quickhacks,
   deck: ops.deck,
+  mode: ops.mode,
   breach: security.breach,
   doctor: ops.doctor,
   resume: system.resume,
