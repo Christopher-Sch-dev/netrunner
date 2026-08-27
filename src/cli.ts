@@ -152,6 +152,12 @@ export async function main(argv: string[]): Promise<never> {
   }
 
   switch (subcommand) {
+    case 'mesh': {
+      const { meshProjects } = await import('./mesh/index')
+      const dirs = args.length > 0 ? args : [projectDir]
+      emit(await meshProjects(dirs), human)
+      process.exit(0)
+    }
     case 'daemon': {
       const { daemonTick } = await import('./daemon/index')
       emit(await daemonTick(projectDir), human)
