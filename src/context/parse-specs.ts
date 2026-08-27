@@ -26,6 +26,10 @@ export const WASM_FILES: Record<string, string> = {
   python: 'tree-sitter-python.wasm',
   go: 'tree-sitter-go.wasm',
   rust: 'tree-sitter-rust.wasm',
+  java: 'tree-sitter-java.wasm',
+  c_sharp: 'tree-sitter-c_sharp.wasm',
+  php: 'tree-sitter-php.wasm',
+  ruby: 'tree-sitter-ruby.wasm',
 }
 /** Configuración por lenguaje: qué nodos son definiciones y cómo se llama al nombre. */
 export const SPECS: Record<string, { defs: Record<string, string>; names: string[]; importTypes: string[] }> = {
@@ -82,6 +86,46 @@ export const SPECS: Record<string, { defs: Record<string, string>; names: string
     names: ['identifier', 'type_identifier'],
     importTypes: ['use_declaration'],
   },
+  java: {
+    defs: {
+      class_declaration: 'class',
+      interface_declaration: 'type',
+      method_declaration: 'function',
+      constructor_declaration: 'function',
+    },
+    names: ['identifier'],
+    importTypes: ['import_declaration'],
+  },
+  c_sharp: {
+    defs: {
+      class_declaration: 'class',
+      interface_declaration: 'type',
+      method_declaration: 'function',
+      constructor_declaration: 'function',
+    },
+    names: ['identifier'],
+    importTypes: ['using_directive'],
+  },
+  php: {
+    defs: {
+      class_declaration: 'class',
+      interface_declaration: 'type',
+      method_declaration: 'function',
+      function_definition: 'function',
+    },
+    names: ['name'],
+    importTypes: ['namespace_use_declaration'],
+  },
+  ruby: {
+    defs: {
+      class: 'class',
+      module: 'class',
+      method: 'function',
+      singleton_method: 'function',
+    },
+    names: ['constant', 'identifier'],
+    importTypes: ['call'],
+  },
 }
 
 /** Tipos de nodo que abren un contexto de función (para resolver el caller de una llamada). */
@@ -97,7 +141,23 @@ export const FUNC_TYPES = new Set([
   'func_literal',
   'impl_item',
   'trait_item',
+  // Wave E2: Java/C#/PHP/Ruby
+  'class_declaration',
+  'interface_declaration',
+  'constructor_declaration',
+  'class',
+  'module',
+  'method',
+  'singleton_method',
 ])
 
 /** Tipos de nodo que representan una llamada a función. */
-export const CALL_TYPES = new Set(['call_expression', 'call'])
+export const CALL_TYPES = new Set([
+  'call_expression',
+  'call',
+  // Wave E2: Java/C#/PHP/Ruby
+  'method_invocation',
+  'invocation_expression',
+  'function_call_expression',
+  'member_call_expression',
+])

@@ -36,6 +36,32 @@ export async function depth(ctx: HandlerContext): Promise<void> {
   process.exit(0)
 }
 
+/** rol: shortest-path entre dos símbolos (gap Graphify: graphify path A B). */
+export async function path(ctx: HandlerContext): Promise<void> {
+  const { shortestPath } = await import('../../path/index')
+  const from = ctx.args[0]
+  const to = ctx.args[1]
+  if (!from || !to) {
+    ctx.fail('MISSING_REQUIRED', 'path requiere dos símbolos', 'netrunner path <from> <to>', 2)
+  }
+  ctx.emit({ from, to, path: await shortestPath(ctx.projectDir, from, to) }, ctx.human)
+  process.exit(0)
+}
+
+/** rol: god nodes — nodos más conectados del grafo (gap Graphify: god nodes). */
+export async function godNodes(ctx: HandlerContext): Promise<void> {
+  const { godNodes } = await import('../../god-nodes/index')
+  ctx.emit({ godNodes: await godNodes(ctx.projectDir) }, ctx.human)
+  process.exit(0)
+}
+
+/** rol: graph-report — dashboard humano del grafo (gap Graphify: GRAPH_REPORT.md). */
+export async function graphReport(ctx: HandlerContext): Promise<void> {
+  const { graphReport } = await import('../../graph-report/index')
+  ctx.emit({ report: await graphReport(ctx.projectDir) }, ctx.human)
+  process.exit(0)
+}
+
 /** rol: escaneo del proyecto. */
 export async function scan(ctx: HandlerContext): Promise<void> {
   const { scanProject } = await import('../../scan/index')

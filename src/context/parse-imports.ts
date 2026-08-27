@@ -64,6 +64,52 @@ function importsFromRust(node: SyntaxNode): ParsedImport[] {
   return [{ name, source }]
 }
 
+/** rol: extracts imports from a Java import_declaration node (scoped_identifier). */
+function importsFromJava(node: SyntaxNode): ParsedImport[] {
+  const scoped = node.namedChildren.find((c) => c.type === 'scoped_identifier')
+  if (!scoped) return []
+  const source = scoped.text
+  const name = source.split('.').pop() ?? source
+  return [{ name, source }]
+}
+
+/** rol: extracts imports from a C# using_directive node (identifier/qualified_name). */
+function importsFromCSharp(node: SyntaxNode): ParsedImport[] {
+  const target = node.namedChildren.find((c) => c.type === 'qualified_name' || c.type === 'identifier')
+  if (!target) return []
+  const source = target.text
+  const name = source.split('.').pop() ?? source
+  return [{ name, source }]
+}
+
+/** rol: extracts imports from a PHP namespace_use_declaration node (use clause). */
+function importsFromPhp(node: SyntaxNode): ParsedImport[] {
+  const out: ParsedImport[] = []
+  for (const clause of node.namedChildren.filter((c) => c.type === 'namespace_use_clause')) {
+    const qn = clause.namedChildren.find((c) => c.type === 'qualified_name')
+    const nameNode = clause.namedChildren.find((c) => c.type === 'name')
+    const source = qn ? qn.text : nameNode?.text ?? ''
+    if (!source) continue
+    const name = source.split('\\').pop() ?? source
+    out.push({ name, source })
+  }
+  return out
+}
+
+/** rol: extracts imports from a Ruby require/require_relative call node. */
+function importsFromRuby(node: SyntaxNode): ParsedImport[] {
+  const head = node.namedChildren[0]
+  if (!head || (head.text !== 'require' && head.text !== 'require_relative')) return []
+  // el string vive dentro de argument_list (no es hijo directo del call)
+  const argList = node.namedChildren.find((c) => c.type === 'argument_list')
+  const str = argList?.namedChildren.find((c) => c.type === 'string')
+  if (!str) return []
+  const frag = str.namedChildren.find((c) => c.type === 'string_content')
+  const source = frag ? frag.text : str.text.replace(/^['\\\"]|['\\\"]$/g, '')
+  if (!source) return []
+  return [{ name: source, source }]
+}
+
 /** rol: extracts all imports of a file given its tree (AC-G2), by language. */
 export function parseImportsFromTree(root: SyntaxNode, language: string, importTypes: string[]): ParsedImport[] {
   const out: ParsedImport[] = []
@@ -76,6 +122,10 @@ export function parseImportsFromTree(root: SyntaxNode, language: string, importT
       python: importsFromPython,
       go: importsFromGo,
       rust: importsFromRust,
+      java: importsFromJava,
+      c_sharp: importsFromCSharp,
+      php: importsFromPhp,
+      ruby: importsFromRuby,
     }
     const extractor = byLang[language]
     if (extractor) out.push(...extractor(n))

@@ -31,6 +31,11 @@ const TARGET_CONFIG: Record<string, string> = {
   hermes: '.hermes/mcp.json',
   dsh: '.dsh/mcp.json',
   fx: '.fx/mcp.json',
+  // Wave D P2: ampliar a más plataformas (gap Graphify: 20+ plataformas)
+  copilot: '.github/copilot/mcp.json',
+  aider: '.aider/mcp.json',
+  devin: '.devin/mcp.json',
+  agents: '.agents/mcp.json',
 }
 
 /** Dónde escanea cada agente las skills (Bug C: OpenCode/Claude NO leen .netrunner/). */
@@ -44,6 +49,11 @@ const TARGET_SKILL_DIR: Record<string, string> = {
   hermes: '.hermes/skills/netrunner',
   dsh: '.dsh/skills/netrunner',
   fx: '.fx/skills/netrunner',
+  // Wave D P2
+  copilot: '.github/copilot/skills/netrunner',
+  aider: '.aider/skills/netrunner',
+  devin: '.devin/skills/netrunner',
+  agents: '.agents/skills/netrunner',
 }
 
 /** rol: contenido del SKILL.md (formato Agent Skills, DEC-006). */

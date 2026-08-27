@@ -132,13 +132,23 @@ export async function parseCalls(code: string, language: string): Promise<Parsed
   const calls: ParsedCall[] = []
   const stack: string[] = []
 
+  // Wave E2: el callee de PHP es un nodo `name` (no `identifier`); Ruby usa `identifier`.
+  const calleeTypes = language === 'php' ? ['name'] : ['identifier']
+
   const walk = (n: SyntaxNode): void => {
     if (CALL_TYPES.has(n.type)) {
-      const callee = firstNamed(n, ['identifier'])
+      // Ruby: `require`/`require_relative` son imports, no llamadas (AC-L2).
+      if (language === 'ruby' && n.type === 'call') {
+        const head = n.namedChildren[0]
+        if (head && (head.text === 'require' || head.text === 'require_relative')) return
+      }
+      const callee = firstNamed(n, calleeTypes)
       if (callee) calls.push({ caller: stack[stack.length - 1] ?? null, callee })
     }
     if (FUNC_TYPES.has(n.type)) {
-      const name = firstNamed(n, ['identifier', 'type_identifier'])
+      // el nombre de función es el `identifier` (no el tipo de retorno `type_identifier`):
+      // en Java/C# el tipo de retorno precede al nombre en el orden de hijos.
+      const name = firstNamed(n, ['identifier']) ?? firstNamed(n, ['type_identifier', 'constant', 'name'])
       stack.push(name ?? '')
       for (const c of n.namedChildren) walk(c)
       stack.pop()

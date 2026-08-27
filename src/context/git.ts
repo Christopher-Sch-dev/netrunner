@@ -56,7 +56,9 @@ function readLastCommits(gitDir: string): Array<{ hash: string; message: string 
     const lines = log.trim().split('\n').filter(Boolean)
     return lines.slice(-5).map((line) => {
       const parts = line.split('\t')
-      const hash = parts[0]?.slice(0, 7) ?? ''
+      // fix auditor (bug 10): el reflog es "oldhash newhash ..." — el hash NUEVO es parts[1]
+      const reflog = parts[0]?.split(' ') ?? []
+      const hash = (reflog[1] ?? reflog[0] ?? '').slice(0, 7)
       const message = parts[1] ?? ''
       return { hash, message }
     })
