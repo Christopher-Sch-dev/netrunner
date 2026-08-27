@@ -50,6 +50,8 @@ export class ToolRegistry {
   private tools = new Map<string, ToolSpec>()
   private preHooks: Array<(id: string, input: Record<string, unknown>) => void> = []
   private postHooks: Array<(id: string, result: unknown) => void> = []
+  // policy-gate (M7): el ICE bloquea ops mutating sin approval. Fail-closed: sin hook → deny.
+  private policyHook: ((id: string, input: Record<string, unknown>, tool: ToolSpec) => boolean) | null = null
 
   /** registra una tool. Lanza si el id ya existe (idempotencia de registro). */
   register(spec: ToolSpec): void {
@@ -57,6 +59,14 @@ export class ToolRegistry {
       throw new Error(`Tool already registered: ${spec.id}`)
     }
     this.tools.set(spec.id, spec)
+  }
+
+  /**
+   * registra el policy check (ICE): decide allow(true)/deny(false) para tools mutating.
+   * Sin hook registrado → las tools no-readOnly se bloquean (fail-closed, M7).
+   */
+  onPolicyCheck(hook: (id: string, input: Record<string, unknown>, tool: ToolSpec) => boolean): void {
+    this.policyHook = hook
   }
 
   /** registra un hook pre-ejecución (waterfall — policy/telemetry/guard como seams). */
@@ -78,6 +88,10 @@ export class ToolRegistry {
   async call(id: string, input: Record<string, unknown>, ctx: ToolContext): Promise<unknown> {
     const tool = this.tools.get(id)
     if (!tool) throw new Error(`Unknown tool: ${id}`)
+    // policy-gate (M7): tool mutating requiere approval del policyHook. Fail-closed sin hook.
+    if (!tool.readOnly && !this.policyHook?.(id, input, tool)) {
+      throw new Error(`policy denied: tool '${id}' es mutating y no pasó el policy check`)
+    }
     for (const h of this.preHooks) h(id, input)
     const result = await tool.execute(input, ctx)
     for (const h of this.postHooks) h(id, result)

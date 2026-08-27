@@ -62,5 +62,11 @@ export async function initProject(projectDir: string): Promise<{
   const agents = writeAgents(projectDir)
   written.push(agents)
 
+  // 4. canon de documentación viva (README.generated.md + AGENTS.md actualizado)
+  //    La marca de NetRunner queda DOCUMENTADA en el proyecto (visión de Cris).
+  const { generateDocs } = await import('./generate/index')
+  const docs = await generateDocs(projectDir)
+  written.push(...docs.written)
+
   return { counts, written }
 }

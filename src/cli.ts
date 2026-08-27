@@ -270,9 +270,11 @@ export async function main(argv: string[]): Promise<never> {
     case 'op': {
       // vision (AC-6): operar el proyecto (test/build/lint) — el control plane
       const { runOp } = await import('./tools/ops')
+      const { logOperation } = await import('./history/index')
       const kind = args[0] ?? 'test'
       const timeout = Number(args[1] ?? 30000)
       const r = await runOp(kind, projectDir, timeout)
+      logOperation(projectDir, `ops ${kind}`, r.ok ? 'ok' : 'fail')
       emit(r, human)
       process.exit(0)
     }
