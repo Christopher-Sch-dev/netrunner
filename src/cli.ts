@@ -52,11 +52,13 @@ function parseArgs(argv: string[]): { subcommand: string; flags: Record<string, 
 }
 
 /** rol: imprime JSON estable a stdout (agente). --human produce texto simple. */
-function emit(data: unknown, human: boolean): void {
+export function emit(data: unknown, human: boolean, tool = ''): void {
   if (human) {
     console.log(typeof data === 'string' ? data : JSON.stringify(data, null, 2))
   } else {
-    console.log(JSON.stringify(data))
+    // _meta: schema version + tool (validador #4 — el LLM sabe qué esperar)
+    const withMeta = { _meta: { schemaVersion: '1.0', tool }, ...(data as Record<string, unknown>) }
+    console.log(JSON.stringify(withMeta))
   }
 }
 
