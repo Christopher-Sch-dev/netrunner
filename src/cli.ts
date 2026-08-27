@@ -266,6 +266,16 @@ export async function main(argv: string[]): Promise<never> {
       emit(snap, human)
       process.exit(0)
     }
+    case 'ops':
+    case 'op': {
+      // vision (AC-6): operar el proyecto (test/build/lint) — el control plane
+      const { runOp } = await import('./tools/ops')
+      const kind = args[0] ?? 'test'
+      const timeout = Number(args[1] ?? 30000)
+      const r = await runOp(kind, projectDir, timeout)
+      emit(r, human)
+      process.exit(0)
+    }
     case 'history': {
       const { history } = await import('./history/index')
       emit(history(projectDir), human)
