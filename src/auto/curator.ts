@@ -18,6 +18,7 @@
  */
 
 import { shouldUpsert } from './gate'
+import { skillScan } from './skill-sec'
 
 /** World observation (external usage signal, not self-report). */
 export interface Observation {
@@ -40,7 +41,11 @@ function actionFor(o: Observation): CurateAction | null {
   }
   if (shouldUpsert({ ok: o.ok, veces: o.veces })) {
     // successful usage with clear signal (gate: ok && veces >= 3) → upsert skill (AC-3)
-    return { type: 'upsert_skill', skill: `memento-${o.symbol.toLowerCase()}.md` }
+    const skillName = `memento-${o.symbol.toLowerCase()}.md`
+    // skill-sec (W2.C2.3): no adoptar un skill que falla el scan anti-inyección (AC-4)
+    const scan = skillScan(skillName)
+    if (!scan.safe) return null
+    return { type: 'upsert_skill', skill: skillName }
   }
   return null
 }
