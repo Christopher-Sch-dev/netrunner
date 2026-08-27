@@ -1,4 +1,4 @@
-# REGLAS — Netrunner — Universal Agent CDK
+# REGLAS — Netrunner — Universal Agent SDK
 
 > Reglas y convenciones específicas de este proyecto (metodología de desarrollo).
 > Son públicas y las siguen todos los contribuidores (humanos y agentes).

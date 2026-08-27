@@ -1,0 +1,7 @@
+packages:
+  - 'packages/*'
+
+# Supply-chain seguro (pnpm 10+): los lifecycle scripts NO corren por defecto.
+# Allowlist explícita solo de paquetes confiables que los necesitan (DEC-001).
+allowBuilds:
+  esbuild: true

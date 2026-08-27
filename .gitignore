@@ -23,6 +23,19 @@ netrc
 *.log
 .DS_Store
 
+# Herramientas de orquestación (no se commitean)
+.atl/
+
 # Testing
 .nyc_output/
 stryker.conf.json.results/
+reports/
+.stryker/
+.stryker-tmp/
+coverage/
+
+# Auditoría interna (nunca se commitea)
+.doc/
+
+# Metadata interna del sistema
+.engram/

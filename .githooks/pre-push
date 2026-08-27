@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# rol: git hook pre-push — gate RÁPIDO antes de pushear (evita OOM de la PC).
+# Corre solo typecheck + lint + test (rápido, ~2s). El gate completo
+# (mutation + act) se corre bajo demanda con ./scripts/ci-local.sh --full
+# cuando hay una release/merge, NO en cada push (fijación OOM 2026-08-26).
+# NOTA: pre-push recibe los refs por STDIN (no por $1).
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "▶ pre-push: gate rápido (typecheck + lint + test)"
+pnpm typecheck
+pnpm lint
+pnpm test
+echo "✓ pre-push OK (gate rápido; mutation/act con ci-local.sh --full en release)"

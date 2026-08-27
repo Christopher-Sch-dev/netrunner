@@ -1,4 +1,4 @@
-# Spec — Netrunner: Universal Agent CDK
+# Spec — Netrunner: Universal Agent SDK
 
 > Especificación raíz del motor-unificado. Destraba el target-check. Se implementa en fases posteriores.
 > Arquitectura validada por auditorías (DEC-001): un solo núcleo (contrato de tools) + formatos proyectados (MCP server, harness-adapter, Agent Plugin, CLI/AXI).

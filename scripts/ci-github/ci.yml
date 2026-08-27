@@ -1,0 +1,70 @@
+name: CI
+
+# Gate de calidad: nada pasa a build/deploy sin test verde (Mandamiento 6/8).
+# Corre en cada PR hacia main/develop y en cada push a feature/release.
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop, 'feature/*', 'release/*']
+
+jobs:
+  quality-gates:
+    name: Quality gates (typecheck · lint · test · mutation)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Enable pnpm via corepack
+        run: corepack enable
+
+      - name: Install dependencies (pnpm)
+        run: pnpm install --frozen-lockfile
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Unit tests (vitest)
+        run: pnpm test
+
+      - name: Mutation testing (Stryker, scoped)
+        run: pnpm mutate
+        env:
+          STRYKER_TIMEOUT_MS: 300000
+
+  build:
+    name: Build binary
+    runs-on: ubuntu-latest
+    needs: quality-gates
+    timeout-minutes: 10
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Enable pnpm via corepack
+        run: corepack enable
+
+      - name: Install dependencies (pnpm)
+        run: pnpm install --frozen-lockfile
+
+      - name: Build standalone binary
+        run: pnpm build
+
+      - name: Upload binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: netrunner-linux-x64
+          path: dist/netrunner

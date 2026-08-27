@@ -4,7 +4,7 @@ This file tells any agent (Claude Code, Codex, Hermes, OpenCode, Cursor, MCP) ho
 
 ## What this project is
 
-Netrunner is a **universal agent CDK** (open-source, MIT): a single binary that turns any project into something any AI agent can understand, operate, and control. It is at the same time an AI SDK, an MCP server, a skill, a plugin, a code knowledge graph, and an agentic control plane — all views of one tool contract.
+Netrunner is a **universal agent SDK** (open-source, MIT): a single binary that turns any project into something any AI agent can understand, operate, and control. It is at the same time an AI SDK, an MCP server, a skill, a plugin, a code knowledge graph, and an agentic control plane — all views of one tool contract.
 
 ## Commands
 

@@ -1,0 +1,12 @@
+#!/usr/bin/env bash
+# rol: git hook pre-commit — gate rápido DX (DEC-003).
+# Corre typecheck + lint + test antes de cada commit. Bloquea si falla.
+set -euo pipefail
+
+cd "$(git rev-parse --show-toplevel)"
+
+echo "▶ pre-commit: typecheck + lint + test"
+pnpm typecheck
+pnpm lint
+pnpm test
+echo "✓ pre-commit OK"
