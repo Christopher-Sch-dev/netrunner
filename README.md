@@ -45,7 +45,7 @@ One binary, all seven. No 500-tool menu: Netrunner exposes **only what's relevan
 
 ```bash
 # Install (Linux/macOS) — downloads the prebuilt binary from GitHub Releases
-curl -fsSL https://github.com/Christopher-Sch-dev/netrunner/raw/main/install.sh | sh
+curl -fsSL https://raw.githubusercontent.com/Christopher-Sch-dev/netrunner/main/install.sh | sh
 
 # Or build from source (requires Bun)
 git clone https://github.com/Christopher-Sch-dev/netrunner.git

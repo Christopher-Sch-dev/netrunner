@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Netrunner installer — downloads the prebuilt binary from GitHub Releases.
-# Usage: curl -fsSL https://github.com/Christopher-Sch-dev/netrunner/raw/main/install.sh | sh
+# Usage: curl -fsSL https://raw.githubusercontent.com/Christopher-Sch-dev/netrunner/main/install.sh | sh
 set -euo pipefail
 
 REPO="Christopher-Sch-dev/netrunner"
