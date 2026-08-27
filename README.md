@@ -92,6 +92,9 @@ Every command returns **clean JSON** (agent-parseable, no hallucination) with st
 | `netrunner map` | Export the graph as JSON (D3/mermaid visualizable) with provenance |
 | `netrunner depth <sym> <level>` | Query a symbol by depth (L0 basic → L3 blast radius) |
 | `netrunner explore <sym>` | Search symbols by name |
+| `netrunner path <from> <to>` | Shortest-path between two symbols (BFS) |
+| `netrunner god-nodes` | Most-connected nodes (architecture hubs) |
+| `netrunner graph-report` | Human dashboard: god nodes + graph summary (markdown) |
 | `netrunner plan "<goal>"` | Generate a plan from the indexed graph (real, symbol-aware) |
 | `netrunner guard` | Black ICE: detect secrets, protected files, broken imports |
 | `netrunner persist "<decision>"` | Save a durable decision with provenance |
@@ -113,6 +116,9 @@ Every command returns **clean JSON** (agent-parseable, no hallucination) with st
 | `netrunner sleeve [import <file>]` | Export/import the portable deck (Construct) |
 | `netrunner doctor` | Self-check: lint + guard + canonStale |
 | `netrunner history` | Operation history (the agent's memory) |
+| `netrunner mcp-orchestrate` | Discover MCP servers, connect as client, aggregate tools into one contract |
+| `netrunner ops <kind>` | Run a deterministic operation (test/build/lint) with exit code |
+| `netrunner snapshot` | Snapshot the project state |
 | `netrunner --mcp` | Serve as an MCP server over stdio (stateless 2026-07-28) |
 | `netrunner --acp` | Serve as an ACP agent over stdio |
 | `netrunner --a2a` | Serve as an A2A agent over stdio (Agent Card + SendMessage) |
