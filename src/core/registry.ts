@@ -48,6 +48,8 @@ export interface ToolContext {
  */
 export class ToolRegistry {
   private tools = new Map<string, ToolSpec>()
+  private preHooks: Array<(id: string, input: Record<string, unknown>) => void> = []
+  private postHooks: Array<(id: string, result: unknown) => void> = []
 
   /** registra una tool. Lanza si el id ya existe (idempotencia de registro). */
   register(spec: ToolSpec): void {
@@ -55,6 +57,16 @@ export class ToolRegistry {
       throw new Error(`Tool already registered: ${spec.id}`)
     }
     this.tools.set(spec.id, spec)
+  }
+
+  /** registra un hook pre-ejecución (waterfall — policy/telemetry/guard como seams). */
+  onPreExecute(hook: (id: string, input: Record<string, unknown>) => void): void {
+    this.preHooks.push(hook)
+  }
+
+  /** registra un hook post-ejecución (waterfall — observabilidad). */
+  onPostExecute(hook: (id: string, result: unknown) => void): void {
+    this.postHooks.push(hook)
   }
 
   /** descubre tools filtradas por capability + perfil (determinismo AC-9). */
@@ -66,7 +78,10 @@ export class ToolRegistry {
   async call(id: string, input: Record<string, unknown>, ctx: ToolContext): Promise<unknown> {
     const tool = this.tools.get(id)
     if (!tool) throw new Error(`Unknown tool: ${id}`)
-    return tool.execute(input, ctx)
+    for (const h of this.preHooks) h(id, input)
+    const result = await tool.execute(input, ctx)
+    for (const h of this.postHooks) h(id, result)
+    return result
   }
 
   /** lista todos los ids registrados (para vistas MCP/plugin/CLI). */

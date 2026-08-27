@@ -17,6 +17,8 @@
  *   AC-5 señal vacía → no-op.
  */
 
+import { shouldUpsert } from './gate'
+
 /** Observación del mundo (señal externa de uso, no auto-reporte). */
 export interface Observation {
   tipo: 'usage' | 'stale'
@@ -36,8 +38,8 @@ function actionFor(o: Observation): CurateAction | null {
     // stale → mark, nunca delete (AC-2)
     return { type: 'mark_review', symbol: o.symbol }
   }
-  if (o.ok && o.veces > 0) {
-    // uso exitoso → upsert skill (AC-3)
+  if (shouldUpsert({ ok: o.ok, veces: o.veces })) {
+    // uso exitoso con señal clara (gate: ok && veces >= 3) → upsert skill (AC-3)
     return { type: 'upsert_skill', skill: `memento-${o.symbol.toLowerCase()}.md` }
   }
   return null
