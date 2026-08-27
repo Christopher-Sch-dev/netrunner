@@ -30,6 +30,11 @@ describe('gitignore (respetar el .gitignore del proyecto)', () => {
     expect(isIgnored('src/app.ts', ['vendor/'])).toBe(false)
   })
 
+  it('isIgnored soporta globs * (fix auditor BUG1)', () => {
+    expect(isIgnored('src/debug.log.ts', ['src/*.log.ts'])).toBe(true)
+    expect(isIgnored('src/app.ts', ['src/*.log.ts'])).toBe(false)
+  })
+
   it('sin .gitignore → lista vacía (AC-4)', () => {
     expect(loadGitignore(dir)).toEqual([])
   })

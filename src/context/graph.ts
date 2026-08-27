@@ -59,6 +59,8 @@ function sourceFiles(root: string): string[] {
       if (e.isDirectory()) {
         if (!IGNORED_DIRS.has(e.name) && !isIgnored(rel, gitignorePatterns)) walk(join(dir, e.name))
       } else if (e.isFile() && !IGNORED_FILES.has(e.name)) {
+        // BUG 1 (auditor): respetar .gitignore a nivel de ARCHIVO también (no solo directorios)
+        if (isIgnored(rel, gitignorePatterns)) continue
         const ext = extname(e.name)
         if (EXT_TO_LANG[ext]) out.push(join(dir, e.name))
       }

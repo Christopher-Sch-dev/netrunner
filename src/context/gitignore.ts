@@ -31,14 +31,24 @@ export function loadGitignore(projectDir: string): string[] {
   }
 }
 
-/** rol: true si el path matchea un patrón del .gitignore (AC-2). */
+/** rol: true si el path matchea un patrón del .gitignore (AC-2, soporta globs *). */
 export function isIgnored(path: string, patterns: string[]): boolean {
   return patterns.some((p) => {
     const clean = p.replace(/^\/+|\/+$/g, '')
     if (!clean) return false
     // patrón de directorio (termina en /) → matchea si el path empieza con el dir
     if (p.endsWith('/')) return path.startsWith(clean + '/') || path === clean
+    // patrón con glob (*) → convertir a regex (fix auditor: matcher naive no soportaba globs)
+    if (clean.includes('*')) {
+      const re = new RegExp('^' + clean.split('*').map(escapeRe).join('.*') + '$')
+      return re.test(path)
+    }
     // patrón de archivo → matchea si el path contiene el patrón
     return path.includes(clean)
   })
+}
+
+/** rol: escapa caracteres regex de un segmento de patrón. */
+function escapeRe(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
