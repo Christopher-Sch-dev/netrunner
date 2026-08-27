@@ -21,6 +21,14 @@
  */
 import { existsSync } from 'node:fs'
 import type { HandlerContext } from './cli/commands/types'
+// imports estáticos de handlers (Bun bundlea imports estáticos; import() con string
+// variable NO se bundlea y rompe el build — fix: dispatch table de funciones).
+import * as ops from './cli/commands/ops'
+import * as context from './cli/commands/context'
+import * as security from './cli/commands/security'
+import * as persistence from './cli/commands/persistence'
+import * as integration from './cli/commands/integration'
+import * as system from './cli/commands/system'
 
 /** rol: parses argv (flags --flag, --flag=val, --dir <path>). Returns {subcommand, flags, args}. */
 function parseArgs(argv: string[]): { subcommand: string; flags: Record<string, string>; args: string[] } {
@@ -77,35 +85,35 @@ function makeCtx(projectDir: string, args: string[], flags: Record<string, strin
 }
 
 /** rol: dispatch table — comando(s) → [módulo handler, función]. Lazy import por dominio. */
-const HANDLERS: Record<string, [string, string]> = {
-  mesh: ['./cli/commands/integration', 'mesh'],
-  daemon: ['./cli/commands/ops', 'daemon'],
-  lint: ['./cli/commands/context', 'lint'],
-  dump: ['./cli/commands/context', 'dump'],
-  map: ['./cli/commands/context', 'map'],
-  depth: ['./cli/commands/context', 'depth'],
-  scan: ['./cli/commands/context', 'scan'],
-  guard: ['./cli/commands/security', 'guard'],
-  persist: ['./cli/commands/persistence', 'persist'],
-  rollback: ['./cli/commands/persistence', 'rollback'],
-  snapshot: ['./cli/commands/persistence', 'snapshot'],
-  policy: ['./cli/commands/security', 'policy'],
-  curate: ['./cli/commands/context', 'curate'],
-  status: ['./cli/commands/context', 'status'],
-  ops: ['./cli/commands/ops', 'ops'],
-  op: ['./cli/commands/ops', 'ops'],
-  quickhacks: ['./cli/commands/ops', 'quickhacks'],
-  deck: ['./cli/commands/ops', 'deck'],
-  breach: ['./cli/commands/security', 'breach'],
-  doctor: ['./cli/commands/ops', 'doctor'],
-  resume: ['./cli/commands/system', 'resume'],
-  history: ['./cli/commands/persistence', 'history'],
-  init: ['./cli/commands/context', 'init'],
-  plan: ['./cli/commands/context', 'plan'],
-  plugin: ['./cli/commands/integration', 'plugin'],
-  install: ['./cli/commands/integration', 'install'],
-  uninstall: ['./cli/commands/integration', 'uninstall'],
-  explore: ['./cli/commands/context', 'explore'],
+const HANDLERS: Record<string, (ctx: HandlerContext) => Promise<void>> = {
+  mesh: integration.mesh,
+  daemon: ops.daemon,
+  lint: context.lint,
+  dump: context.dump,
+  map: context.map,
+  depth: context.depth,
+  scan: context.scan,
+  guard: security.guard,
+  persist: persistence.persist,
+  rollback: persistence.rollback,
+  snapshot: persistence.snapshot,
+  policy: security.policy,
+  curate: context.curate,
+  status: context.status,
+  ops: ops.ops,
+  op: ops.ops,
+  quickhacks: ops.quickhacks,
+  deck: ops.deck,
+  breach: security.breach,
+  doctor: ops.doctor,
+  resume: system.resume,
+  history: persistence.history,
+  init: context.init,
+  plan: context.plan,
+  plugin: integration.plugin,
+  install: integration.install,
+  uninstall: integration.uninstall,
+  explore: context.explore,
 }
 
 /** rol: binary entrypoint — router que delega en handlers por dominio. */
@@ -134,35 +142,29 @@ export async function main(argv: string[]): Promise<void> {
   const ctx = makeCtx(projectDir, args, flags, human, subcommand)
 
   if (flags['version'] || subcommand === 'version') {
-    const { version } = await import('./cli/commands/system')
-    await version(ctx)
+    await system.version(ctx)
   }
 
   if (flags['help'] || subcommand === 'help') {
-    const { help } = await import('./cli/commands/system')
-    await help(ctx)
+    await system.help(ctx)
   }
 
   if (flags['mcp'] || subcommand === 'mcp') {
-    const { mcp } = await import('./cli/commands/system')
-    await mcp(ctx)
+    await system.mcp(ctx)
   }
 
   if (flags['acp'] || subcommand === 'acp') {
-    const { acp } = await import('./cli/commands/system')
-    await acp(ctx)
+    await system.acp(ctx)
   }
 
   if (flags['a2a'] || subcommand === 'a2a') {
-    const { a2a } = await import('./cli/commands/system')
-    await a2a(ctx)
+    await system.a2a(ctx)
   }
 
   const cmd = resolved ?? subcommand
-  const entry = HANDLERS[cmd]
-  if (entry) {
-    const mod = await import(entry[0])
-    await mod[entry[1]](ctx)
+  const handler = HANDLERS[cmd]
+  if (handler) {
+    await handler(ctx)
   } else if (cmd === 'help' || cmd === '--help') {
     // dead code (flags['help']/subcommand==='help' ya sale antes) — preservado por comportamiento.
     emit({ help: 'netrunner — plug any project into any agent', commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'plugin', '--mcp', '--acp', '--a2a', '--version'] }, true)
@@ -172,7 +174,7 @@ export async function main(argv: string[]): Promise<void> {
     if (subcommand && !flags['help'] && subcommand !== 'version') {
       fail('UNKNOWN_COMMAND', `comando no reconocido: '${subcommand}'`, 'usa: netrunner --help para la lista', 2)
     }
-    const { dashboard } = await import('./cli/commands/system')
+    const { dashboard } = system
     await dashboard(ctx)
   }
 }
