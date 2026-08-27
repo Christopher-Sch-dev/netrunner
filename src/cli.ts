@@ -303,6 +303,12 @@ export async function main(argv: string[]): Promise<never> {
       emit(r, human)
       process.exit(0)
     }
+    case 'breach': {
+      // vision (W3.D3.1): descifrar un repo desconocido (Breach Protocol)
+      const { breach } = await import('./breach/index')
+      emit(await breach(projectDir), human)
+      process.exit(0)
+    }
     case 'doctor': {
       // self-check del deck (fix juez de producto: lint invisible)
       const { doctor } = await import('./doctor/index')
