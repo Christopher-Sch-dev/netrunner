@@ -80,8 +80,12 @@ export function discoverServers(projectDir: string): McpServerConfig[] {
   if (!servers) return []
   return Object.entries(servers)
     .filter(([, cfg]) => {
-      // SECURITY (C1): solo binarios conocidos — bloquear RCE vía command arbitrario
-      const cmd = cfg.command.split(/[\\/]/).pop() ?? cfg.command
+      // SECURITY (C1 + fix V1): solo basenames EXACTOS sin separadores de path.
+      // Rechazar /usr/bin/python3 (path absoluto) — el basename python3 se resuelve
+      // vía PATH, que es lo que un .mcp.json legítimo usa. Un path absoluto/relativo
+      // en el command es señal de RCE (el atacante controla qué binario ejecutar).
+      const cmd = cfg.command
+      if (cmd.includes('/') || cmd.includes('\\')) return false
       return ALLOWED_COMMANDS.has(cmd)
     })
     .map(([name, cfg]) => ({
