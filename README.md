@@ -43,10 +43,11 @@ One binary, all seven. No 500-tool menu: Netrunner exposes **only what's relevan
 
 ## Quickstart
 
-> **Note:** Netrunner is pre-1.0. The binary is built from source (Bun). A release binary + `install.sh` are on the roadmap.
-
 ```bash
-# Build from source (requires Bun)
+# Install (Linux/macOS) — downloads the prebuilt binary from GitHub Releases
+curl -fsSL https://github.com/Christopher-Sch-dev/netrunner/raw/main/install.sh | sh
+
+# Or build from source (requires Bun)
 git clone https://github.com/Christopher-Sch-dev/netrunner.git
 cd netrunner
 bun install
