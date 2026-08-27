@@ -33,7 +33,7 @@
     "@agentclientprotocol/sdk": "^1.4.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "tree-sitter-wasms": "^0.1.13",
-    "web-tree-sitter": "^0.20.8",
+    "web-tree-sitter": "^0.21.0",
     "zod": "^4.4.3"
   }
 }
