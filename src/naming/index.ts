@@ -16,10 +16,9 @@
  *   AC-4 determinista.
  */
 
-/** Mapa de aliases cyberpunk → comando real (AC-1). */
+/** Mapa de aliases cyberpunk → comando real (AC-1). quickhacks es un comando propio (lista con costo). */
 const ALIASES: Record<string, string> = {
   jack: 'init',
-  quickhacks: 'ops',
   ice: 'guard',
 }
 

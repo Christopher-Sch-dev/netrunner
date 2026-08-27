@@ -9,8 +9,8 @@ describe('naming cyberpunk (aliases + deck)', () => {
     expect(resolveAlias('jack')).toBe('init')
   })
 
-  it('quickhacks → ops (AC-1)', () => {
-    expect(resolveAlias('quickhacks')).toBe('ops')
+  it('quickhacks es comando propio (no alias, AC-1)', () => {
+    expect(resolveAlias('quickhacks')).toBe('quickhacks')
   })
 
   it('ice → guard (AC-1)', () => {

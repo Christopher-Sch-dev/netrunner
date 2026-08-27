@@ -306,6 +306,12 @@ export async function main(argv: string[]): Promise<never> {
       emit(r, human)
       process.exit(0)
     }
+    case 'quickhacks': {
+      // vision (W3.D3.3): quickhacks con costo/cooldown (mina #8)
+      const { listQuickhacks } = await import('./quickhacks/index')
+      emit({ quickhacks: listQuickhacks() }, human)
+      process.exit(0)
+    }
     case 'deck': {
       // vision (W3.D3.2): estado del deck (quickhacks + daemons + canon pendiente)
       const { deckState } = await import('./naming/index')
