@@ -130,6 +130,9 @@ function applyStateless(server: McpServer, available: Toolset[]): void {
   }))
 
   // 2) tools/list cacheable — envuelve el handler original para añadir _meta.ttlMs/cacheScope.
+  // NOTA: el SDK MCP YA registra las tools dinámicas (registerTool) en tools/list.
+  // No agregar dinámicas aquí (duplicaría + rompería el schema). BUG3 del auditor
+  // era un falso positivo (binario desactualizado cuando probó).
   const originalList = inner._requestHandlers.get('tools/list')
   if (originalList) {
     inner._requestHandlers.set('tools/list', async (request, extra) => {

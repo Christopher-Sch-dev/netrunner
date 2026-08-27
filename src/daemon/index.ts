@@ -20,12 +20,14 @@ import { lintSnapshot } from '../auto/lint'
 import { curate } from '../auto/curator'
 import { buildSnapshot } from '../context/snapshot'
 import { harvest } from './harvest'
+import { watchdogCheck } from '../watchdog/index'
 
 /** Resultado de una pasada del daemon. */
 export interface DaemonResult {
   synced: boolean
   issues: Array<{ type: string; message: string }>
   actions: Array<{ type: string; skill?: string; symbol?: string }>
+  changed: boolean
 }
 
 /** rol: corre una pasada del daemon (AC-1..4). */
@@ -41,5 +43,8 @@ export async function daemonTick(projectDir: string): Promise<DaemonResult> {
   const observations = harvest(projectDir)
   const actions = curate(observations)
 
-  return { synced: sync.synced, issues: lint.issues, actions }
+  // 4. watchdog (Wave B2): vigilar cambios y emitir señal si hay (memoria viva)
+  const wd = watchdogCheck(projectDir)
+
+  return { synced: sync.synced, issues: lint.issues, actions, changed: wd.changed }
 }

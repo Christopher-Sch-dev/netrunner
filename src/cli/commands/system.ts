@@ -53,7 +53,11 @@ export async function a2a(ctx: HandlerContext): Promise<void> {
 /** rol: el recuerdo que se re-adhiere al reconectar (W1). */
 export async function resume(ctx: HandlerContext): Promise<void> {
   const { resume } = await import('../../resume/index')
-  ctx.emit(await resume(ctx.projectDir), ctx.human)
+  const { pendingSignals } = await import('../../hooks/index')
+  const state = await resume(ctx.projectDir)
+  // hook (Wave B): el agente ve las señales pendientes al reconectar
+  const signals = pendingSignals(ctx.projectDir)
+  ctx.emit({ ...state, signals }, ctx.human)
   process.exit(0)
 }
 

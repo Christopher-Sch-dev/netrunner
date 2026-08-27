@@ -16,12 +16,15 @@
  */
 import { readdirSync } from 'node:fs'
 import { join, relative } from 'node:path'
+import { loadGitignore, isIgnored } from './gitignore'
 
 const IGNORED = new Set(['node_modules', '.git', '.netrunner', 'dist', 'build', 'coverage', '.stryker-tmp'])
 
-/** rol: returns the directory tree (up to depth 3, excludes noise). */
+/** rol: returns the directory tree (up to depth 3, excludes noise + gitignore). */
 export function dirsTree(projectDir: string, depth = 3): string[] {
   const out: string[] = []
+  // BUG 2 (auditor): respetar el .gitignore del proyecto (no reportar dirs gitignored)
+  const gitignorePatterns = loadGitignore(projectDir)
   const walk = (dir: string, d: number): void => {
     if (d > depth) return
     let entries
@@ -30,6 +33,7 @@ export function dirsTree(projectDir: string, depth = 3): string[] {
       if (!e.isDirectory() || IGNORED.has(e.name)) continue
       const abs = join(dir, e.name)
       const rel = relative(projectDir, abs)
+      if (isIgnored(rel, gitignorePatterns)) continue
       out.push(rel)
       walk(abs, d + 1)
     }

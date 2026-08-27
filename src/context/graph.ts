@@ -22,6 +22,7 @@ import { readdirSync, readFileSync, statSync } from 'node:fs'
 import { join, relative, extname } from 'node:path'
 import type { GraphEdge, GraphNode } from './types'
 import { parseFile, type ParsedSymbol, type ParsedImport, type ParsedCall } from './parse'
+import { loadGitignore, isIgnored } from './gitignore'
 
 /** Maps extension → tree-sitter language (same as parse.ts). */
 const EXT_TO_LANG: Record<string, string> = {
@@ -48,13 +49,18 @@ const IGNORED_FILES = new Set(['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock
 /** rol: returns the list of source files to index (deterministic). */
 function sourceFiles(root: string): string[] {
   const out: string[] = []
+  // respetar el .gitignore del proyecto (gap Cris + Graphify): no indexar lo ignorado
+  const gitignorePatterns = loadGitignore(root)
   const walk = (dir: string): void => {
     let entries
     try { entries = readdirSync(dir, { withFileTypes: true }) } catch { return }
     for (const e of entries) {
+      const rel = join(dir, e.name).replace(root + '/', '')
       if (e.isDirectory()) {
-        if (!IGNORED_DIRS.has(e.name)) walk(join(dir, e.name))
+        if (!IGNORED_DIRS.has(e.name) && !isIgnored(rel, gitignorePatterns)) walk(join(dir, e.name))
       } else if (e.isFile() && !IGNORED_FILES.has(e.name)) {
+        // BUG 1 (auditor): respetar .gitignore a nivel de ARCHIVO también (no solo directorios)
+        if (isIgnored(rel, gitignorePatterns)) continue
         const ext = extname(e.name)
         if (EXT_TO_LANG[ext]) out.push(join(dir, e.name))
       }
