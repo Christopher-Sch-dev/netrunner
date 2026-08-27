@@ -10,6 +10,7 @@ export async function ops(ctx: HandlerContext): Promise<void> {
   const { logOperation } = await import('../../history/index')
   const { emitEvent } = await import('../../context/events')
   const { recordLatency } = await import('../../metrics/index')
+  const { emitSignal } = await import('../../hooks/index')
   const kind = ctx.args[0] ?? 'test'
   const timeout = Number(ctx.args[1] ?? 30000)
   const start = Date.now()
@@ -18,6 +19,10 @@ export async function ops(ctx: HandlerContext): Promise<void> {
   recordLatency(ctx.projectDir, `op.${kind}`, Date.now() - start) // m4-metrics (W5.F5.3)
   emitEvent(ctx.projectDir, { type: r.ok ? 'op/result' : 'op/error', tool: `op.${kind}`, ok: r.ok })
   logOperation(ctx.projectDir, `ops ${kind}`, r.ok ? 'ok' : 'fail')
+  // hook (Wave B): señal al agente conectado — si la op mutó, el canon puede requerir actualización
+  if (kind === 'build' || kind === 'lint') {
+    emitSignal(ctx.projectDir, 'canon-pendiente', `la op ${kind} puede requerir actualizar el canon`)
+  }
   ctx.emit(r, ctx.human)
   process.exit(0)
 }
