@@ -18,12 +18,12 @@ describe('snapshot store', () => {
     rmSync(dir, { recursive: true, force: true })
   })
 
-  it('buildSnapshot une los detectores (AC-1)', () => {
+  it('buildSnapshot une los detectores (AC-1)', async () => {
     mkdirSync(join(dir, '.git'), { recursive: true })
     writeFileSync(join(dir, '.git', 'HEAD'), 'ref: refs/heads/develop\n')
     writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'probe', dependencies: { react: '^18' } }))
 
-    const snap = buildSnapshot(dir)
+    const snap = await buildSnapshot(dir)
 
     expect(snap.git.branch).toBe('develop')
     expect(snap.versions.prod.react).toBe('^18')
@@ -34,8 +34,8 @@ describe('snapshot store', () => {
     expect(snap.mtime).toBeGreaterThan(0)
   })
 
-  it('save + load roundtrip (AC-2/3)', () => {
-    const snap = buildSnapshot(dir)
+  it('save + load roundtrip (AC-2/3)', async () => {
+    const snap = await buildSnapshot(dir)
     saveSnapshot(dir, snap)
 
     const loaded = loadSnapshot(dir)

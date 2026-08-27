@@ -34,7 +34,7 @@ describe('MCP resources (net://meta/*)', () => {
 
     // lee el recurso vía el callback registrado (accedemos al snapshot directamente)
     const { buildSnapshot } = await import('../src/context/snapshot')
-    const snap = buildSnapshot(dir)
+    const snap = await buildSnapshot(dir)
     expect(snap.git.branch).toBe('develop')
   })
 })

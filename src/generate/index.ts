@@ -20,7 +20,7 @@ import { join, dirname } from 'node:path'
 import { buildSnapshot } from '../context/snapshot'
 
 /** rol: genera el markdown del README desde el snapshot. */
-function readmeContent(snap: ReturnType<typeof buildSnapshot>): string {
+function readmeContent(snap: Awaited<ReturnType<typeof buildSnapshot>>): string {
   const lines: string[] = [
     '# Proyecto (generado por Netrunner)',
     '',
@@ -55,8 +55,8 @@ Este proyecto es operable por agentes de IA vía Netrunner. Conecta el server MC
 }
 
 /** rol: genera la documentación viva del proyecto (idempotente, AC-4). */
-export function generateDocs(projectDir: string): { written: string[] } {
-  const snap = buildSnapshot(projectDir)
+export async function generateDocs(projectDir: string): Promise<{ written: string[] }> {
+  const snap = await buildSnapshot(projectDir)
   const readmePath = join(projectDir, 'README.generated.md')
   const agentsPath = join(projectDir, 'AGENTS.md')
   mkdirSync(dirname(readmePath), { recursive: true })

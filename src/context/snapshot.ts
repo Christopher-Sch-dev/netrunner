@@ -25,9 +25,11 @@ import { coverageInfo } from './coverage'
 import { servicesInfo } from './services'
 import { dirsTree } from './dirs'
 import { todosInfo } from './todos'
+import { detectStack } from './detect'
 
 /** Snapshot del estado del proyecto (une todos los detectores). */
 export interface ProjectSnapshot {
+  stack: Awaited<ReturnType<typeof detectStack>>
   git: ReturnType<typeof gitInfo>
   versions: ReturnType<typeof versionsInfo>
   coverage: ReturnType<typeof coverageInfo>
@@ -38,8 +40,9 @@ export interface ProjectSnapshot {
 }
 
 /** rol: construye el snapshot del proyecto (une los detectores, AC-1). */
-export function buildSnapshot(projectDir: string): ProjectSnapshot {
+export async function buildSnapshot(projectDir: string): Promise<ProjectSnapshot> {
   return {
+    stack: await detectStack(projectDir),
     git: gitInfo(projectDir),
     versions: versionsInfo(projectDir),
     coverage: coverageInfo(projectDir),

@@ -17,12 +17,12 @@ describe('generador de doc viva', () => {
     rmSync(dir, { recursive: true, force: true })
   })
 
-  it('genera README.generated.md desde el snapshot (AC-1/2)', () => {
+  it('genera README.generated.md desde el snapshot (AC-1/2)', async () => {
     mkdirSync(join(dir, '.git'), { recursive: true })
     writeFileSync(join(dir, '.git', 'HEAD'), 'ref: refs/heads/develop\n')
     writeFileSync(join(dir, 'package.json'), JSON.stringify({ name: 'probe', dependencies: { react: '^18' } }))
 
-    const result = generateDocs(dir)
+    const result = await generateDocs(dir)
 
     const readmePath = join(dir, 'README.generated.md')
     expect(existsSync(readmePath)).toBe(true)
@@ -32,10 +32,10 @@ describe('generador de doc viva', () => {
     expect(result.written).toContain('README.generated.md')
   })
 
-  it('idempotente: re-generar no duplica (AC-4)', () => {
-    generateDocs(dir)
+  it('idempotente: re-generar no duplica (AC-4)', async () => {
+    await generateDocs(dir)
     const first = readFileSync(join(dir, 'README.generated.md'), 'utf8')
-    generateDocs(dir)
+    await generateDocs(dir)
     const second = readFileSync(join(dir, 'README.generated.md'), 'utf8')
     expect(second).toBe(first)
   })

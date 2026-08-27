@@ -20,11 +20,11 @@ import { buildSnapshot } from '../context/snapshot'
 
 /** rol: registra los recursos meta del snapshot en el server MCP (AC-1/4). */
 export function registerMetaResources(server: McpServer, projectDir: string): void {
-  const read = (uri: string) => {
-    const snap = buildSnapshot(projectDir)
+  const read = async (uri: string) => {
+    const snap = await buildSnapshot(projectDir)
     switch (uri) {
       case 'net://meta/branch': return snap.git.branch ?? 'no repo'
-      case 'net://meta/stack': return JSON.stringify(snap.git.remoteUrl ?? 'no remote')
+      case 'net://meta/stack': return JSON.stringify(snap.stack)
       case 'net://meta/coverage': return `lines:${snap.coverage.lines}% functions:${snap.coverage.functions}%`
       case 'net://meta/versions': return JSON.stringify(snap.versions)
       case 'net://meta/services': return JSON.stringify(snap.services)
@@ -38,7 +38,7 @@ export function registerMetaResources(server: McpServer, projectDir: string): vo
       uri,
       uri,
       { title: uri, description: `Snapshot del proyecto (${uri})`, mimeType: 'text/plain' },
-      async () => ({ contents: [{ uri, mimeType: 'text/plain', text: read(uri) }] }),
+      async () => ({ contents: [{ uri, mimeType: 'text/plain', text: await read(uri) }] }),
     )
   }
 }

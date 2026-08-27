@@ -110,9 +110,9 @@ export async function main(argv: string[]): Promise<never> {
     case 'status': {
       const { buildSnapshot } = await import('./context/snapshot')
       const { generateDocs } = await import('./generate/index')
-      const snap = buildSnapshot(projectDir)
+      const snap = await buildSnapshot(projectDir)
       if (flags['docs'] === 'true' || flags['docs'] === '1') {
-        generateDocs(projectDir)
+        await generateDocs(projectDir)
       }
       emit(snap, human)
       process.exit(0)
