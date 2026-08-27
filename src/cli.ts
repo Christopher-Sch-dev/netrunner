@@ -359,6 +359,13 @@ export async function main(argv: string[]): Promise<never> {
     }
     case 'init': {
       const dir = args[0] ?? projectDir
+      // jack-remote (W5.F5.1): si el arg es owner/repo → clonar repo GitHub remoto
+      if (args[0] && /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(args[0])) {
+        const { jackRemote } = await import('./jack-remote/index')
+        const result = await jackRemote(args[0], projectDir)
+        emit({ jacked: result.dir, counts: result.counts }, human)
+        process.exit(0)
+      }
       // vision (AC-1): init indexa Y genera el conectable layer (mcp.json + SKILL.md + AGENTS.md)
       const { initProject } = await import('./init')
       const { logOperation } = await import('./history/index')
