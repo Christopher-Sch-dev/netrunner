@@ -108,8 +108,11 @@ async function dashboard(projectDir: string): Promise<Record<string, unknown>> {
 /** rol: binary entrypoint. */
 export async function main(argv: string[]): Promise<never> {
   const { subcommand, flags, args } = parseArgs(argv)
+  // naming cyberpunk (W3.D3.2): jack→init, quickhacks→ops, ice→guard
+  const { resolveAlias } = await import('./naming/index')
+  const resolved = subcommand ? resolveAlias(subcommand) : undefined
   // fix juez: _meta.tool debe reflejar el subcommand (el agente sabe qué tool respondió)
-  currentTool = subcommand ?? ''
+  currentTool = resolved ?? ''
   const human = flags.human === 'true' || flags.human === '1'
   // Bug cwd (auditor): --dir <path> takes precedence over process.cwd().
   // The agent may not be in the correct cwd → it would index the wrong directory.
@@ -168,7 +171,7 @@ export async function main(argv: string[]): Promise<never> {
     await new Promise<void>(() => {}) // keeps the process alive
   }
 
-  switch (subcommand) {
+  switch (resolved ?? subcommand) {
     case 'mesh': {
       const { meshProjects } = await import('./mesh/index')
       const dirs = args.length > 0 ? args : [projectDir]
@@ -301,6 +304,20 @@ export async function main(argv: string[]): Promise<never> {
       emitEvent(projectDir, { type: r.ok ? 'op/result' : 'op/error', tool: `op.${kind}`, ok: r.ok })
       logOperation(projectDir, `ops ${kind}`, r.ok ? 'ok' : 'fail')
       emit(r, human)
+      process.exit(0)
+    }
+    case 'deck': {
+      // vision (W3.D3.2): estado del deck (quickhacks + daemons + canon pendiente)
+      const { deckState } = await import('./naming/index')
+      const { canonStale } = await import('./canon/stale')
+      const { history } = await import('./history/index')
+      const h = history(projectDir)
+      const state = deckState({
+        quickhacks: ['test', 'build', 'lint'],
+        daemons: ['curator', 'sync'],
+        canonStale: canonStale(projectDir),
+      })
+      emit({ ...state, lastOps: h.operations.slice(0, 5) }, human)
       process.exit(0)
     }
     case 'breach': {
