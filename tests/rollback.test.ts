@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest'
-import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync, existsSync } from 'node:fs'
+import { mkdtempSync, writeFileSync, mkdirSync, rmSync, readFileSync, existsSync, symlinkSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createSnapshot, listSnapshots, restoreSnapshot } from '../src/rollback/index'
@@ -64,5 +64,21 @@ describe('snapshot rollback', () => {
     const snap = createSnapshot(dir)
 
     expect(Object.keys(snap.files)).not.toContain('.env')
+  })
+
+  it('bloquea symlink escape en restore (fix juez hacker: writeFileSync sigue symlinks)', () => {
+    // crea un symlink dentro del proyecto que apunta FUERA
+    const outside = join(dir, '..', 'pwned-outside.txt')
+    mkdirSync(join(dir, 'src'), { recursive: true })
+    try { writeFileSync(outside, 'original') } catch { /* */ }
+    mkdirSync(join(dir, '.netrunner', 'backups'), { recursive: true })
+    // snapshot con un path que ES un symlink a un archivo fuera del proyecto
+    const evil = { id: 'snap-link', files: { 'src/link.txt': 'pwned' }, mtime: 0 }
+    writeFileSync(join(dir, '.netrunner', 'backups', 'snap-link.json'), JSON.stringify(evil))
+    // el target src/link.txt es un symlink a un archivo fuera
+    symlinkSync(outside, join(dir, 'src', 'link.txt'))
+
+    // si el realpath de src/ apunta dentro del proyecto, el symlink no debería poder escribirse fuera
+    expect(() => restoreSnapshot(dir, 'snap-link')).toThrow(/symlink escape|path traversal/)
   })
 })
