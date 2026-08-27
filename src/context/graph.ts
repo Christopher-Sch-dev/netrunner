@@ -40,6 +40,7 @@ const EXT_TO_LANG: Record<string, string> = {
 const IGNORED_DIRS = new Set([
   'node_modules', '.git', '.netrunner', 'dist', 'build', 'coverage',
   '.next', '.nuxt', 'vendor', '.venv', 'target', '.onyx', '.doc', '.engram',
+  '.stryker-tmp', // Stryker crea copias de sandbox → colisionan IDs (Bug A)
 ])
 
 const IGNORED_FILES = new Set(['package-lock.json', 'pnpm-lock.yaml', 'yarn.lock', 'bun.lockb'])
@@ -90,7 +91,8 @@ function applyParsed(
   edges: GraphEdge[],
 ): void {
   for (const def of parsed.defs) {
-    const id = `def:${def.name}`
+    // namespacing por archivo: def:<rel_path>:<name> (Bug A — evita colisión entre archivos)
+    const id = `def:${rel}:${def.name}`
     nodeInsert.run(id, def.name, def.kind, rel, def.line, def.endLine)
     nodes.push({ id, name: def.name, kind: def.kind, file: rel, line: def.line, endLine: def.endLine })
   }
