@@ -1,20 +1,20 @@
 /**
- * rol: Evento durable de Netrunner (Juez 2 — invariante "model-visible ⟺ logged" de dsh).
- * Cada operación emite un evento reconstruible (op/start, op/result, op/error).
- * El agente puede replay qué pasó, no solo ver el último resultado.
+ * rol: Netrunner durable event (Juez 2 — "model-visible ⟺ logged" invariant).
+ * Each operation emits a reconstructible event (op/start, op/result, op/error).
+ * The agent can replay what happened, not just see the last result.
  *
  * SPEC (Mandamiento 0):
- *   Como el motor Netrunner,
- *   quiero que cada operación emita un evento durable,
- *   para que el agente pueda replay qué pasó.
+ *   As the Netrunner engine,
+ *   I want each operation to emit a durable event,
+ *   so that the agent can replay what happened.
  *
  * AC (features/events.feature):
- *   AC-1 emitEvent agrega un evento durable.
- *   AC-2 replayEvents devuelve los eventos en orden.
- *   AC-4 log vacío → [].
+ *   AC-1 emitEvent adds a durable event.
+ *   AC-2 replayEvents returns the events in order.
+ *   AC-4 empty log → [].
  */
 
-/** Un evento durable de operación. */
+/** A durable operation event. */
 export interface DurableEvent {
   type: 'op/start' | 'op/result' | 'op/error'
   tool: string
@@ -22,12 +22,12 @@ export interface DurableEvent {
   ts: number
 }
 
-/** rol: agrega un evento durable al log (AC-1). */
+/** rol: adds a durable event to the log (AC-1). */
 export function emitEvent(log: string[], event: Omit<DurableEvent, 'ts'>): void {
   log.push(JSON.stringify({ ...event, ts: Date.now() }))
 }
 
-/** rol: replay los eventos en orden (AC-2/4). */
+/** rol: replays the events in order (AC-2/4). */
 export function replayEvents(log: string[]): DurableEvent[] {
   return log.map((line) => JSON.parse(line) as DurableEvent)
 }

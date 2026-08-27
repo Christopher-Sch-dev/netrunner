@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { runOp } from '../src/tools/ops'
 
-// rol: tests de ops (AC-1..5 de features/ops.feature). Control determinista del proyecto.
+// role: tests for ops (AC-1..5 of features/ops.feature). Deterministic project control.
 
 describe('ops (control determinista)', () => {
   let dir: string

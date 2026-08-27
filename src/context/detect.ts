@@ -1,29 +1,29 @@
 /**
- * rol: Detección determinista del stack de un proyecto leyendo manifestos reales (AC-4 stack del dashboard).
- * Consume StackInfo de src/context/types.ts (ANCLA — NO modificar).
+ * rol: Deterministic detection of a project's stack by reading real manifests (AC-4 dashboard stack).
+ * Consumes StackInfo from src/context/types.ts (ANCHOR — DO NOT modify).
  *
  * Spec:
- *   Como desarrollador/creador con cualquier proyecto,
- *   quiero que netrunner detecte lenguaje/framework/packageManager leyendo
- *   los manifestos reales del proyecto de forma determinista,
- *   para que el dashboard (AC-4) muestre el stack correcto sin preguntar.
+ *   As a developer/creator with any project,
+ *   I want netrunner to detect language/framework/packageManager by reading
+ *   the project's real manifests deterministically,
+ *   so that the dashboard (AC-4) shows the correct stack without asking.
  *
  * AC:
- *   - AC-D1: package.json + lockfile distingue pnpm/npm/yarn/bun.
- *   - AC-D2: framework por deps (astro/react/next/vite), default node.
+ *   - AC-D1: package.json + lockfile distinguishes pnpm/npm/yarn/bun.
+ *   - AC-D2: framework by deps (astro/react/next/vite), default node.
  *   - AC-D3: lockfile npm/yarn/bun/bun.lockb.
- *   - AC-D4: pyproject.toml (pip/poetry/uv) o requirements.txt (pip) → python.
+ *   - AC-D4: pyproject.toml (pip/poetry/uv) or requirements.txt (pip) → python.
  *   - AC-D5: Cargo.toml → rust/cargo; go.mod → go/go.
- *   - AC-D6: sin manifiesto → 'unknown' + manifestPath ''.
- *   - AC-D7: manifiesto ilegible/inválido → tratado como ausente (nunca lanza).
+ *   - AC-D6: no manifest → 'unknown' + manifestPath ''.
+ *   - AC-D7: unreadable/invalid manifest → treated as absent (never throws).
  *
  * Gherkin:
- *   GIVEN un proyecto con package.json y pnpm-lock.yaml
+ *   GIVEN a project with package.json and pnpm-lock.yaml
  *   WHEN detectStack(projectDir)
- *   THEN packageManager pnpm y manifestPath 'package.json'.
- *   GIVEN un proyecto sin ningún manifiesto
+ *   THEN packageManager pnpm and manifestPath 'package.json'.
+ *   GIVEN a project with no manifest at all
  *   WHEN detectStack(projectDir)
- *   THEN language/framework/packageManager 'unknown' y manifestPath ''.
+ *   THEN language/framework/packageManager 'unknown' and manifestPath ''.
  */
 import { readFile } from 'node:fs/promises'
 import { basename, join } from 'node:path'
@@ -31,7 +31,7 @@ import type { StackInfo } from './types'
 
 const UNKNOWN: StackInfo = { language: 'unknown', framework: 'unknown', packageManager: 'unknown', manifestPath: '' }
 
-/** rol: lee el contenido de un archivo o undefined si no existe / no es legible (AC-D7, nunca lanza). */
+/** rol: reads a file's content or undefined if it does not exist / is not readable (AC-D7, never throws). */
 async function readOptional(projectDir: string, relativePath: string): Promise<string | undefined> {
   try {
     return await readFile(join(projectDir, relativePath), 'utf8')
@@ -40,7 +40,7 @@ async function readOptional(projectDir: string, relativePath: string): Promise<s
   }
 }
 
-/** rol: devuelve el manifiesto presente con mayor prioridad (orden determinista por idioma). */
+/** rol: returns the manifest present with the highest priority (deterministic order by language). */
 async function findManifest(projectDir: string): Promise<{ path: string; text: string } | undefined> {
   const candidates = ['package.json', 'pyproject.toml', 'requirements.txt', 'Cargo.toml', 'go.mod']
   for (const relativePath of candidates) {
@@ -50,7 +50,7 @@ async function findManifest(projectDir: string): Promise<{ path: string; text: s
   return undefined
 }
 
-/** rol: framework del proyecto por deps de package.json (AC-D2); default node. */
+/** rol: project framework by package.json deps (AC-D2); default node. */
 function frameworkFromPackage(pkg: Record<string, unknown>): string {
   const deps: Record<string, unknown> = {
     ...(pkg.dependencies as Record<string, unknown> | undefined),
@@ -61,14 +61,14 @@ function frameworkFromPackage(pkg: Record<string, unknown>): string {
   return framework ?? 'node'
 }
 
-/** rol: detecta el stack TS/JS desde package.json + lockfiles (AC-D1/D2/D3). */
+/** rol: detects the TS/JS stack from package.json + lockfiles (AC-D1/D2/D3). */
 async function detectPackageStack(projectDir: string, packagePath: string): Promise<StackInfo> {
   const raw = await readOptional(projectDir, packagePath)
   let pkg: Record<string, unknown>
   try {
     pkg = JSON.parse(raw ?? '{}') as Record<string, unknown>
   } catch {
-    // AC-D7: manifiesto inválido se trata como ausente (nunca lanza)
+    // AC-D7: invalid manifest is treated as absent (never throws)
     return UNKNOWN
   }
   const lockfiles = ['pnpm-lock.yaml', 'yarn.lock', 'bun.lockb', 'bun.lock', 'package-lock.json']
@@ -82,7 +82,7 @@ async function detectPackageStack(projectDir: string, packagePath: string): Prom
   return { language: 'typescript', framework: frameworkFromPackage(pkg), packageManager, manifestPath: packagePath }
 }
 
-/** rol: detecta el stack Python desde pyproject.toml o requirements.txt (AC-D4). */
+/** rol: detects the Python stack from pyproject.toml or requirements.txt (AC-D4). */
 async function detectPythonStack(projectDir: string, pyprojectPath: string): Promise<StackInfo> {
   const text = await readOptional(projectDir, pyprojectPath)
   if (text === undefined) {
@@ -92,7 +92,7 @@ async function detectPythonStack(projectDir: string, pyprojectPath: string): Pro
   return { language: 'python', framework: 'python', packageManager, manifestPath: pyprojectPath }
 }
 
-/** rol: detección de stack por manifestos (AC-D1..D7). */
+/** rol: stack detection by manifests (AC-D1..D7). */
 export async function detectStack(projectDir: string): Promise<StackInfo> {
   const manifest = await findManifest(projectDir)
   if (manifest === undefined) return UNKNOWN

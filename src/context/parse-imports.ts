@@ -1,13 +1,13 @@
 /**
- * rol: Extracción de imports de un archivo con tree-sitter (AC-G2).
- * Separado de parse.ts para cumplir Mandamiento 1 (módulos <200 líneas, <30 por función).
- * Cada lenguaje (ts/js/python/go/rust) delega en su propio extractor.
+ * rol: Import extraction from a file with tree-sitter (AC-G2).
+ * Separated from parse.ts to comply with Mandamiento 1 (modules <200 lines, <30 per function).
+ * Each language (ts/js/python/go/rust) delegates to its own extractor.
  */
 import type { SyntaxNode } from 'web-tree-sitter'
 import { forEachNode } from './parse-specs'
 import type { ParsedImport } from './parse-specs'
 
-/** rol: extrae el módulo fuente de un nodo import (string sin comillas). */
+/** rol: extracts the source module of an import node (string without quotes). */
 function sourceOf(node: SyntaxNode): string {
   const str = node.namedChildren.find((c) => c.type === 'string')
   if (!str) return ''
@@ -15,7 +15,7 @@ function sourceOf(node: SyntaxNode): string {
   return frag ? frag.text : str.text.replace(/^['\"]|['\"]$/g, '')
 }
 
-/** rol: extracto imports de un nodo import_statement TS/JS/TSX (import_clause). */
+/** rol: extracts imports from a TS/JS/TSX import_statement node (import_clause). */
 function importsFromJsLike(node: SyntaxNode): ParsedImport[] {
   const source = sourceOf(node)
   const names = new Set<string>()
@@ -24,7 +24,7 @@ function importsFromJsLike(node: SyntaxNode): ParsedImport[] {
   return [...names].map((name) => ({ name, source }))
 }
 
-/** rol: extrae imports de un nodo import_statement / import_from_statement de Python. */
+/** rol: extracts imports from a Python import_statement / import_from_statement node. */
 function importsFromPython(node: SyntaxNode): ParsedImport[] {
   const rel = node.namedChildren.find((c) => c.type === 'relative_import')
   const dottedNames = node.namedChildren.filter((c) => c.type === 'dotted_name')
@@ -42,7 +42,7 @@ function importsFromPython(node: SyntaxNode): ParsedImport[] {
   return out
 }
 
-/** rol: extrae imports de un nodo import_declaration de Go. */
+/** rol: extracts imports from a Go import_declaration node. */
 function importsFromGo(node: SyntaxNode): ParsedImport[] {
   const out: ParsedImport[] = []
   for (const spec of node.namedChildren.filter((c) => c.type === 'import_spec')) {
@@ -55,7 +55,7 @@ function importsFromGo(node: SyntaxNode): ParsedImport[] {
   return out
 }
 
-/** rol: extrae imports de un nodo use_declaration de Rust. */
+/** rol: extracts imports from a Rust use_declaration node. */
 function importsFromRust(node: SyntaxNode): ParsedImport[] {
   const path = node.namedChildren.find((c) => c.type === 'scoped_identifier' || c.type === 'identifier')
   if (!path) return []
@@ -64,7 +64,7 @@ function importsFromRust(node: SyntaxNode): ParsedImport[] {
   return [{ name, source }]
 }
 
-/** rol: extrae todos los imports de un archivo dado su árbol (AC-G2), por lenguaje. */
+/** rol: extracts all imports of a file given its tree (AC-G2), by language. */
 export function parseImportsFromTree(root: SyntaxNode, language: string, importTypes: string[]): ParsedImport[] {
   const out: ParsedImport[] = []
   forEachNode(root, (n) => {

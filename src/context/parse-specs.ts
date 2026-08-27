@@ -1,24 +1,24 @@
 /**
- * rol: Configuración pura de las gramáticas tree-sitter de Netrunner (sin lógica).
- * Extraído de parse.ts para cumplir Mandamiento 1 (archivo <200 líneas, modular).
- * Especifica qué nodos son definiciones, cómo se nombran, y qué import types
- * existen por lenguaje — sin parsear nada.
+ * rol: Pure configuration of Netrunner's tree-sitter grammars (no logic).
+ * Extracted from parse.ts to comply with Mandamiento 1 (file <200 lines, modular).
+ * Specifies which nodes are definitions, how they are named, and which import types
+ * exist per language — without parsing anything.
  */
 import type { SyntaxNode } from 'web-tree-sitter'
 
-/** Import plano: nombre importado + módulo fuente. */
+/** Flat import: imported name + source module. */
 export interface ParsedImport {
   name: string
   source: string
 }
 
-/** rol: recorre cada nodo del árbol aplicando fn (incluye el propio root). */
+/** rol: walks each node of the tree applying fn (includes the root itself). */
 export function forEachNode(node: SyntaxNode, fn: (n: SyntaxNode) => void): void {
   fn(node)
   for (const child of node.namedChildren) forEachNode(child, fn)
 }
 
-/** Nombre del archivo WASM de cada gramática soportada. */
+/** WASM file name of each supported grammar. */
 export const WASM_FILES: Record<string, string> = {
   typescript: 'tree-sitter-typescript.wasm',
   tsx: 'tree-sitter-tsx.wasm',

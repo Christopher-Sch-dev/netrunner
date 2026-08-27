@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { exportMap } from '../src/map/index'
 
-// mock bun:sqlite → node:sqlite (para que map.ts resuelva)
+// mock bun:sqlite → node:sqlite (so map.ts can resolve)
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -23,7 +23,7 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-// rol: tests de provenance en map (AC-1..4 de features/provenance.feature).
+// role: tests for provenance in map (AC-1..4 of features/provenance.feature).
 
 describe('map con provenance', () => {
   let dir: string
@@ -49,7 +49,7 @@ describe('map con provenance', () => {
     expect(map.edges.length).toBeGreaterThan(0)
     const edge = map.edges[0]
     expect(edge.provenance).toBe('EXTRACTED')
-    expect(edge.file).toBe('src/b.ts') // file del nodo from
+    expect(edge.file).toBe('src/b.ts') // file of the from node
   })
 
   it('sin provenance → default INFERRED (AC-3, no rompe)', () => {

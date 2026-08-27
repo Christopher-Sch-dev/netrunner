@@ -6,7 +6,7 @@ import { Client } from '@modelcontextprotocol/sdk/client/index.js'
 import { InMemoryTransport } from '@modelcontextprotocol/sdk/inMemory.js'
 import { createServer, toolsetsFor } from '../src/transport/mcp-server'
 
-// mock bun:sqlite → node:sqlite (mismo API) para que vitest (node) resuelva queries.ts
+// mock bun:sqlite → node:sqlite (same API) so vitest (node) can resolve queries.ts
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -24,8 +24,8 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-// rol: conformance MCP (AC-3, AC-9) — progressive disclosure por stack + idempotencia.
-// Usa InMemoryTransport + Client real (sin subproceso), como exige la matriz de universalidad.
+// role: MCP conformance (AC-3, AC-9) — progressive disclosure by stack + idempotency.
+// Uses InMemoryTransport + a real Client (no subprocess), as the universality matrix requires.
 
 describe('mcp-server (progressive disclosure)', () => {
   let dir: string
@@ -55,7 +55,7 @@ describe('mcp-server (progressive disclosure)', () => {
     const list = await client.listTools()
     const names = list.tools.map((t) => t.name).sort()
 
-    // solo meta-tools al inicio — NO las tools del grafo (net_explore etc)
+    // only meta-tools at the start — NOT the graph tools (net_explore etc)
     expect(names).toEqual(['net_available_toolsets', 'net_enable_toolset'])
     expect(names).not.toContain('net_explore')
     expect(names).not.toContain('net_stack')

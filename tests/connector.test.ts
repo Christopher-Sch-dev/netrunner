@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { ToolRegistry } from '../src/core/registry'
 import { registerConnector, type Connector } from '../src/plugin/connector'
 
-// rol: tests de conectores de dominio como plugins (AC-1..4 de features/connector.feature).
-// Netrunner como orquestador de MCP servers (Juez 1).
+// role: tests for domain connectors as plugins (AC-1..4 of features/connector.feature).
+// Netrunner as an orchestrator of MCP servers.
 
 describe('conectores de dominio como plugins', () => {
   it('registra un conector (AC-1/2)', () => {

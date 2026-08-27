@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { needsSync, syncIfNeeded } from '../src/context/sync'
 
-// mock bun:sqlite → node:sqlite (para que graph.ts resuelva)
+// mock bun:sqlite → node:sqlite (so graph.ts can resolve)
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -23,7 +23,7 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-// rol: tests de auto-sync (AC-1..4 de features/sync.feature). El grafo se mantiene solo.
+// role: tests for auto-sync (AC-1..4 of features/sync.feature). The graph stays up to date on its own.
 
 describe('auto-sync del grafo', () => {
   let dir: string
@@ -43,7 +43,7 @@ describe('auto-sync del grafo', () => {
   })
 
   it('archivo cambió → needsSync true (AC-1)', async () => {
-    // indexa primero
+    // index first
     const { indexProject } = await import('../src/context/graph')
     await indexProject(dir)
     expect(needsSync(dir)).toBe(false)

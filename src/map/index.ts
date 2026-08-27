@@ -23,7 +23,7 @@ const LIMIT = 200
 
 /** Nodo del grafo visual. */
 export interface MapNode { id: string; name: string; kind: string; file: string }
-/** Edge del grafo visual con provenance (anti-alucinación, robar de graphify). */
+/** Edge del grafo visual con provenance (anti-alucinación). */
 export interface MapEdge { from: string; to: string; kind: string; provenance: string; file: string }
 
 /** Grafo exportado. */

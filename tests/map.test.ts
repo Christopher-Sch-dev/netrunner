@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { DatabaseSync } from 'node:sqlite'
 import { exportMap } from '../src/map/index'
 
-// mock bun:sqlite → node:sqlite (para que graph.ts resuelva)
+// mock bun:sqlite → node:sqlite (so graph.ts can resolve)
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -23,7 +23,7 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-// rol: tests de map (AC-1..4 de features/map.feature). Grafo visual (la matrix).
+// role: tests for map (AC-1..4 of features/map.feature). Visual graph (the matrix).
 
 describe('map (grafo visual)', () => {
   let dir: string

@@ -4,7 +4,7 @@
 **Como** el motor Netrunner,
 **quiero** consolidar Memento-Skills duplicadas y recordar las rechazadas,
 **para** que la auto-mejora no drifte (memoria amplia sin consolidar causa regresiones,
-validador #3 — robar de SkillOpt).
+validador #3 — evita drift).
 
 ## Acceptance Criteria
 - **AC-1**: `consolidateMementos(mementos)` agrupa Mementos duplicados (mismo símbolo) en uno consolidado.

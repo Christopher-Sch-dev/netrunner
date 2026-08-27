@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { createSnapshot, listSnapshots, restoreSnapshot } from '../src/rollback/index'
 
-// rol: tests de rollback (AC-1..4 de features/rollback.feature). Backup/restore del estado.
+// role: tests for rollback (AC-1..4 of features/rollback.feature). Backup/restore of state.
 
 describe('snapshot rollback', () => {
   let dir: string
@@ -33,7 +33,7 @@ describe('snapshot rollback', () => {
     writeFileSync(join(dir, 'src', 'a.ts'), 'export const x = 1\n')
 
     const snap = createSnapshot(dir)
-    // muto el archivo
+    // I mutate the file
     writeFileSync(join(dir, 'src', 'a.ts'), 'export const x = 999\n')
 
     restoreSnapshot(dir, snap.id)

@@ -1,24 +1,24 @@
 /**
- * rol: Detector de cobertura de tests de Netrunner (Wave 6 — skill auto-generante).
- * Lee el % de cobertura del proyecto desde coverage/coverage-summary.json
- * (formato vitest/istanbul json-summary). Es la base de la feature de cobertura:
- * "qué porcentaje del proyecto completo y los tests rellenados o actuales".
+ * rol: Netrunner test coverage detector (Wave 6 — self-generating skill).
+ * Reads the project coverage % from coverage/coverage-summary.json
+ * (vitest/istanbul json-summary format). It is the basis of the coverage feature:
+ * "what percentage of the whole project and the tests filled in or current".
  *
  * SPEC (Mandamiento 0):
- *   Como un agente que opera un proyecto Netrunner,
- *   quiero conocer el % de cobertura de tests,
- *   para que la skill auto-generante documente qué está cubierto.
+ *   As an agent operating a Netrunner project,
+ *   I want to know the test coverage %,
+ *   so that the self-generating skill documents what is covered.
  *
  * AC (features/coverage.feature):
  *   AC-1 coverageInfo(dir) → { lines, functions, branches, statements }.
- *   AC-2 lee coverage/coverage-summary.json (json-summary).
- *   AC-3 sin coverage → 0 en todo (no falla).
- *   AC-4 los % son números (0-100).
+ *   AC-2 reads coverage/coverage-summary.json (json-summary).
+ *   AC-3 no coverage → 0 everywhere (does not fail).
+ *   AC-4 the % are numbers (0-100).
  */
 import { readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
 
-/** Cobertura de tests del proyecto (%). */
+/** Project test coverage (%). */
 export interface CoverageInfo {
   lines: number
   functions: number
@@ -26,7 +26,7 @@ export interface CoverageInfo {
   statements: number
 }
 
-/** rol: devuelve la cobertura del proyecto (determinista, no falla sin coverage). */
+/** rol: returns the project coverage (deterministic, does not fail without coverage). */
 export function coverageInfo(projectDir: string): CoverageInfo {
   const path = join(projectDir, 'coverage', 'coverage-summary.json')
   if (!existsSync(path)) return { lines: 0, functions: 0, branches: 0, statements: 0 }
@@ -42,6 +42,6 @@ export function coverageInfo(projectDir: string): CoverageInfo {
       statements: total.statements?.pct ?? 0,
     }
   } catch {
-    return { lines: 0, functions: 0, branches: 0, statements: 0 } // inválido → no falla
+    return { lines: 0, functions: 0, branches: 0, statements: 0 } // invalid → does not fail
   }
 }

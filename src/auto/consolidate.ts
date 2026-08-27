@@ -1,21 +1,21 @@
 /**
- * rol: Consolidación de Mementos + rejected-buffer (validador #3, robar de SkillOpt).
- * Evita drift de la auto-mejora: consolida Mementos-Skills duplicadas del mismo
- * símbolo y recuerda los rechazados (memoria negativa — no repetir errores).
+ * rol: Memento consolidation + rejected-buffer (validator #3).
+ * Prevents self-improvement drift: consolidates duplicate Memento-Skills of the same
+ * symbol and remembers rejected ones (negative memory — avoid repeating mistakes).
  *
  * SPEC (Mandamiento 0):
- *   Como el motor Netrunner,
- *   quiero consolidar Mementos duplicados y recordar los rechazados,
- *   para que la auto-mejora no drifte.
+ *   As the Netrunner engine,
+ *   I want to consolidate duplicate Mementos and remember rejected ones,
+ *   so that self-improvement does not drift.
  *
  * AC (features/consolidate.feature):
- *   AC-1 consolidateMementos agrupa duplicados (mismo símbolo).
- *   AC-2 rememberRejected agrega al buffer de rechazados.
- *   AC-3 isRejected devuelve true si fue rechazado.
- *   AC-4 sin mementos → []; sin rechazados → false.
+ *   AC-1 consolidateMementos groups duplicates (same symbol).
+ *   AC-2 rememberRejected adds to the rejected buffer.
+ *   AC-3 isRejected returns true if it was rejected.
+ *   AC-4 no mementos → []; no rejected → false.
  */
 
-/** Un Memento-Skill (observación de uso exitoso). */
+/** A Memento-Skill (observation of successful usage). */
 export interface Memento {
   symbol: string
   skill: string
@@ -23,7 +23,7 @@ export interface Memento {
   veces: number
 }
 
-/** rol: consolida Mementos duplicados del mismo símbolo (AC-1). */
+/** rol: consolidates duplicate Mementos of the same symbol (AC-1). */
 export function consolidateMementos(mementos: Memento[]): Memento[] {
   const bySymbol = new Map<string, Memento>()
   for (const m of mementos) {
@@ -39,12 +39,12 @@ export function consolidateMementos(mementos: Memento[]): Memento[] {
   return [...bySymbol.values()]
 }
 
-/** rol: agrega un símbolo al buffer de rechazados (AC-2). */
+/** rol: adds a symbol to the rejected buffer (AC-2). */
 export function rememberRejected(rejected: string[], symbol: string): void {
   if (!rejected.includes(symbol)) rejected.push(symbol)
 }
 
-/** rol: devuelve true si el símbolo fue rechazado antes (AC-3). */
+/** rol: returns true if the symbol was rejected before (AC-3). */
 export function isRejected(rejected: string[], symbol: string): boolean {
   return rejected.includes(symbol)
 }

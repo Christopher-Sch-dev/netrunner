@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest'
 import { buildNetrunnerRegistry } from '../src/core/registry-factory'
 import { dumpContract, toolHelp } from '../src/discovery/index'
 
-// mock bun:sqlite → node:sqlite (para que queries.ts resuelva)
+// mock bun:sqlite → node:sqlite (so queries.ts can resolve)
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -20,8 +20,8 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-// rol: tests de auto-descubrimiento (AC-1..4 de features/discovery.feature).
-// El agente descubre exactamente qué puede operar sin adivinar.
+// role: tests for auto-discovery (AC-1..4 of features/discovery.feature).
+// The agent discovers exactly what it can operate without guessing.
 
 describe('auto-descubrimiento', () => {
   it('dump imprime el contrato completo (AC-1)', () => {
@@ -31,7 +31,7 @@ describe('auto-descubrimiento', () => {
     expect(contract.tools.length).toBeGreaterThan(0)
     expect(contract.toolsets).toBeDefined()
     expect(contract.capabilities).toBeDefined()
-    // cada tool tiene id, description, readOnly, schema
+    // each tool has id, description, readOnly, schema
     const tool = contract.tools[0]
     expect(tool.id).toBeDefined()
     expect(tool.description).toBeDefined()

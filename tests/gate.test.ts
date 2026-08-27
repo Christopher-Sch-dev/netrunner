@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { shouldUpsert } from '../src/auto/gate'
 
-// rol: tests del gate de validación del curator (AC-1..4 de features/gate.feature).
-// Un Memento malo no se propaga (riesgo #1 del Juez 2, robar de SkillOpt).
+// role: tests for the curator validation gate (AC-1..4 of features/gate.feature).
+// A bad Memento does not propagate (risk #1).
 
 describe('gate de validación del curator', () => {
   it('señal clara → upsert (AC-1)', () => {

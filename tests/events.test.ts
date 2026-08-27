@@ -2,8 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { emitEvent, replayEvents } from '../src/context/events'
 import { ToolRegistry } from '../src/core/registry'
 
-// rol: tests del evento durable + waterfall (AC-1..4 de features/events.feature).
-// El agente puede replay qué pasó (invariante dsh) y policy/guard son seams.
+// role: tests for the durable event + waterfall (AC-1..4 of features/events.feature).
+// The agent can replay what happened (dsh invariant) and policy/guard are seams.
 
 describe('evento durable + waterfall', () => {
   it('emite y replay eventos en orden (AC-1/2)', () => {

@@ -4,8 +4,8 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { gitInfo } from '../src/context/git'
 
-// rol: tests del detector git (AC-1..4 de features/git.feature).
-// Lee .git/HEAD y .git/config directamente (determinista, sin binario git).
+// role: tests for the git detector (AC-1..4 of features/git.feature).
+// Reads .git/HEAD and .git/config directly (deterministic, no git binary).
 
 describe('detector git', () => {
   let dir: string
@@ -43,7 +43,7 @@ describe('detector git', () => {
     mkdirSync(join(dir, '.git', 'refs', 'heads'), { recursive: true })
     mkdirSync(join(dir, '.git', 'logs'), { recursive: true })
     writeFileSync(join(dir, '.git', 'HEAD'), 'ref: refs/heads/main\n')
-    // simula 3 commits en el log
+    // simulates 3 commits in the log
     writeFileSync(join(dir, '.git', 'logs', 'HEAD'), [
       'abc1234 commit 1',
       'def5678 commit 2',

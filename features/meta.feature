@@ -4,7 +4,7 @@
 **Como** un agente que opera un proyecto Netrunner,
 **quiero** que cada output del CLI incluya un `_meta` con schemaVersion y tool,
 **para** que el LLM sepa qué estructura esperar y de dónde viene el output
-(validador #4 — robar de repomix `_meta` + kimi-k3 schema fingerprint).
+(validador #4 — schema version + fingerprint).
 
 ## Acceptance Criteria
 - **AC-1**: `emit(result, human)` agrega `_meta: { schemaVersion, tool }` al output JSON.

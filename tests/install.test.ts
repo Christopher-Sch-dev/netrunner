@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { install } from '../src/install'
 
-// rol: tests de netrunner install (AC-1..5 de features/install.feature, DEC-006).
+// role: tests for netrunner install (AC-1..5 of features/install.feature, DEC-006).
 
 describe('netrunner install', () => {
   let dir: string
@@ -23,11 +23,11 @@ describe('netrunner install', () => {
     const skillPath = join(dir, '.netrunner', 'skills', 'netrunner', 'SKILL.md')
     expect(existsSync(skillPath)).toBe(true)
     const skill = readFileSync(skillPath, 'utf8')
-    // formato Agent Skills: frontmatter name + description
+    // Agent Skills format: frontmatter name + description
     expect(skill).toContain('name: netrunner')
     expect(skill).toContain('description:')
 
-    // wiring MCP en .mcp.json
+    // MCP wiring in .mcp.json
     const mcpPath = join(dir, '.mcp.json')
     expect(existsSync(mcpPath)).toBe(true)
     const mcp = JSON.parse(readFileSync(mcpPath, 'utf8'))
@@ -44,7 +44,7 @@ describe('netrunner install', () => {
     const first = readFileSync(join(dir, '.mcp.json'), 'utf8')
     await install('mcp', dir)
     const second = readFileSync(join(dir, '.mcp.json'), 'utf8')
-    expect(second).toBe(first) // actualiza en-place, no duplica
+    expect(second).toBe(first) // updates in place, does not duplicate
   })
 
   it('target inválido → error (AC-5)', async () => {
@@ -56,7 +56,7 @@ describe('netrunner install', () => {
     for (const t of targets) {
       const r = await install(t, dir)
       expect(r.written).toContain('SKILL.md')
-      // r.mcpConfig ya es ruta absoluta; verifico que existe
+      // r.mcpConfig is already an absolute path; verify it exists
       expect(existsSync(r.mcpConfig)).toBe(true)
     }
   })

@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { meshProjects } from '../src/mesh/index'
 
-// mock bun:sqlite → node:sqlite (para que graph.ts resuelva)
+// mock bun:sqlite → node:sqlite (so graph.ts can resolve)
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -22,8 +22,8 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-// rol: tests de net mesh (AC-1..4 de features/mesh.feature).
-// De "jack a un sistema" a "jack a la red" (Jueces 1,3).
+// role: tests for net mesh (AC-1..4 of features/mesh.feature).
+// From "jack into a system" to "jack into the network".
 
 describe('net mesh (grafo multi-repo)', () => {
   let dir1: string

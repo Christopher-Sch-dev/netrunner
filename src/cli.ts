@@ -1,32 +1,32 @@
 #!/usr/bin/env node
 /**
- * rol: CLI de Netrunner (AC-4 dashboard, AC-6 ops deterministas, AC-14 agent-friendly).
- * Sigue la spec ai-native-cli (JSON output por defecto, exit codes, --human).
+ * rol: Netrunner CLI (AC-4 dashboard, AC-6 deterministic ops, AC-14 agent-friendly).
+ * Follows the ai-native-cli spec (JSON output by default, exit codes, --human).
  *
- *   netrunner                    → dashboard content-first (JSON)
- *   netrunner init <dir>         → indexa el grafo del proyecto
- *   netrunner plan "<goal>"      → genera plan desde el contexto (dashboard)
- *   netrunner --mcp              → arranca el servidor MCP por stdio
+ *   netrunner                    → content-first dashboard (JSON)
+ *   netrunner init <dir>         → indexes the project graph
+ *   netrunner plan "<goal>"      → generates a plan from the context (dashboard)
+ *   netrunner --mcp              → starts the MCP server over stdio
  *   netrunner --version / --help → self-description
  *
  * SPEC (Mandamiento 0):
- *   Como un agente que se conecta a un proyecto Netrunner,
- *   quiero invocar el motor por CLI con salida JSON estable,
- *   para operar el proyecto de forma determinista y pipe-friendly.
+ *   As an agent connecting to a Netrunner project,
+ *   I want to invoke the engine via CLI with stable JSON output,
+ *   so that I can operate the project deterministically and pipe-friendly.
  *
  * AC:
- *   AC-4 dashboard content-first (stack + capabilities + counts).
- *   AC-14 output JSON por defecto, exit 0/1/2, stderr para errores.
+ *   AC-4 content-first dashboard (stack + capabilities + counts).
+ *   AC-14 JSON output by default, exit 0/1/2, stderr for errors.
  */
 import { detectStack } from './context/detect'
 import { indexProject } from './context/graph'
 
-/** rol: parsea argv (flags --flag, --flag=val, --dir <path>). Devuelve {subcommand, flags, args}. */
+/** rol: parses argv (flags --flag, --flag=val, --dir <path>). Returns {subcommand, flags, args}. */
 function parseArgs(argv: string[]): { subcommand: string; flags: Record<string, string>; args: string[] } {
   const flags: Record<string, string> = {}
   const args: string[] = []
   let subcommand = ''
-  // flags que consumen el siguiente argumento como valor (--dir <path>)
+  // flags that consume the next argument as a value (--dir <path>)
   const valueFlags = new Set(['dir'])
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i]
@@ -37,7 +37,7 @@ function parseArgs(argv: string[]): { subcommand: string; flags: Record<string, 
       } else {
         const name = a.slice(2)
         if (valueFlags.has(name) && i + 1 < argv.length) {
-          flags[name] = argv[++i] // consume el siguiente arg como valor
+          flags[name] = argv[++i] // consumes the next arg as a value
         } else {
           flags[name] = 'true'
         }
@@ -51,30 +51,30 @@ function parseArgs(argv: string[]): { subcommand: string; flags: Record<string, 
   return { subcommand, flags, args }
 }
 
-/** rol: imprime JSON estable a stdout (agente). --human produce texto simple. */
+/** rol: prints stable JSON to stdout (agent). --human produces plain text. */
 export function emit(data: unknown, human: boolean, tool = ''): void {
   if (human) {
     console.log(typeof data === 'string' ? data : JSON.stringify(data, null, 2))
   } else {
-    // _meta: schema version + tool (validador #4 — el LLM sabe qué esperar)
+    // _meta: schema version + tool (validator #4 — the LLM knows what to expect)
     const withMeta = { _meta: { schemaVersion: '1.0', tool }, ...(data as Record<string, unknown>) }
     console.log(JSON.stringify(withMeta))
   }
 }
 
-/** rol: imprime error estructurado a stderr y sale con exit code. */
+/** rol: prints a structured error to stderr and exits with an exit code. */
 function fail(code: string, message: string, suggestion: string, exitCode = 1): never {
   process.stderr.write(JSON.stringify({ error: true, code, message, suggestion }) + '\n')
   process.exit(exitCode)
 }
 
-/** rol: genera un plan accionable del goal usando el grafo indexado (AC-1/2). */
+/** rol: generates an actionable plan from the goal using the indexed graph (AC-1/2). */
 async function generatePlan(goal: string, projectDir: string): Promise<{ goal: string; steps: Array<{ action: string; target: string }> }> {
   const { nodes } = await indexProject(projectDir, { incremental: true })
   const symbols = nodes.filter((n) => n.kind !== 'import').slice(0, 20)
   const files = new Set(nodes.map((n) => n.file)).size
 
-  // plan determinista (TOON): pasos derivados del contexto, sin verbosidad
+  // deterministic plan (TOON): steps derived from context, no verbosity
   const steps: Array<{ action: string; target: string }> = []
   if (symbols.length > 0) {
     steps.push({ action: 'explore', target: symbols[0].name })
@@ -86,7 +86,7 @@ async function generatePlan(goal: string, projectDir: string): Promise<{ goal: s
   return { goal, steps }
 }
 
-/** rol: dashboard content-first del proyecto (AC-4). */
+/** rol: content-first project dashboard (AC-4). */
 async function dashboard(projectDir: string): Promise<Record<string, unknown>> {
   const stack = await detectStack(projectDir)
   const { nodes, edges } = await indexProject(projectDir, { incremental: true })
@@ -101,12 +101,12 @@ async function dashboard(projectDir: string): Promise<Record<string, unknown>> {
   }
 }
 
-/** rol: entrypoint del binario. */
+/** rol: binary entrypoint. */
 export async function main(argv: string[]): Promise<never> {
   const { subcommand, flags, args } = parseArgs(argv)
   const human = flags.human === 'true' || flags.human === '1'
-  // Bug cwd (auditor): --dir <path> tiene precedencia sobre process.cwd().
-  // El agente puede no estar en el cwd correcto → indexa el directorio equivocado.
+  // Bug cwd (auditor): --dir <path> takes precedence over process.cwd().
+  // The agent may not be in the correct cwd → it would index the wrong directory.
   const projectDir = flags.dir ?? process.cwd()
 
   if (flags['version'] || subcommand === 'version') {
@@ -115,12 +115,12 @@ export async function main(argv: string[]): Promise<never> {
   }
 
   if (flags['help'] || subcommand === 'help') {
-    // si --help viene con un subcommand que es una tool, imprime su schema
+    // if --help comes with a subcommand that is a tool, print its schema
     if (subcommand && subcommand !== 'help') {
       const { toolHelp } = await import('./discovery/index')
       const { buildNetrunnerRegistry } = await import('./core/registry-factory')
       const registry = buildNetrunnerRegistry()
-      // mapea subcommand → id de tool (explore → graph.explore, etc.)
+      // maps subcommand → tool id (explore → graph.explore, etc.)
       const toolId = registry.listIds().find((id) => id.endsWith(`.${subcommand}`))
       if (toolId) {
         emit(toolHelp(registry, toolId), human)
@@ -137,18 +137,18 @@ export async function main(argv: string[]): Promise<never> {
   }
 
   if (flags['mcp'] || subcommand === 'mcp') {
-    // --mcp arranca el servidor MCP por stdio (no responde JSON de vuelta).
+    // --mcp starts the MCP server over stdio (does not respond JSON back).
     const { serveMCP } = await import('./transport/mcp-server')
     await serveMCP(projectDir)
-    // NO process.exit(0) aquí: serveMCP mantiene el proceso vivo escuchando stdin (Bug B).
+    // NO process.exit(0) here: serveMCP keeps the process alive listening on stdin (Bug B).
   }
 
   if (flags['acp'] || subcommand === 'acp') {
-    // --acp arranca el agente ACP por stdio (vista ACP, para IDEs como Zed).
-    // serveACP ya conecta el stream (process.stdin/stdout) internamente.
+    // --acp starts the ACP agent over stdio (ACP view, for IDEs like Zed).
+    // serveACP already connects the stream (process.stdin/stdout) internally.
     const { serveACP } = await import('./harness/acp')
     serveACP(projectDir)
-    await new Promise<void>(() => {}) // mantiene el proceso vivo
+    await new Promise<void>(() => {}) // keeps the process alive
   }
 
   switch (subcommand) {
@@ -179,7 +179,7 @@ export async function main(argv: string[]): Promise<never> {
     case 'map': {
       const { exportMap } = await import('./map/index')
       const { syncIfNeeded } = await import('./context/sync')
-      await syncIfNeeded(projectDir) // auto-sync: el grafo se mantiene solo (Fase 3)
+      await syncIfNeeded(projectDir) // auto-sync: the graph keeps itself up to date (Fase 3)
       emit(exportMap(projectDir), human)
       process.exit(0)
     }
@@ -263,14 +263,14 @@ export async function main(argv: string[]): Promise<never> {
     case 'init': {
       const dir = args[0] ?? projectDir
       const { nodes, edges } = await indexProject(dir)
-      // output consistente: counts anidados (no colisiona con map que usa nodes:[...])
+      // consistent output: nested counts (does not collide with map which uses nodes:[...])
       emit({ indexed: dir, counts: { nodes: nodes.length, edges: edges.length } }, human)
       process.exit(0)
     }
     case 'plan': {
       const goal = args.join(' ').trim()
       if (!goal) fail('MISSING_REQUIRED', 'plan requiere un goal', 'netrunner plan "<goal>"', 2)
-      // TOON: devuelve SOLO { goal, steps } (sin campo context verboso) — AC-3
+      // TOON: returns ONLY { goal, steps } (no verbose context field) — AC-3
       emit({ plan: await generatePlan(goal, projectDir) }, human)
       process.exit(0)
     }
@@ -307,14 +307,14 @@ export async function main(argv: string[]): Promise<never> {
       process.exit(0)
     }
     default: {
-      // sin subcomando → dashboard
+      // no subcommand → dashboard
       emit(await dashboard(projectDir), human)
       process.exit(0)
     }
   }
 }
 
-// Ejecuta solo si es el entrypoint directo (no importado en tests).
+// Runs only if it is the direct entrypoint (not imported in tests).
 if (import.meta.main) {
   main(process.argv.slice(2)).catch((e) => fail('INTERNAL', String(e?.message ?? e), 'revisa los logs', 1))
 }

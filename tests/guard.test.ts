@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { guardCheck } from '../src/guard/index'
 
-// rol: tests de guard (AC-1..4 de features/guard.feature). Black ICE: protecciones del repo.
+// role: tests for guard (AC-1..4 of features/guard.feature). Black ICE: repo protections.
 
 describe('guard (Black ICE: protecciones)', () => {
   let dir: string

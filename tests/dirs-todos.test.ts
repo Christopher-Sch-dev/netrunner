@@ -5,7 +5,7 @@ import { join } from 'node:path'
 import { dirsTree } from '../src/context/dirs'
 import { todosInfo } from '../src/context/todos'
 
-// rol: tests de los detectores dirs + todos (AC-1..4 de features/dirs-todos.feature).
+// role: tests for the dirs + todos detectors (AC-1..4 of features/dirs-todos.feature).
 
 describe('detectores dirs + todos', () => {
   let dir: string

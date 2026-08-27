@@ -1,8 +1,8 @@
 import { describe, it, expect } from 'vitest'
 import { appendResult, readResults } from '../src/auto/results'
 
-// rol: tests del log de resultados del curator (AC-1..4 de features/results.feature).
-// Auto-mejora anclada a señal externa medible (validador #5, patrón Karpathy log.md).
+// role: tests for the curator results log (AC-1..4 of features/results.feature).
+// Self-improvement anchored to a measurable external signal (validator #5).
 
 describe('log de resultados del curator', () => {
   it('append + read roundtrip (AC-1/2)', () => {
@@ -23,7 +23,7 @@ describe('log de resultados del curator', () => {
   it('formato TSV parseable (AC-4)', () => {
     const log: string[] = []
     appendResult(log, { symbol: 'login', action: 'upsert_skill', ok: true })
-    // la línea es TSV: timestamp | symbol | action | ok
+    // the line is TSV: timestamp | symbol | action | ok
     expect(log[0].split('\t').length).toBe(4)
     expect(log[0]).toMatch(/login\tupsert_skill\ttrue$/)
   })

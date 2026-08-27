@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync, existsSync } from 'node:
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-// mock bun:sqlite → node:sqlite (para que cli.ts resuelva graph.ts)
+// mock bun:sqlite → node:sqlite (so cli.ts can resolve graph.ts)
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -21,7 +21,7 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-/** Helper: corre main() capturando console.log; intercepta process.exit como throw. */
+/** Helper: runs main() capturing console.log; intercepts process.exit as a throw. */
 async function runCli(args: string[]): Promise<string[]> {
   const { main } = await import('../src/cli')
   const logged: string[] = []
@@ -41,7 +41,7 @@ async function runCli(args: string[]): Promise<string[]> {
   return logged
 }
 
-// rol: tests del CLI status (AC-1..4 de features/status.feature).
+// role: tests for the CLI status (AC-1..4 of features/status.feature).
 
 describe('cli status (sticky note vivo)', () => {
   let dir: string
@@ -71,7 +71,7 @@ describe('cli status (sticky note vivo)', () => {
   })
 
   it('--dir <path> tiene precedencia sobre process.cwd() (fix bug cwd)', async () => {
-    // corre status --dir <dir> desde un cwd distinto (tmp) → debe operar dir, no cwd
+    // runs status --dir <dir> from a different cwd (tmp) → it must operate on dir, not cwd
     const otherCwd = mkdtempSync(join(tmpdir(), 'netrunner-othercwd-'))
     const original = process.cwd()
     process.chdir(otherCwd)

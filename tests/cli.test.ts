@@ -3,7 +3,7 @@ import { mkdtempSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 
-// mock bun:sqlite → node:sqlite (mismo API) para que vitest (node) resuelva graph.ts/queries.ts
+// mock bun:sqlite → node:sqlite (same API) so vitest (node) can resolve graph.ts/queries.ts
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -21,13 +21,13 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-/** Helper: corre main() capturando console.log; intercepta process.exit como throw. */
+/** Helper: runs main() capturing console.log; intercepts process.exit as a throw. */
 async function runCli(args: string[]): Promise<string[]> {
   const { main } = await import('../src/cli')
   const logged: string[] = []
   const spy = vi.spyOn(console, 'log').mockImplementation((s: unknown) => { logged.push(String(s)) })
   const realExit = process.exit
-  // process.exit → lanzar marcador para no matar vitest
+  // process.exit → throw a marker so vitest is not killed
   ;(process as unknown as { exit: (c?: number) => never }).exit = ((code?: number) => {
     throw new Error(`__EXIT__${code ?? 0}`)
   }) as never
@@ -42,7 +42,7 @@ async function runCli(args: string[]): Promise<string[]> {
   return logged
 }
 
-// rol: tests del CLI (AC-4 dashboard, AC-14 agent-friendly: JSON output, exit codes).
+// role: tests for the CLI (AC-4 dashboard, AC-14 agent-friendly: JSON output, exit codes).
 
 describe('cli', () => {
   let dir: string

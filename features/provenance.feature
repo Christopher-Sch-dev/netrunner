@@ -4,7 +4,7 @@
 **Como** un agente que opera un proyecto Netrunner,
 **quiero** que cada edge del grafo exponga su PROVENANCE (`EXTRACTED`/`INFERRED`/`AMBIGUOUS`)
 y el `file:line` de donde salió,
-**para** que el LLM pueda auditar cada afirmación y no alucine (robar de graphify,
+**para** que el LLM pueda auditar cada afirmación y no alucine (provenance).
 el gap #1 del estado del arte).
 
 ## Acceptance Criteria

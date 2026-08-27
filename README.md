@@ -3,8 +3,9 @@
 **The universal jack.** Connect every project, every agent, one net.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.2.0-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
-[![Tests](https://img.shields.io/badge/tests-121%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
+[![Version](https://img.shields.io/badge/version-0.3.1-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
+[![Tests](https://img.shields.io/badge/tests-154%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
+[![Coverage](https://img.shields.io/badge/coverage-84%25-yellow.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 
 Netrunner is an open-source, MIT-licensed **universal agent SDK**: a single binary that turns *any* project into something *any* AI agent can understand, operate, and control — with one command.
 
@@ -35,7 +36,7 @@ One binary, all seven. No 500-tool menu: Netrunner exposes **only what's relevan
 | Face | What the agent gets |
 |---|---|
 | **Understand** | Project dashboard, symbol map, call graph, blast radius — answers in a handful of calls, not grep/read storms |
-| **Control** | Deterministic operations (test, build, lint) with exit codes |
+| **Control** | Deterministic operations (test, build, lint) with exit codes and timeboxing |
 | **Learn** | A self-generating skill that documents the project (git, versions, coverage, services, TODOs) |
 | **Safely** | Read vs mutate separation, fail-closed policy, Black ICE secret guard |
 
@@ -65,16 +66,17 @@ netrunner install     # wire up your agents (MCP/ACP/plugin)
 ```bash
 $ netrunner status
 {
+  "_meta": { "schemaVersion": "1.0", "tool": "status" },
   "stack": { "language": "typescript", "framework": "node", "packageManager": "pnpm" },
   "git": { "branch": "develop", "remoteUrl": "https://github.com/Christopher-Sch-dev/netrunner.git" },
   "versions": { "prod": { "zod": "^4.4.3" }, "dev": { "vitest": "^3.0.0" } },
-  "coverage": { "lines": 0, "functions": 0, "branches": 0, "statements": 0 },
+  "coverage": { "lines": 84.39, "functions": 89.74, "branches": 78.13, "statements": 84.39 },
   "services": { "services": [] },
   "todos": { "todos": [ { "file": "src/context/todos.ts", "line": 2, "tag": "TODO", "text": "..." } ] }
 }
 ```
 
-Every command returns **clean JSON** (agent-parseable, no hallucination) with standard exit codes.
+Every command returns **clean JSON** (agent-parseable, no hallucination) with standard exit codes and a `_meta` schema version.
 
 ---
 
@@ -86,20 +88,24 @@ Every command returns **clean JSON** (agent-parseable, no hallucination) with st
 | `netrunner init [dir]` | Index the project into a knowledge graph |
 | `netrunner status [--docs]` | Live snapshot + regenerate README.generated.md / AGENTS.md |
 | `netrunner scan` | Unified overlay: stack + git + versions + coverage + services + TODOs |
-| `netrunner map` | Export the graph as JSON (D3/mermaid visualizable) |
+| `netrunner map` | Export the graph as JSON (D3/mermaid visualizable) with provenance |
 | `netrunner depth <sym> <level>` | Query a symbol by depth (L0 basic → L3 blast radius) |
 | `netrunner explore <sym>` | Search symbols by name |
 | `netrunner plan "<goal>"` | Generate a plan from the indexed graph |
 | `netrunner guard` | Black ICE: detect secrets and protected files |
 | `netrunner persist "<decision>"` | Save a durable decision with provenance |
-| `netrunner rollback [create]` | Snapshot / restore project state |
+| `netrunner rollback [create\|restore]` | Snapshot / restore project state |
 | `netrunner policy <intent>` | Evaluate a permission (read/mutate) |
 | `netrunner curate` | Deterministic self-improvement from observations |
+| `netrunner lint` | Health-check the snapshot (stale, orphans) |
+| `netrunner daemon` | One daemon pass: sync + lint + curator |
+| `netrunner mesh <dirs...>` | Connect N projects into a multi-repo graph |
+| `netrunner dump` | Print the full tool contract (auto-discovery) |
 | `netrunner install <target>` | Wire up agents (mcp/opencode/claude/cursor/codex/gemini/hermes) |
 | `netrunner plugin <name>` | Generate an Agent Plugin 1.0 package |
 | `netrunner --mcp` | Serve as an MCP server over stdio |
 | `netrunner --acp` | Serve as an ACP agent over stdio |
-| `netrunner --help` | List commands |
+| `netrunner --help` | List commands (or `<tool> --help` for a tool's schema) |
 
 Global flags: `--dir <path>` (operate a specific project), `--human` (readable output).
 
@@ -151,13 +157,13 @@ Netrunner was tested end-to-end with an AI agent (OpenCode + Nemotron) against t
 
 ## Roadmap
 
-**Shipped (v0.2.0):** knowledge graph, MCP + ACP + CLI + plugin views, self-generating skill (git/versions/coverage/services/TODOs), cyberpunk features (persist/map/scan/guard/depth/rollback), policy + curator.
+**Shipped (v0.3.1):** knowledge graph, MCP + ACP + CLI + plugin views, self-generating skill (git/versions/coverage/services/TODOs), cyberpunk features (persist/map/scan/guard/depth/rollback), policy + curator, provenance in output, auto-sync graph, release binary + install.sh, benchmarks, auto-discovery (dump), timeboxing, consolidation + rejected-buffer, `_meta` schema version, curator results log, snapshot lint, curator validation gate, durable events + waterfall, daemon, multi-repo mesh, real coverage, domain connectors.
 
-**Next (v0.3.0):**
-1. **Provenance in output** — label every edge `EXTRACTED`/`INFERRED`/`AMBIGUOUS` (anti-hallucination, from graphify).
-2. **Auto-sync graph** — file watcher + git hook so the graph refreshes itself (from codegraph).
-3. **Release binary + `install.sh`** — one-command install.
-4. **Benchmarks** — published token/tool-call reduction numbers.
+**Next:**
+1. **Daemon as a service** — `netrunner daemon` running as a systemd user service with a file watcher (event-driven, not mtime-polling).
+2. **A2A (agent-to-agent)** — bridge MCP ↔ A2A so the daemon talks to other agents.
+3. **More graph languages** — expand structural extraction to more ecosystems.
+4. **Community** — worked examples, benchmarks on more projects, conformance tests.
 
 ---
 
@@ -174,7 +180,7 @@ We'd love your help. Netrunner is ambitious — a universal motor for the agent 
 ## Development
 
 - **Stack**: TypeScript + Bun + pnpm · Target T0 (local, no servers).
-- **Method**: spec-first → Gherkin → TDD → mutation testing → e2e. See `.onyx/`.
+- **Method**: spec-first → Gherkin → TDD → mutation testing → e2e.
 - **Branches**: GitFlow (main → develop → feature/* / release/* / hotfix/*).
 - **Read `AGENTS.md`** for how agents contribute to this repo.
 

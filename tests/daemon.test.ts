@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { daemonTick } from '../src/daemon/index'
 
-// mock bun:sqlite → node:sqlite (para que graph.ts resuelva)
+// mock bun:sqlite → node:sqlite (so graph.ts can resolve)
 vi.mock('bun:sqlite', () => {
   const { DatabaseSync } = require('node:sqlite')
   return {
@@ -22,8 +22,8 @@ vi.mock('bun:sqlite', () => {
   }
 })
 
-// rol: tests del daemon persistente (AC-1..4 de features/daemon.feature).
-// El grafo se mantiene al día sin invocar init manual (curator fantasma).
+// role: tests for the persistent daemon (AC-1..4 of features/daemon.feature).
+// The graph stays up to date without invoking manual init (background curator).
 
 describe('daemon persistente', () => {
   let dir: string
@@ -55,7 +55,7 @@ describe('daemon persistente', () => {
     const { indexProject } = await import('../src/context/graph')
     await indexProject(dir)
 
-    // modifica un archivo con mtime futuro
+    // modifies a file with a future mtime
     const { utimesSync } = await import('node:fs')
     writeFileSync(join(dir, 'src', 'a.ts'), 'export const x = 2\n')
     const future = Date.now() + 5000
