@@ -152,6 +152,11 @@ export async function main(argv: string[]): Promise<never> {
   }
 
   switch (subcommand) {
+    case 'daemon': {
+      const { daemonTick } = await import('./daemon/index')
+      emit(await daemonTick(projectDir), human)
+      process.exit(0)
+    }
     case 'lint': {
       const { lintSnapshot } = await import('./auto/lint')
       const { buildSnapshot } = await import('./context/snapshot')
