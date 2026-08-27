@@ -6,7 +6,7 @@ import type { HandlerContext } from './types'
 
 /** rol: --version / version. */
 export async function version(ctx: HandlerContext): Promise<void> {
-  ctx.emit({ name: 'netrunner', version: '0.7.2' }, ctx.human)
+  ctx.emit({ name: 'netrunner', version: '0.7.3' }, ctx.human)
   process.exit(0)
 }
 
@@ -24,7 +24,7 @@ export async function help(ctx: HandlerContext): Promise<void> {
   }
   ctx.emit({
     name: 'netrunner',
-    version: '0.7.2',
+    version: '0.7.3',
     usage: 'netrunner <cmd> [args] [--dir <path>] [--human]',
     commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'path', 'god-nodes', 'graph-report', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'uninstall', 'plugin', 'breach', 'deck', 'mode', 'quickhacks', 'resume', 'sleeve', 'doctor', 'history', 'mcp-orchestrate', '--mcp', '--acp', '--a2a'],
   }, ctx.human)
