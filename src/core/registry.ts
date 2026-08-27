@@ -73,4 +73,9 @@ export class ToolRegistry {
   listIds(): string[] {
     return [...this.tools.keys()]
   }
+
+  /** desregistra una tool (efectos reversibles del plugin system). No-op si no existe. */
+  unregister(id: string): void {
+    this.tools.delete(id)
+  }
 }

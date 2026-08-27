@@ -41,9 +41,9 @@ describe('mcp-server (progressive disclosure)', () => {
     rmSync(dir, { recursive: true, force: true })
   })
 
-  it('toolsetsFor: un stack TS activa graph y stack', () => {
+  it('toolsetsFor: un stack TS activa graph, stack y ops', () => {
     const t = toolsetsFor({ language: 'typescript', framework: 'unknown' })
-    expect(t.map((x) => x.id)).toEqual(['graph', 'stack'])
+    expect(t.map((x) => x.id)).toEqual(['graph', 'stack', 'ops'])
   })
 
   it('al conectar solo expone meta-tools (progressive disclosure), no 500', async () => {

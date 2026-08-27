@@ -33,6 +33,19 @@ const TARGET_CONFIG: Record<string, string> = {
   fx: '.fx/mcp.json',
 }
 
+/** Dónde escanea cada agente las skills (Bug C: OpenCode/Claude NO leen .netrunner/). */
+const TARGET_SKILL_DIR: Record<string, string> = {
+  mcp: '.netrunner/skills/netrunner',
+  opencode: '.opencode/skills/netrunner',
+  claude: '.claude/skills/netrunner',
+  cursor: '.cursor/skills/netrunner',
+  codex: '.codex/skills/netrunner',
+  gemini: '.gemini/skills/netrunner',
+  hermes: '.hermes/skills/netrunner',
+  dsh: '.dsh/skills/netrunner',
+  fx: '.fx/skills/netrunner',
+}
+
 /** rol: contenido del SKILL.md (formato Agent Skills, DEC-006). */
 function skillContent(): string {
   return `---
@@ -56,9 +69,10 @@ Conecta el server MCP netrunner (--mcp) y usa estas tools para entender y operar
 `
 }
 
-/** rol: escribe SKILL.md en .netrunner/skills/netrunner/. Idempotente (sobreescribe). */
-function writeSkill(dir: string): string {
-  const path = join(dir, '.netrunner', 'skills', 'netrunner', 'SKILL.md')
+/** rol: escribe SKILL.md en el dir de skills del target (Bug C: el agente lo escanea). */
+function writeSkill(target: string, dir: string): string {
+  const rel = TARGET_SKILL_DIR[target]
+  const path = join(dir, rel, 'SKILL.md')
   mkdirSync(dirname(path), { recursive: true })
   writeFileSync(path, skillContent())
   return path
@@ -98,7 +112,7 @@ export function install(target: string, projectDir: string, bin = resolveBin()):
   if (!TARGET_CONFIG[target]) {
     throw new Error(`target no soportado: '${target}' (usa: ${Object.keys(TARGET_CONFIG).join(', ')})`)
   }
-  const skillPath = writeSkill(projectDir)
+  const skillPath = writeSkill(target, projectDir)
   const mcpPath = writeMcp(target, projectDir, bin)
   return { target, written: ['SKILL.md', mcpPath], mcpConfig: mcpPath }
 }

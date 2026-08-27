@@ -103,10 +103,20 @@ export async function main(argv: string[]): Promise<never> {
     // --mcp arranca el servidor MCP por stdio (no responde JSON de vuelta).
     const { serveMCP } = await import('./transport/mcp-server')
     await serveMCP(projectDir)
-    process.exit(0)
+    // NO process.exit(0) aquí: serveMCP mantiene el proceso vivo escuchando stdin (Bug B).
   }
 
   switch (subcommand) {
+    case 'status': {
+      const { buildSnapshot } = await import('./context/snapshot')
+      const { generateDocs } = await import('./generate/index')
+      const snap = await buildSnapshot(projectDir)
+      if (flags['docs'] === 'true' || flags['docs'] === '1') {
+        await generateDocs(projectDir)
+      }
+      emit(snap, human)
+      process.exit(0)
+    }
     case 'init': {
       const dir = args[0] ?? projectDir
       const { nodes, edges } = await indexProject(dir)
