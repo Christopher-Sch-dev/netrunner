@@ -151,7 +151,7 @@ export async function main(argv: string[]): Promise<never> {
       name: 'netrunner',
       version: '0.3.1',
       usage: 'netrunner <cmd> [args] [--dir <path>] [--human]',
-      commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'plugin', '--mcp', '--acp'],
+      commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'plugin', '--mcp', '--acp', '--a2a'],
     }, human)
     process.exit(0)
   }
@@ -169,6 +169,14 @@ export async function main(argv: string[]): Promise<never> {
     const { serveACP } = await import('./harness/acp')
     serveACP(projectDir)
     await new Promise<void>(() => {}) // keeps the process alive
+  }
+
+  if (flags['a2a'] || subcommand === 'a2a') {
+    // --a2a starts the A2A server over stdio (A2A v1.0 view, W4.E4.1).
+    // Exposes the ToolRegistry as an A2A agent (Agent Card + SendMessage).
+    const { serveA2A } = await import('./transport/a2a-server')
+    await serveA2A(projectDir)
+    // NO process.exit(0): serveA2A keeps the process alive listening on stdin.
   }
 
   switch (resolved ?? subcommand) {
@@ -407,7 +415,7 @@ export async function main(argv: string[]): Promise<never> {
     }
     case '--help':
     case 'help': {
-      emit({ help: 'netrunner — plug any project into any agent', commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'plugin', '--mcp', '--acp', '--version'] }, true)
+      emit({ help: 'netrunner — plug any project into any agent', commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'plugin', '--mcp', '--acp', '--a2a', '--version'] }, true)
       process.exit(0)
     }
     default: {
