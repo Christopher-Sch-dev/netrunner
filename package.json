@@ -1,6 +1,6 @@
 {
   "name": "netrunner",
-  "version": "0.2.0",
+  "version": "0.3.1",
   "type": "module",
   "description": "Universal agent SDK \u2014 plug any project into any agent.",
   "license": "MIT",

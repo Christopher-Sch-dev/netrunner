@@ -108,14 +108,14 @@ export async function main(argv: string[]): Promise<never> {
   const projectDir = flags.dir ?? process.cwd()
 
   if (flags['version'] || subcommand === 'version') {
-    emit({ name: 'netrunner', version: '0.2.0' }, human)
+    emit({ name: 'netrunner', version: '0.3.1' }, human)
     process.exit(0)
   }
 
   if (flags['help'] || subcommand === 'help') {
     emit({
       name: 'netrunner',
-      version: '0.2.0',
+      version: '0.3.1',
       usage: 'netrunner <cmd> [args] [--dir <path>] [--human]',
       commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'install', 'plugin', '--mcp'],
     }, human)
