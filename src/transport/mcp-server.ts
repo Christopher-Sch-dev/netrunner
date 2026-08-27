@@ -29,6 +29,7 @@ import { z } from 'zod'
 import { detectStack } from '../context/detect'
 import { buildNetrunnerRegistry } from '../core/registry-factory'
 import { toolsetsForStack, STACK_TOOLSETS } from './toolsets'
+import { registerMetaResources } from './mcp-resources'
 import type { ToolRegistry, ToolSpec, ToolContext } from '../core/registry'
 
 /** Un toolset: grupo de tools activadas por stack del proyecto (determinista). */
@@ -134,6 +135,9 @@ export async function createServer(projectDir: string): Promise<McpServer> {
       return { content: [{ type: 'text' as const, text: `toolset '${toolset}' habilitado` }] }
     },
   )
+
+  // expone el snapshot del proyecto como recursos MCP (net://meta/*, Wave 5)
+  registerMetaResources(server, projectDir)
 
   return server
 }
