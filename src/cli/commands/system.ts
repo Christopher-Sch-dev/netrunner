@@ -6,7 +6,7 @@ import type { HandlerContext } from './types'
 
 /** rol: --version / version. */
 export async function version(ctx: HandlerContext): Promise<void> {
-  ctx.emit({ name: 'netrunner', version: '0.7.1' }, ctx.human)
+  ctx.emit({ name: 'netrunner', version: '0.7.2' }, ctx.human)
   process.exit(0)
 }
 
@@ -24,7 +24,7 @@ export async function help(ctx: HandlerContext): Promise<void> {
   }
   ctx.emit({
     name: 'netrunner',
-    version: '0.7.1',
+    version: '0.7.2',
     usage: 'netrunner <cmd> [args] [--dir <path>] [--human]',
     commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'path', 'god-nodes', 'graph-report', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'uninstall', 'plugin', 'breach', 'deck', 'mode', 'quickhacks', 'resume', 'sleeve', 'doctor', 'history', 'mcp-orchestrate', '--mcp', '--acp', '--a2a'],
   }, ctx.human)
@@ -68,13 +68,31 @@ export async function sleeve(ctx: HandlerContext): Promise<void> {
   const { exportSleeve, importSleeve } = await import('../../sleeve/index')
   const action = ctx.args[0] ?? 'export'
   if (action === 'import' && ctx.args[1]) {
-    // import desde un archivo JSON
-    const { readFileSync } = await import('node:fs')
-    const sleeve = JSON.parse(readFileSync(ctx.args[1], 'utf8'))
+    // import desde un archivo JSON (fix auditor M3: restringir a paths dentro del proyecto)
+    const { readFileSync, existsSync } = await import('node:fs')
+    const { join, resolve } = await import('node:path')
+    const importPath = resolve(ctx.args[1])
+    const projectRoot = resolve(ctx.projectDir)
+    if (!importPath.startsWith(projectRoot + '/') && importPath !== projectRoot) {
+      ctx.emit({ imported: false, error: 'sleeve import solo acepta archivos dentro del proyecto' }, ctx.human)
+      process.exit(1)
+    }
+    if (!existsSync(importPath)) {
+      ctx.emit({ imported: false, error: `archivo no existe: ${importPath}` }, ctx.human)
+      process.exit(1)
+    }
+    const sleeve = JSON.parse(readFileSync(importPath, 'utf8'))
     importSleeve(ctx.projectDir, sleeve)
     ctx.emit({ imported: true }, ctx.human)
   } else {
-    ctx.emit(exportSleeve(ctx.projectDir), ctx.human)
+    // fix auditor (issue #3): export escribe el archivo .netrunner/sleeve.json (portable)
+    const { writeFileSync, mkdirSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const sleeveData = exportSleeve(ctx.projectDir)
+    const sleevePath = join(ctx.projectDir, '.netrunner', 'sleeve.json')
+    mkdirSync(join(ctx.projectDir, '.netrunner'), { recursive: true })
+    writeFileSync(sleevePath, JSON.stringify(sleeveData, null, 2))
+    ctx.emit({ ...sleeveData, exportedTo: sleevePath }, ctx.human)
   }
   process.exit(0)
 }

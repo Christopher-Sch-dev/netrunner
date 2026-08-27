@@ -19,7 +19,7 @@
  *   AC-4 content-first dashboard (stack + capabilities + counts).
  *   AC-14 JSON output by default, exit 0/1/2, stderr for errors.
  */
-import { existsSync, statSync } from 'node:fs'
+import { existsSync, statSync, realpathSync } from 'node:fs'
 import type { HandlerContext } from './cli/commands/types'
 // imports estáticos de handlers (Bun bundlea imports estáticos; import() con string
 // variable NO se bundlea y rompe el build — fix: dispatch table de funciones).
@@ -122,6 +122,8 @@ const HANDLERS: Record<string, (ctx: HandlerContext) => Promise<void>> = {
   uninstall: integration.uninstall,
   explore: context.explore,
   path: context.path,
+  callers: context.callers,
+  callees: context.callees,
   'god-nodes': context.godNodes,
   'graph-report': context.graphReport,
   'mcp-orchestrate': orchestrate.orchestrate,
@@ -149,10 +151,15 @@ export async function main(argv: string[]): Promise<void> {
     fail('INVALID_DIR', `'${projectDir}' no es un directorio`, 'usa un directorio de proyecto con --dir', 2)
   }
 
-  // fix juez hacker (#8) + auditor (bug 6): bloquear directorios de sistema en --dir
-  // (incluye / raíz — escanear todo el FS es DoS/leak)
+  // fix auditor (C2): resolver symlinks ANTES del check de sistema — un symlink a /
+  // no debe bypassear el bloqueo (realpathSync sigue el symlink al destino real)
+  const realDir = flags.dir ? realpathSync(projectDir) : projectDir
+
+  // fix juez hacker (#8) + auditor (bug 6/C2): bloquear directorios de sistema en --dir
+  // (incluye / raíz — escanear todo el FS es DoS/leak). realpathSync (arriba) ya resuelve
+  // symlinks; NO bloquear /tmp /home (proyectos de prueba legítimos viven ahí).
   const FORBIDDEN_DIRS = ['/', '/etc', '/usr', '/var', '/proc', '/sys', '/boot', '/bin', '/sbin', '/lib', '/lib64', '/root', '/dev']
-  if (flags.dir && FORBIDDEN_DIRS.some((d) => projectDir === d || projectDir.startsWith(d + '/'))) {
+  if (flags.dir && FORBIDDEN_DIRS.some((d) => realDir === d || realDir.startsWith(d + '/'))) {
     fail('FORBIDDEN_DIR', `directorio de sistema no operable: '${projectDir}'`, 'usa un directorio de proyecto (código), no del sistema', 2)
   }
 

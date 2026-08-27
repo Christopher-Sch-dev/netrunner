@@ -59,7 +59,14 @@ interface Connection {
 /**
  * rol: lee .mcp.json del proyecto y devuelve las configs de servers (AC-1).
  * Sin .mcp.json → []. No lanza: un proyecto sin servers es un caso válido.
+ * SECURITY (fix auditor C1): valida que el command sea un binario conocido
+ * (allowlist) — un .mcp.json comprometido NO puede ejecutar comandos arbitrarios.
  */
+const ALLOWED_COMMANDS = new Set([
+  'netrunner', 'node', 'bun', 'npx', 'python3', 'python', 'deno', 'go', 'cargo',
+  'npx.cmd', 'node.exe', 'bun.exe', 'python.exe',
+])
+
 export function discoverServers(projectDir: string): McpServerConfig[] {
   const mcpPath = join(projectDir, '.mcp.json')
   if (!existsSync(mcpPath)) return []
@@ -71,12 +78,18 @@ export function discoverServers(projectDir: string): McpServerConfig[] {
   }
   const servers = (raw as { mcpServers?: Record<string, McpServerConfig> })?.mcpServers
   if (!servers) return []
-  return Object.entries(servers).map(([name, cfg]) => ({
-    name,
-    command: cfg.command,
-    args: cfg.args ?? [],
-    env: cfg.env,
-  }))
+  return Object.entries(servers)
+    .filter(([, cfg]) => {
+      // SECURITY (C1): solo binarios conocidos — bloquear RCE vía command arbitrario
+      const cmd = cfg.command.split(/[\\/]/).pop() ?? cfg.command
+      return ALLOWED_COMMANDS.has(cmd)
+    })
+    .map(([name, cfg]) => ({
+      name,
+      command: cfg.command,
+      args: cfg.args ?? [],
+      env: cfg.env,
+    }))
 }
 
 /**

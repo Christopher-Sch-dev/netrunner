@@ -63,7 +63,11 @@ function isTruncated<T>(rows: T[]): boolean {
 /** Consulta nodos por ids, respetando el orden dado (LIMIT acotado). */
 function nodesByIds(db: Database, ids: string[]): GraphNode[] {
   const stmt = db.query('SELECT * FROM nodes WHERE id = ?')
-  return ids.slice(0, LIMIT).map((id) => toNode(stmt.get(id) as Record<string, unknown>))
+  // fix auditor (issue #1): filtrar nulls — un edge puede apuntar a un nodo inexistente
+  return ids.slice(0, LIMIT)
+    .map((id) => stmt.get(id) as Record<string, unknown> | undefined)
+    .filter((row): row is Record<string, unknown> => !!row)
+    .map(toNode)
 }
 
 /** Consulta edges que tocan un conjunto de nodos (from O to en ids), dedup. */

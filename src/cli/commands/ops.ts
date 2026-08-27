@@ -11,8 +11,15 @@ export async function ops(ctx: HandlerContext): Promise<void> {
   const { emitEvent } = await import('../../context/events')
   const { recordLatency } = await import('../../metrics/index')
   const { emitSignal } = await import('../../hooks/index')
+  const { evaluatePolicy } = await import('../../policy/index')
   const kind = ctx.args[0] ?? 'test'
   const timeout = Number(ctx.args[1] ?? 30000)
+  // fix auditor (A1): policy fail-closed en CLI — ops es mutating, requiere approval
+  const decision = evaluatePolicy('edit', { readOnly: false, approval: false })
+  if (decision === 'deny') {
+    ctx.emit({ ok: false, error: 'policy deny: mutating op requiere approval' }, ctx.human)
+    process.exit(1)
+  }
   const start = Date.now()
   emitEvent(ctx.projectDir, { type: 'op/start', tool: `op.${kind}` })
   const r = await runOp(kind, ctx.projectDir, timeout)

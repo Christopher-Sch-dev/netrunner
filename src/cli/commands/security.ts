@@ -7,8 +7,10 @@ import type { HandlerContext } from './types'
 /** rol: guard check (patrones secrets + symlinks + imports rotos). */
 export async function guard(ctx: HandlerContext): Promise<void> {
   const { guardCheck } = await import('../../guard/index')
-  ctx.emit(guardCheck(ctx.projectDir), ctx.human)
-  process.exit(0)
+  const result = guardCheck(ctx.projectDir)
+  ctx.emit(result, ctx.human)
+  // fix auditor (A2): fail-closed — si hay secrets/problemas, exit ≠ 0 (el CI/agente se entera)
+  process.exit(result.ok ? 0 : 1)
 }
 
 /** rol: evaluar política de intención (fail-closed, AC-4). */
