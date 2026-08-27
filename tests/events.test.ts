@@ -1,4 +1,7 @@
-import { describe, it, expect } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach } from 'vitest'
+import { mkdtempSync, rmSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { emitEvent, replayEvents } from '../src/context/events'
 import { ToolRegistry } from '../src/core/registry'
 
@@ -6,12 +9,21 @@ import { ToolRegistry } from '../src/core/registry'
 // The agent can replay what happened (dsh invariant) and policy/guard are seams.
 
 describe('evento durable + waterfall', () => {
-  it('emite y replay eventos en orden (AC-1/2)', () => {
-    const log: string[] = []
-    emitEvent(log, { type: 'op/start', tool: 'op.test' })
-    emitEvent(log, { type: 'op/result', tool: 'op.test', ok: true })
+  let dir: string
 
-    const events = replayEvents(log)
+  beforeEach(() => {
+    dir = mkdtempSync(join(tmpdir(), 'netrunner-events-old-'))
+  })
+
+  afterEach(() => {
+    rmSync(dir, { recursive: true, force: true })
+  })
+
+  it('emite y replay eventos en orden (AC-1/2)', () => {
+    emitEvent(dir, { type: 'op/start', tool: 'op.test' })
+    emitEvent(dir, { type: 'op/result', tool: 'op.test', ok: true })
+
+    const events = replayEvents(dir)
     expect(events.length).toBe(2)
     expect(events[0].type).toBe('op/start')
     expect(events[1].type).toBe('op/result')
@@ -19,7 +31,7 @@ describe('evento durable + waterfall', () => {
   })
 
   it('log vacío → [] (AC-4)', () => {
-    expect(replayEvents([])).toEqual([])
+    expect(replayEvents(dir)).toEqual([])
   })
 
   it('hooks pre/post no rompen la ejecución (AC-3/4)', () => {
