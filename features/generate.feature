@@ -4,7 +4,7 @@
 **Como** un agente que opera un proyecto Netrunner,
 **quiero** que el motor genere/actualice la documentación del proyecto (README/AGENTS)
 desde el snapshot vivo,
-**para** que la skill auto-generante documente todo al día (la feature de Cris:
+**para** que la skill auto-generante documente todo al día (la feature de documentación:
 "forzar la creación de documentación del proyecto, con el agente y automáticamente").
 
 ## Acceptance Criteria (Wave 6 — skill auto-generante)

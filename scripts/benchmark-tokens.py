@@ -6,7 +6,7 @@ Mide bytes de output (proxy de tokens) de:
 """
 import subprocess, os, sys
 
-REPO = "/home/blackice/code/HERMES-GITHUB/netrunner"
+REPO = os.environ.get("NETRUNNER_REPO", os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 BIN = os.path.join(REPO, "dist", "netrunner")
 
 def bytes_of(cmd):

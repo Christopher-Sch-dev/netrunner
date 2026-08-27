@@ -1,7 +1,7 @@
 /**
  * rol: Detector de árbol de directorios de Netrunner (Wave 6 — skill auto-generante).
  * Devuelve la estructura de carpetas del proyecto (hasta depth 3), excluyendo
- * node_modules/.git/.netrunner. Es la base de la feature de Cris: "carpetas,
+ * node_modules/.git/.netrunner. Es la base de la feature de carpetas:
  * subcarpetas".
  *
  * SPEC (Mandamiento 0):

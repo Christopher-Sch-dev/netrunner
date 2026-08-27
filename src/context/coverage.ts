@@ -1,7 +1,7 @@
 /**
  * rol: Detector de cobertura de tests de Netrunner (Wave 6 — skill auto-generante).
  * Lee el % de cobertura del proyecto desde coverage/coverage-summary.json
- * (formato vitest/istanbul json-summary). Es la base de la feature de Cris:
+ * (formato vitest/istanbul json-summary). Es la base de la feature de cobertura:
  * "qué porcentaje del proyecto completo y los tests rellenados o actuales".
  *
  * SPEC (Mandamiento 0):

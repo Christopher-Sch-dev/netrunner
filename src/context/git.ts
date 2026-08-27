@@ -2,7 +2,7 @@
  * rol: Detector git de Netrunner (Wave 6 — skill auto-generante).
  * Lee el estado git del proyecto DIRECTAMENTE de `.git/` (HEAD, config, logs)
  * sin ejecutar el binario git — determinista, PURE, sin I/O pesada. Es la base
- * de la feature de documentación que Cris quiere: en qué rama está, si está
+ * de la feature de documentación: en qué rama está, si está
  * conectado a GitHub, y los últimos commits.
  *
  * SPEC (Mandamiento 0):

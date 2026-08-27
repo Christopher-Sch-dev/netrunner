@@ -4,7 +4,7 @@
 **Como** un agente que opera un proyecto Netrunner,
 **quiero** conocer la estructura de carpetas (árbol) y los pendientes (TODO/FIXME),
 **para** que la skill auto-generante documente el árbol del proyecto y los pendientes
-(la feature de Cris: "carpetas, subcarpetas" + "pendientes").
+(la feature de carpetas y pendientes).
 
 ## Acceptance Criteria (Wave 6 — skill auto-generante)
 - **AC-1**: `dirsTree(projectDir)` devuelve el árbol de directorios (hasta depth 3, excluye node_modules/.git).

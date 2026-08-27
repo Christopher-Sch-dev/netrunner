@@ -5,7 +5,7 @@
 **quiero** un SNAPSHOT del estado del proyecto (rama, versiones, cobertura, servicios,
 árbol, pendientes) persistido en `.netrunner/state/project.json`,
 **para** que la skill auto-generante lea un "sticky note" vivo y progresivo del proyecto
-(la feature de Cris: "sticky notes para siempre y progresivo").
+(la feature de snapshot: "sticky notes para siempre y progresivo").
 
 ## Acceptance Criteria (Wave 6 — skill auto-generante)
 - **AC-1**: `buildSnapshot(projectDir)` une los detectores (git, versions, coverage, services, dirs, todos) en un ProjectSnapshot.

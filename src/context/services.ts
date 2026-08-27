@@ -2,7 +2,7 @@
  * rol: Detector de servicios de Netrunner (Wave 6 — skill auto-generante).
  * Detecta los servicios conectados del proyecto (frontend/backend/urls/puertos)
  * desde package.json scripts (dev/start con --port) y docker-compose.yml.
- * Es la base de la feature de Cris: "detectar los servicios de infraestructura".
+ * Es la base de la feature de servicios de infraestructura.
  *
  * SPEC (Mandamiento 0):
  *   Como un agente que opera un proyecto Netrunner,

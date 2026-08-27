@@ -2,7 +2,7 @@
  * rol: Detector de versiones de Netrunner (Wave 6 — skill auto-generante).
  * Lee las versiones de las dependencias del proyecto desde package.json,
  * separadas en prod (dependencies) y dev (devDependencies), ordenadas
- * alfabéticamente. Es la base de la feature de documentación que Cris quiere:
+ * alfabéticamente. Es la base de la feature de documentación de versiones:
  * "las versiones de lo que tenemos instalado separado y ordenado".
  *
  * SPEC (Mandamiento 0):

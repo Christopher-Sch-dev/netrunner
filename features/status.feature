@@ -5,7 +5,7 @@
 **quiero** ejecutar `netrunner status` para ver el snapshot del proyecto (rama,
 versiones, cobertura, servicios, pendientes) y regenerar la doc viva,
 **para** que el agente tenga el "sticky note" vivo del proyecto en una llamada
-(la feature de Cris: documentación forzada + contexto completo).
+(la feature de status: documentación forzada + contexto completo).
 
 ## Acceptance Criteria
 - **AC-1**: `netrunner status` devuelve el snapshot del proyecto (git/versions/coverage/services/dirs/todos) en JSON.
