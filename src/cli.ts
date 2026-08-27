@@ -18,6 +18,7 @@
  *   AC-4 content-first dashboard (stack + capabilities + counts).
  *   AC-14 JSON output by default, exit 0/1/2, stderr for errors.
  */
+import { existsSync } from 'node:fs'
 import { detectStack } from './context/detect'
 import { indexProject } from './context/graph'
 
@@ -108,6 +109,11 @@ export async function main(argv: string[]): Promise<never> {
   // Bug cwd (auditor): --dir <path> takes precedence over process.cwd().
   // The agent may not be in the correct cwd → it would index the wrong directory.
   const projectDir = flags.dir ?? process.cwd()
+
+  // fix juez de casos borde: --dir inexistente → error (no mentir reportando éxito)
+  if (flags.dir && !existsSync(projectDir)) {
+    fail('INVALID_DIR', `directorio no existe: '${projectDir}'`, 'usa un path válido con --dir', 2)
+  }
 
   if (flags['version'] || subcommand === 'version') {
     emit({ name: 'netrunner', version: '0.3.1' }, human)
@@ -307,7 +313,10 @@ export async function main(argv: string[]): Promise<never> {
       process.exit(0)
     }
     default: {
-      // no subcommand → dashboard
+      // no subcommand → dashboard (AC-4). Unknown subcommand → error (fix juez de casos borde).
+      if (subcommand && !flags['help'] && subcommand !== 'version') {
+        fail('UNKNOWN_COMMAND', `comando no reconocido: '${subcommand}'`, 'usa: netrunner --help para la lista', 2)
+      }
       emit(await dashboard(projectDir), human)
       process.exit(0)
     }

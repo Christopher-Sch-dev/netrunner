@@ -88,6 +88,13 @@ function edgesAmong(db: Database, ids: string[]): GraphEdge[] {
 
 /** EXPLORE: nodos cuyo nombre matchea (LIKE) + edges que los conectan. */
 export async function explore(name: string, projectDir: string): Promise<QueryResult> {
+  // auto-index if there is no index.db yet (fix juez de casos borde: --dir without init → cryptic error)
+  const { existsSync } = await import('node:fs')
+  const { join } = await import('node:path')
+  if (!existsSync(join(projectDir, '.netrunner', 'index.db'))) {
+    const { indexProject } = await import('./graph')
+    await indexProject(projectDir)
+  }
   const db = openDb(projectDir)
   try {
     const pattern = `%${name}%`
