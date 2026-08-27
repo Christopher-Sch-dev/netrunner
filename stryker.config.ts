@@ -9,9 +9,10 @@ export default defineConfig({
   // reporters: solo clear-text (sin html: genera .stryker/ pesado)
   reporters: ['clear-text'],
   coverageAnalysis: 'perTest',
-  // cap de recursos (OOM fix 2026-08-26): concurrency 2 → RAM liviana,
-  // no revienta la PC aunque corran otros proyectos.
-  concurrency: 2,
+  // cap de recursos (OOM/CPU fix 2026-08-27): concurrency 1 + maxWorkers 1 → UN solo proceso,
+  // no 8 (2 runners × 4 workers). El mutation es CPU-intensivo (recompila el binario por mutante);
+  // correrlo en paralelo mata la CPU. Solo correr cuando la PC esté libre.
+  concurrency: 1,
   maxTestRunnerReuse: 100,
   cleanTempDir: 'always',
   mutate: ['src/**/*.ts'],
