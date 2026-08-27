@@ -16,7 +16,7 @@ Netrunner is a **universal agent SDK** (open-source, MIT): a single binary that 
 
 ## How to work here
 
-1. **Read `.onyx/` first** — PROJECT.md (what this is), RULES.md (how to work), DECISIONS/ (decisions made), TESTING.md (what tests validate).
+1. **Read `spec.md` first** — the root contract (what this is, the acceptance criteria). Then `README.md` for the big picture.
 2. **Spec before code.** Every feature starts in `spec.md` with *As/In order to/I want* + Acceptance Criteria. No code without a spec.
 3. **Gherkin.** Translate each story into `features/*.feature` (Given/When/Then).
 4. **TDD.** RED (failing test) → GREEN (minimal implementation) → refactor.
@@ -46,4 +46,4 @@ Conventional commits: `feat:`, `fix:`, `docs:`, `refactor:`, `test:`.
 
 ## Decision record
 
-Decisions live in `.onyx/DECISIONS/` as `DEC-NNN-slug.md` in Gherkin format (Given/When/Then + why + rejected alternatives).
+Architectural decisions are recorded in `spec.md` and the commit history. Each significant decision is captured in the spec's acceptance criteria and the relevant feature files.
