@@ -46,4 +46,23 @@ describe('snapshot rollback', () => {
     const list = listSnapshots(dir)
     expect(list.snapshots).toEqual([])
   })
+
+  it('bloquea path traversal en restore (fix RCE del juez de seguridad)', () => {
+    // crea un snapshot malicioso con un path que escapa del proyecto
+    mkdirSync(join(dir, '.netrunner', 'backups'), { recursive: true })
+    const evil = { id: 'snap-evil', files: { '../../../../tmp/PWNED': 'pwned' }, mtime: 0 }
+    writeFileSync(join(dir, '.netrunner', 'backups', 'snap-evil.json'), JSON.stringify(evil))
+
+    expect(() => restoreSnapshot(dir, 'snap-evil')).toThrow(/path traversal/)
+  })
+
+  it('no guarda secrets en el snapshot (fix fuga de secrets)', () => {
+    mkdirSync(join(dir, 'src'), { recursive: true })
+    writeFileSync(join(dir, 'src', 'a.ts'), 'export const x = 1\n')
+    writeFileSync(join(dir, '.env'), 'SECRET=ghp_1234567890\n')
+
+    const snap = createSnapshot(dir)
+
+    expect(Object.keys(snap.files)).not.toContain('.env')
+  })
 })

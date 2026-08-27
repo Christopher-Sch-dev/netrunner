@@ -15,14 +15,16 @@
  *   AC-4 sin backups → { snapshots: [] } (no falla).
  */
 import { mkdirSync, writeFileSync, readFileSync, readdirSync, existsSync } from 'node:fs'
-import { join, dirname, relative } from 'node:path'
+import { join, dirname, relative, resolve, normalize } from 'node:path'
 
 const IGNORED = new Set(['node_modules', '.git', '.netrunner', 'dist', 'build', 'coverage', '.stryker-tmp'])
+// archivos sensibles que NUNCA van al backup (fuga de secrets — fix juez de seguridad)
+const SENSITIVE = new Set(['.env', '.pem', '.key', '.p12', '.credentials', 'id_rsa', 'id_ed25519', 'config.json'])
 
 /** Un snapshot del estado. */
 export interface SnapshotEntry { id: string; files: Record<string, string>; mtime: number }
 
-/** rol: recolecta los archivos fuente del proyecto (determinista). */
+/** rol: recolecta los archivos fuente del proyecto (determinista, sin secrets). */
 function collectFiles(projectDir: string): Record<string, string> {
   const files: Record<string, string> = {}
   const walk = (dir: string): void => {
@@ -32,8 +34,12 @@ function collectFiles(projectDir: string): Record<string, string> {
       if (e.isDirectory()) {
         if (!IGNORED.has(e.name)) walk(join(dir, e.name))
       } else if (e.isFile()) {
+        const rel = relative(projectDir, join(dir, e.name))
+        // no seguir symlinks (fix seguridad) ni archivos sensibles (fix fuga de secrets)
+        if (e.isSymbolicLink()) continue
+        if (SENSITIVE.has(e.name) || e.name.includes('.env')) continue
         try {
-          files[relative(projectDir, join(dir, e.name))] = readFileSync(join(dir, e.name), 'utf8')
+          files[rel] = readFileSync(join(dir, e.name), 'utf8')
         } catch { /* skip */ }
       }
     }
@@ -70,13 +76,18 @@ export function listSnapshots(projectDir: string): { snapshots: Array<{ id: stri
   }
 }
 
-/** rol: restaura un snapshot (re-escribe el estado, AC-3). */
+/** rol: restaura un snapshot (re-escribe el estado, AC-3). Valida path traversal (fix RCE). */
 export function restoreSnapshot(projectDir: string, id: string): void {
   const path = join(projectDir, '.netrunner', 'backups', `${id}.json`)
   if (!existsSync(path)) throw new Error(`snapshot no encontrado: '${id}'`)
   const entry = JSON.parse(readFileSync(path, 'utf8')) as SnapshotEntry
+  const root = resolve(projectDir)
   for (const [rel, content] of Object.entries(entry.files)) {
-    const abs = join(projectDir, rel)
+    // path traversal guard (fix RCE del juez de seguridad): el target debe quedar bajo projectDir
+    const abs = resolve(root, rel)
+    if (abs !== root && !abs.startsWith(root + '/')) {
+      throw new Error(`path traversal bloqueado: '${rel}' escapa del proyecto`)
+    }
     mkdirSync(dirname(abs), { recursive: true })
     writeFileSync(abs, content)
   }
