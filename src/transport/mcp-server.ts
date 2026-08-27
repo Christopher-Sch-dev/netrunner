@@ -32,6 +32,26 @@ import { toolsetsForStack, STACK_TOOLSETS } from './toolsets'
 import { registerMetaResources } from './mcp-resources'
 import type { ToolRegistry, ToolSpec, ToolContext } from '../core/registry'
 
+/** Versión del protocolo MCP stateless que habla este server (2026-07-28). */
+export const STATELESS_PROTOCOL_VERSION = '2026-07-28'
+
+/** TTL del catálogo de tools (tools/list cacheable, SEP-2549). */
+export const TOOLS_LIST_TTL_MS = 60_000
+
+/** cacheScope del catálogo de tools (SEP-2549): 'global' = cacheable entre clientes. */
+export const TOOLS_LIST_CACHE_SCOPE = 'global'
+
+/**
+ * rol: headers de routing HTTP del stateless 2026-07-28 (SEP-2243).
+ * Mcp-Method y Mcp-Name viajan en headers para que gateways/WAFs rutteen y midan
+ * sin parsear el body JSON. Mcp-Name solo aplica a métodos con tool (tools/call).
+ */
+export function statelessHeaders(method: string, name?: string): Record<string, string> {
+  const headers: Record<string, string> = { 'Mcp-Method': method }
+  if (name) headers['Mcp-Name'] = name
+  return headers
+}
+
 /** Un toolset: grupo de tools activadas por stack del proyecto (determinista). */
 interface Toolset {
   id: string
@@ -89,6 +109,37 @@ function vToZod(v: unknown): z.ZodType {
 }
 
 /**
+ * rol: capa stateless 2026-07-28 sobre el SDK MCP (que aún no lo implementa).
+ * 1) Registra el RPC `server/discover` (SEP-2575): capacidades + toolsets up front.
+ * 2) Envuelve el handler de `tools/list` para inyectar `_meta.ttlMs`/`cacheScope`
+ *    (SEP-2549): el catálogo de tools es cacheable por el cliente.
+ * El `_meta` del ListToolsResultSchema es $loose, así que los campos extra sobreviven.
+ */
+function applyStateless(server: McpServer, available: Toolset[]): void {
+  const inner = server.server as unknown as {
+    _requestHandlers: Map<string, (request: unknown, extra: unknown) => Promise<unknown>>
+    setRequestHandler: (schema: z.ZodObject<{ method: z.ZodLiteral<string> }>, handler: (request: unknown, extra: unknown) => Promise<unknown>) => void
+  }
+
+  // 1) server/discover — RPC opcional de capacidades (stateless 2026-07-28).
+  const DiscoverRequestSchema = z.object({ method: z.literal('server/discover') })
+  inner.setRequestHandler(DiscoverRequestSchema, async () => ({
+    protocolVersion: STATELESS_PROTOCOL_VERSION,
+    capabilities: { tools: { listChanged: true } },
+    toolsets: available.map((t) => ({ id: t.id, description: t.description })),
+  }))
+
+  // 2) tools/list cacheable — envuelve el handler original para añadir _meta.ttlMs/cacheScope.
+  const originalList = inner._requestHandlers.get('tools/list')
+  if (originalList) {
+    inner._requestHandlers.set('tools/list', async (request, extra) => {
+      const result = (await originalList(request, extra)) as Record<string, unknown>
+      return { ...result, _meta: { ttlMs: TOOLS_LIST_TTL_MS, cacheScope: TOOLS_LIST_CACHE_SCOPE } }
+    })
+  }
+}
+
+/**
  * rol: construye el McpServer proyectando el registry (testable).
  * projectDir es el proyecto a operar. Expone progressive disclosure.
  */
@@ -139,6 +190,9 @@ export async function createServer(projectDir: string): Promise<McpServer> {
 
   // expone el snapshot del proyecto como recursos MCP (net://meta/*, Wave 5)
   registerMetaResources(server, projectDir)
+
+  // capa stateless 2026-07-28: server/discover + tools/list cacheable (W4.E4.3)
+  applyStateless(server, available)
 
   return server
 }
