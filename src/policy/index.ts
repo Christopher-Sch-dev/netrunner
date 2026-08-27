@@ -33,10 +33,15 @@ export type Intent = 'explore' | 'edit' | 'destroy' | string
 export type Decision = 'allow' | 'deny'
 
 /** rol: decide si la intención está permitida en el contexto (PURE, fail-closed). */
-export function evaluatePolicy(_intent: Intent, ctx: PolicyContext): Decision {
+export function evaluatePolicy(intent: Intent, ctx: PolicyContext): Decision {
   if (!ctx || typeof ctx !== 'object') return 'deny' // fail-closed (AC-4)
+  // intenciones mutating (edit/destroy) NUNCA se permiten solo por readOnly (fix policy bypass)
+  if (intent === 'destroy' || intent === 'edit') {
+    return ctx.approval ? 'allow' : 'deny'
+  }
+  // intenciones de lectura (explore, scan, etc.) → allow si readOnly
   if (ctx.readOnly) return 'allow' // lectura siempre permitida (AC-2)
-  // mutating: requiere approval explícito
+  // mutating genérico: requiere approval explícito
   return ctx.approval ? 'allow' : 'deny' // (AC-2/3)
 }
 

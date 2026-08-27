@@ -27,6 +27,14 @@ describe('policy por intención + secrets', () => {
     expect(evaluatePolicy('edit', {} as PolicyContext)).toBe('deny')
   })
 
+  it('destroy/edit NO se permiten por readOnly (fix policy bypass del juez de seguridad)', () => {
+    // antes: destroy --readonly true → allow (bug). Ahora: deny sin approval.
+    expect(evaluatePolicy('destroy', { readOnly: true, approval: false })).toBe('deny')
+    expect(evaluatePolicy('edit', { readOnly: true, approval: false })).toBe('deny')
+    // con approval explícito sí
+    expect(evaluatePolicy('destroy', { readOnly: true, approval: true })).toBe('allow')
+  })
+
   it('secrets scopeados por tool (AC-3)', () => {
     mkdirSync(join(dir, '.netrunner'), { recursive: true })
     writeFileSync(

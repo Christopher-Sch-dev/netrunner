@@ -18,6 +18,7 @@
  *   AC-4 content-first dashboard (stack + capabilities + counts).
  *   AC-14 JSON output by default, exit 0/1/2, stderr for errors.
  */
+import { existsSync } from 'node:fs'
 import { detectStack } from './context/detect'
 import { indexProject } from './context/graph'
 
@@ -109,6 +110,11 @@ export async function main(argv: string[]): Promise<never> {
   // The agent may not be in the correct cwd → it would index the wrong directory.
   const projectDir = flags.dir ?? process.cwd()
 
+  // fix juez de casos borde: --dir inexistente → error (no mentir reportando éxito)
+  if (flags.dir && !existsSync(projectDir)) {
+    fail('INVALID_DIR', `directorio no existe: '${projectDir}'`, 'usa un path válido con --dir', 2)
+  }
+
   if (flags['version'] || subcommand === 'version') {
     emit({ name: 'netrunner', version: '0.3.1' }, human)
     process.exit(0)
@@ -131,7 +137,7 @@ export async function main(argv: string[]): Promise<never> {
       name: 'netrunner',
       version: '0.3.1',
       usage: 'netrunner <cmd> [args] [--dir <path>] [--human]',
-      commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'install', 'plugin', 'dump', '--mcp'],
+      commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'plugin', '--mcp', '--acp'],
     }, human)
     process.exit(0)
   }
@@ -260,11 +266,31 @@ export async function main(argv: string[]): Promise<never> {
       emit(snap, human)
       process.exit(0)
     }
+    case 'ops':
+    case 'op': {
+      // vision (AC-6): operar el proyecto (test/build/lint) — el control plane
+      const { runOp } = await import('./tools/ops')
+      const { logOperation } = await import('./history/index')
+      const kind = args[0] ?? 'test'
+      const timeout = Number(args[1] ?? 30000)
+      const r = await runOp(kind, projectDir, timeout)
+      logOperation(projectDir, `ops ${kind}`, r.ok ? 'ok' : 'fail')
+      emit(r, human)
+      process.exit(0)
+    }
+    case 'history': {
+      const { history } = await import('./history/index')
+      emit(history(projectDir), human)
+      process.exit(0)
+    }
     case 'init': {
       const dir = args[0] ?? projectDir
-      const { nodes, edges } = await indexProject(dir)
-      // consistent output: nested counts (does not collide with map which uses nodes:[...])
-      emit({ indexed: dir, counts: { nodes: nodes.length, edges: edges.length } }, human)
+      // vision (AC-1): init indexa Y genera el conectable layer (mcp.json + SKILL.md + AGENTS.md)
+      const { initProject } = await import('./init')
+      const { logOperation } = await import('./history/index')
+      const result = await initProject(dir)
+      logOperation(projectDir, 'init')
+      emit({ indexed: dir, counts: result.counts, written: result.written }, human)
       process.exit(0)
     }
     case 'plan': {
@@ -293,6 +319,17 @@ export async function main(argv: string[]): Promise<never> {
       }
       process.exit(0)
     }
+    case 'uninstall': {
+      const { uninstall } = await import('./install')
+      const target = args[0] ?? 'mcp'
+      try {
+        const result = uninstall(target, projectDir)
+        emit(result, human)
+      } catch (e) {
+        fail('UNKNOWN_TARGET', String((e as Error).message), 'usa: mcp | opencode | claude | cursor', 2)
+      }
+      process.exit(0)
+    }
     case 'explore': {
       const { explore } = await import('./context/queries')
       const name = args[0]
@@ -303,11 +340,14 @@ export async function main(argv: string[]): Promise<never> {
     }
     case '--help':
     case 'help': {
-      emit({ help: 'netrunner — plug any project into any agent', commands: ['init', 'plan', 'explore', '--mcp', '--version'] }, true)
+      emit({ help: 'netrunner — plug any project into any agent', commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'plugin', '--mcp', '--acp', '--version'] }, true)
       process.exit(0)
     }
     default: {
-      // no subcommand → dashboard
+      // no subcommand → dashboard (AC-4). Unknown subcommand → error (fix juez de casos borde).
+      if (subcommand && !flags['help'] && subcommand !== 'version') {
+        fail('UNKNOWN_COMMAND', `comando no reconocido: '${subcommand}'`, 'usa: netrunner --help para la lista', 2)
+      }
       emit(await dashboard(projectDir), human)
       process.exit(0)
     }

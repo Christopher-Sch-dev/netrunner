@@ -55,6 +55,7 @@ export function toolsetsFor(stack: { language: string; framework: string }): Too
 function familyToToolset(family: string): string | null {
   if (family === 'graph') return 'graph'
   if (family === 'read') return 'stack' // stack.info es family 'read'
+  if (family === 'op' || family === 'build' || family === 'test') return 'ops'
   return null
 }
 

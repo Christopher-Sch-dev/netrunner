@@ -17,7 +17,7 @@
  *   AC-4 devuelve JSON con qué escribió (TOON).
  *   AC-5 target inválido → error estructurado.
  */
-import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
+import { mkdirSync, writeFileSync, readFileSync, existsSync, rmSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 
 /** Config de cada target: qué archivo MCP escribe (matrix de agentes, w4a2). */
@@ -115,4 +115,29 @@ export function install(target: string, projectDir: string, bin = resolveBin()):
   const skillPath = writeSkill(target, projectDir)
   const mcpPath = writeMcp(target, projectDir, bin)
   return { target, written: ['SKILL.md', mcpPath], mcpConfig: mcpPath }
+}
+
+/**
+ * rol: desinstala el motor de un proyecto (AC-8 reversible — fix juez de producto).
+ * Revierte lo que install escribió: borra la config MCP y el skill dir del target.
+ * Idempotente: si no hay nada que desinstalar, no falla.
+ */
+export function uninstall(target: string, projectDir: string): { target: string; removed: string[] } {
+  if (!TARGET_CONFIG[target]) {
+    throw new Error(`target no soportado: '${target}' (usa: ${Object.keys(TARGET_CONFIG).join(', ')})`)
+  }
+  const removed: string[] = []
+  // borra la config MCP del target
+  const mcpPath = join(projectDir, TARGET_CONFIG[target])
+  if (existsSync(mcpPath)) {
+    rmSync(mcpPath, { force: true })
+    removed.push(mcpPath)
+  }
+  // borra el skill dir del target
+  const skillDir = join(projectDir, TARGET_SKILL_DIR[target])
+  if (existsSync(skillDir)) {
+    rmSync(skillDir, { recursive: true, force: true })
+    removed.push(skillDir)
+  }
+  return { target, removed }
 }

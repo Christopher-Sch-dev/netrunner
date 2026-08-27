@@ -19,8 +19,18 @@ import { readdirSync, readFileSync } from 'node:fs'
 import { join, relative } from 'node:path'
 
 const IGNORED = new Set(['node_modules', '.git', '.netrunner', 'dist', 'build', 'coverage', '.stryker-tmp'])
-const PROTECTED_FILES = new Set(['.env', '.env.local', '.pem', '.key', '.p12'])
-const SECRET_PATTERNS = [/ghp_[A-Za-z0-9]{20,}/, /sk-[A-Za-z0-9]{20,}/, /token\s*=\s*['"][^'"]{16,}['"]/i]
+const PROTECTED_FILES = new Set(['.env', '.env.local', '.pem', '.key', '.p12', 'id_rsa', 'id_ed25519', '.credentials', '.netrc'])
+const SECRET_PATTERNS = [
+  /ghp_[A-Za-z0-9]{20,}/,
+  /sk-[A-Za-z0-9]{20,}/,
+  /token\s*=\s*[A-Za-z0-9]{16,}/i,
+  /token\s*=\s*['"][^'"]{8,}['"]/i,
+  /AKIA[0-9A-Z]{16}/,
+  /xox[baprs]-[0-9A-Za-z-]{10,}/,
+  /AIza[0-9A-Za-z_-]{20,}/,
+  /-----BEGIN (RSA |OPENSSH |EC )?PRIVATE KEY/,
+  /password\s*=\s*[A-Za-z0-9]{6,}/i,
+]
 
 /** Un issue de protección. */
 export interface GuardIssue { file: string; reason: string }
@@ -37,14 +47,14 @@ export function guardCheck(projectDir: string): GuardResult {
     for (const e of entries) {
       if (e.isDirectory()) {
         if (!IGNORED.has(e.name)) walk(join(dir, e.name))
-      } else if (e.isFile()) {
+      } else if (e.isFile() || e.isSymbolicLink()) {
         const rel = relative(projectDir, join(dir, e.name))
-        // archivos protegidos (AC-3)
+        // archivos protegidos (AC-3), incluye symlinks a ellos (fix evasión)
         if (PROTECTED_FILES.has(e.name)) {
           issues.push({ file: rel, reason: 'archivo protegido (no commitear)' })
           continue
         }
-        // secrets en contenido (AC-2)
+        // secrets en contenido (AC-2), sigue symlinks a archivos
         try {
           const content = readFileSync(join(dir, e.name), 'utf8')
           if (SECRET_PATTERNS.some((re) => re.test(content))) {
