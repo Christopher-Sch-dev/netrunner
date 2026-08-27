@@ -3,8 +3,8 @@
 **The universal jack.** Connect every project, every agent, one net.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.3.1-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
-[![Tests](https://img.shields.io/badge/tests-154%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
+[![Version](https://img.shields.io/badge/version-0.7.1-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
+[![Tests](https://img.shields.io/badge/tests-243%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 [![Coverage](https://img.shields.io/badge/coverage-84%25-yellow.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 
 Netrunner is an open-source, MIT-licensed **universal agent SDK**: a single binary that turns *any* project into something *any* AI agent can understand, operate, and control — with one command.
@@ -85,26 +85,37 @@ Every command returns **clean JSON** (agent-parseable, no hallucination) with st
 | Command | What it does |
 |---|---|
 | `netrunner` | Project dashboard (content-first) |
-| `netrunner init [dir]` | Index the project into a knowledge graph |
+| `netrunner init [dir]` | Index the project into a knowledge graph + generate the connectable layer (mcp.json, SKILL.md, AGENTS.md, program.md) |
+| `netrunner init <owner/repo>` | Jack a remote GitHub repo (clone + init) |
 | `netrunner status [--docs]` | Live snapshot + regenerate README.generated.md / AGENTS.md |
 | `netrunner scan` | Unified overlay: stack + git + versions + coverage + services + TODOs |
 | `netrunner map` | Export the graph as JSON (D3/mermaid visualizable) with provenance |
 | `netrunner depth <sym> <level>` | Query a symbol by depth (L0 basic → L3 blast radius) |
 | `netrunner explore <sym>` | Search symbols by name |
-| `netrunner plan "<goal>"` | Generate a plan from the indexed graph |
-| `netrunner guard` | Black ICE: detect secrets and protected files |
+| `netrunner plan "<goal>"` | Generate a plan from the indexed graph (real, symbol-aware) |
+| `netrunner guard` | Black ICE: detect secrets, protected files, broken imports |
 | `netrunner persist "<decision>"` | Save a durable decision with provenance |
-| `netrunner rollback [create\|restore]` | Snapshot / restore project state |
+| `netrunner rollback [create\|restore]` | Snapshot / restore project state (incl. decisions) |
 | `netrunner policy <intent>` | Evaluate a permission (read/mutate) |
 | `netrunner curate` | Deterministic self-improvement from observations |
 | `netrunner lint` | Health-check the snapshot (stale, orphans) |
-| `netrunner daemon` | One daemon pass: sync + lint + curator |
+| `netrunner daemon [--watch]` | Daemon pass: sync + lint + curator + watchdog (resident with --watch) |
 | `netrunner mesh <dirs...>` | Connect N projects into a multi-repo graph |
 | `netrunner dump` | Print the full tool contract (auto-discovery) |
 | `netrunner install <target>` | Wire up agents (mcp/opencode/claude/cursor/codex/gemini/hermes) |
+| `netrunner uninstall <target>` | Revert the wiring |
 | `netrunner plugin <name>` | Generate an Agent Plugin 1.0 package |
-| `netrunner --mcp` | Serve as an MCP server over stdio |
+| `netrunner breach` | Decipher an unknown repo (stack → git → services → deck) |
+| `netrunner deck` | Deck state: quickhacks + daemons + tools (progressive disclosure) |
+| `netrunner mode <profile>` | Deck mode: explore / operate / audit (Wintermute/Neuromancer) |
+| `netrunner quickhacks` | List quickhacks with cost/cooldown |
+| `netrunner resume` | Reload the deck state (snapshot + decisions + history + signals) |
+| `netrunner sleeve [import <file>]` | Export/import the portable deck (Construct) |
+| `netrunner doctor` | Self-check: lint + guard + canonStale |
+| `netrunner history` | Operation history (the agent's memory) |
+| `netrunner --mcp` | Serve as an MCP server over stdio (stateless 2026-07-28) |
 | `netrunner --acp` | Serve as an ACP agent over stdio |
+| `netrunner --a2a` | Serve as an A2A agent over stdio (Agent Card + SendMessage) |
 | `netrunner --help` | List commands (or `<tool> --help` for a tool's schema) |
 
 Global flags: `--dir <path>` (operate a specific project), `--human` (readable output).
@@ -157,13 +168,12 @@ Netrunner was tested end-to-end with an AI agent (OpenCode + Nemotron) against t
 
 ## Roadmap
 
-**Shipped (v0.3.1):** knowledge graph, MCP + ACP + CLI + plugin views, self-generating skill (git/versions/coverage/services/TODOs), cyberpunk features (persist/map/scan/guard/depth/rollback), policy + curator, provenance in output, auto-sync graph, release binary + install.sh, benchmarks, auto-discovery (dump), timeboxing, consolidation + rejected-buffer, `_meta` schema version, curator results log, snapshot lint, curator validation gate, durable events + waterfall, daemon, multi-repo mesh, real coverage, domain connectors.
+**Shipped (v0.7.1):** knowledge graph, MCP (stateless 2026-07-28) + ACP + A2A + CLI + plugin views, self-generating skill, cyberpunk features (persist/map/scan/guard/depth/rollback/breach/deck/mode/quickhacks), policy + curator + validation gate, durable events + waterfall, daemon + watchdog, multi-repo mesh, real coverage, domain connectors, jack-remote (GitHub), m1-cli refactor, m4-metrics, progressive disclosure, token-counting, net sleeve, program.md, gitignore respected, hooks (signals to the connected agent).
 
 **Next:**
-1. **Daemon as a service** — `netrunner daemon` running as a systemd user service with a file watcher (event-driven, not mtime-polling).
-2. **A2A (agent-to-agent)** — bridge MCP ↔ A2A so the daemon talks to other agents.
-3. **More graph languages** — expand structural extraction to more ecosystems.
-4. **Community** — worked examples, benchmarks on more projects, conformance tests.
+1. **Orchestrator MCP real** — a real MCP orchestrator (not just the server).
+2. **More graph languages** — expand structural extraction to more ecosystems.
+3. **Community** — worked examples, benchmarks on more projects, conformance tests.
 
 ---
 
