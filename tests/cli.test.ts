@@ -82,6 +82,6 @@ describe('cli', () => {
     const json = logged.find((l) => l.startsWith('{'))
     expect(json).toBeDefined()
     expect(json).toContain('"netrunner"')
-    expect(json).toContain('"0.1.0"')
+    expect(logged[0]).toContain('"0.2.0"')
   })
 })

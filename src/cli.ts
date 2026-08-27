@@ -21,16 +21,27 @@
 import { detectStack } from './context/detect'
 import { indexProject } from './context/graph'
 
-/** rol: parsea argv (flags --flag, --flag=val). Devuelve {subcommand, flags, args}. */
+/** rol: parsea argv (flags --flag, --flag=val, --dir <path>). Devuelve {subcommand, flags, args}. */
 function parseArgs(argv: string[]): { subcommand: string; flags: Record<string, string>; args: string[] } {
   const flags: Record<string, string> = {}
   const args: string[] = []
   let subcommand = ''
-  for (const a of argv) {
+  // flags que consumen el siguiente argumento como valor (--dir <path>)
+  const valueFlags = new Set(['dir'])
+  for (let i = 0; i < argv.length; i++) {
+    const a = argv[i]
     if (a.startsWith('--')) {
       const eq = a.indexOf('=')
-      if (eq > -1) flags[a.slice(2, eq)] = a.slice(eq + 1)
-      else flags[a.slice(2)] = 'true'
+      if (eq > -1) {
+        flags[a.slice(2, eq)] = a.slice(eq + 1)
+      } else {
+        const name = a.slice(2)
+        if (valueFlags.has(name) && i + 1 < argv.length) {
+          flags[name] = argv[++i] // consume el siguiente arg como valor
+        } else {
+          flags[name] = 'true'
+        }
+      }
     } else if (!subcommand) {
       subcommand = a
     } else {
@@ -92,10 +103,22 @@ async function dashboard(projectDir: string): Promise<Record<string, unknown>> {
 export async function main(argv: string[]): Promise<never> {
   const { subcommand, flags, args } = parseArgs(argv)
   const human = flags.human === 'true' || flags.human === '1'
-  const projectDir = process.cwd()
+  // Bug cwd (auditor): --dir <path> tiene precedencia sobre process.cwd().
+  // El agente puede no estar en el cwd correcto → indexa el directorio equivocado.
+  const projectDir = flags.dir ?? process.cwd()
 
   if (flags['version'] || subcommand === 'version') {
-    emit({ name: 'netrunner', version: '0.1.0' }, human)
+    emit({ name: 'netrunner', version: '0.2.0' }, human)
+    process.exit(0)
+  }
+
+  if (flags['help'] || subcommand === 'help') {
+    emit({
+      name: 'netrunner',
+      version: '0.2.0',
+      usage: 'netrunner <cmd> [args] [--dir <path>] [--human]',
+      commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'install', 'plugin', '--mcp'],
+    }, human)
     process.exit(0)
   }
 
@@ -106,7 +129,89 @@ export async function main(argv: string[]): Promise<never> {
     // NO process.exit(0) aquí: serveMCP mantiene el proceso vivo escuchando stdin (Bug B).
   }
 
+  if (flags['acp'] || subcommand === 'acp') {
+    // --acp arranca el agente ACP por stdio (vista ACP, para IDEs como Zed).
+    // serveACP ya conecta el stream (process.stdin/stdout) internamente.
+    const { serveACP } = await import('./harness/acp')
+    serveACP(projectDir)
+    await new Promise<void>(() => {}) // mantiene el proceso vivo
+  }
+
   switch (subcommand) {
+    case 'map': {
+      const { exportMap } = await import('./map/index')
+      const { syncIfNeeded } = await import('./context/sync')
+      await syncIfNeeded(projectDir) // auto-sync: el grafo se mantiene solo (Fase 3)
+      emit(exportMap(projectDir), human)
+      process.exit(0)
+    }
+    case 'depth': {
+      const { depthQuery } = await import('./depth/index')
+      const symbol = args[0] ?? ''
+      const level = Number(args[1] ?? 0)
+      emit(await depthQuery(symbol, level, projectDir), human)
+      process.exit(0)
+    }
+    case 'scan': {
+      const { scanProject } = await import('./scan/index')
+      emit(await scanProject(projectDir), human)
+      process.exit(0)
+    }
+    case 'guard': {
+      const { guardCheck } = await import('./guard/index')
+      emit(guardCheck(projectDir), human)
+      process.exit(0)
+    }
+    case 'persist': {
+      const { persistDecision } = await import('./persist/index')
+      const decision = args.join(' ') || 'decisión'
+      emit(persistDecision(projectDir, decision, 'netrunner'), human)
+      process.exit(0)
+    }
+    case 'rollback': {
+      const { listSnapshots, createSnapshot, restoreSnapshot } = await import('./rollback/index')
+      if (args[0] === 'create') {
+        emit(createSnapshot(projectDir), human)
+      } else if (args[0] === 'restore') {
+        const id = args[1]
+        if (!id) {
+          emit({ error: true, code: 'MISSING_REQUIRED', message: 'rollback restore <id> requiere un id de snapshot' }, human)
+          process.exit(2)
+        }
+        restoreSnapshot(projectDir, id)
+        emit({ restored: id }, human)
+      } else {
+        emit(listSnapshots(projectDir), human)
+      }
+      process.exit(0)
+    }
+    case 'snapshot': {
+      const { buildSnapshot, saveSnapshot, loadSnapshot } = await import('./context/snapshot')
+      if (args[0] === 'save') {
+        const snap = await buildSnapshot(projectDir)
+        const path = saveSnapshot(projectDir, snap)
+        emit({ saved: path }, human)
+      } else if (args[0] === 'load') {
+        emit(loadSnapshot(projectDir), human)
+      } else {
+        emit(await buildSnapshot(projectDir), human)
+      }
+      process.exit(0)
+    }
+    case 'policy': {
+      const { evaluatePolicy } = await import('./policy/index')
+      const intent = args[0] ?? 'explore'
+      const readOnly = flags['readonly'] === 'true' || flags['readonly'] === '1'
+      const approval = flags['approval'] === 'true' || flags['approval'] === '1'
+      emit({ intent, decision: evaluatePolicy(intent as never, { readOnly, approval }) }, human)
+      process.exit(0)
+    }
+    case 'curate': {
+      const { curate } = await import('./auto/curator')
+      const obs = args.length ? JSON.parse(args.join(' ')) : []
+      emit({ actions: curate(obs) }, human)
+      process.exit(0)
+    }
     case 'status': {
       const { buildSnapshot } = await import('./context/snapshot')
       const { generateDocs } = await import('./generate/index')
@@ -120,7 +225,8 @@ export async function main(argv: string[]): Promise<never> {
     case 'init': {
       const dir = args[0] ?? projectDir
       const { nodes, edges } = await indexProject(dir)
-      emit({ indexed: dir, nodes: nodes.length, edges: edges.length }, human)
+      // output consistente: counts anidados (no colisiona con map que usa nodes:[...])
+      emit({ indexed: dir, counts: { nodes: nodes.length, edges: edges.length } }, human)
       process.exit(0)
     }
     case 'plan': {

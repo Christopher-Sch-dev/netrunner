@@ -23,8 +23,8 @@ const LIMIT = 200
 
 /** Nodo del grafo visual. */
 export interface MapNode { id: string; name: string; kind: string; file: string }
-/** Edge del grafo visual. */
-export interface MapEdge { from: string; to: string; kind: string }
+/** Edge del grafo visual con provenance (anti-alucinación, robar de graphify). */
+export interface MapEdge { from: string; to: string; kind: string; provenance: string; file: string }
 
 /** Grafo exportado. */
 export interface MapData { nodes: MapNode[]; edges: MapEdge[] }
@@ -36,7 +36,14 @@ export function exportMap(projectDir: string): MapData {
   try {
     const db = new Database(path)
     const nodes = db.query('SELECT id, name, kind, file FROM nodes LIMIT ?').all(LIMIT) as MapNode[]
-    const edges = db.query('SELECT "from", "to", kind FROM edges LIMIT ?').all(LIMIT) as MapEdge[]
+    // edges con provenance + file del nodo from (JOIN) — el LLM audita cada afirmación
+    const edges = db.query(
+      `SELECT e."from", e."to", e.kind,
+              CASE WHEN e.provenance = '' THEN 'INFERRED' ELSE e.provenance END AS provenance,
+              COALESCE(n.file, '') AS file
+       FROM edges e LEFT JOIN nodes n ON n.id = e."from"
+       LIMIT ?`,
+    ).all(LIMIT) as MapEdge[]
     db.close()
     return { nodes, edges }
   } catch {
