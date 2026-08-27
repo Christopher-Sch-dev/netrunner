@@ -85,7 +85,14 @@ export async function sleeve(ctx: HandlerContext): Promise<void> {
     importSleeve(ctx.projectDir, sleeve)
     ctx.emit({ imported: true }, ctx.human)
   } else {
-    ctx.emit(exportSleeve(ctx.projectDir), ctx.human)
+    // fix auditor (issue #3): export escribe el archivo .netrunner/sleeve.json (portable)
+    const { writeFileSync, mkdirSync } = await import('node:fs')
+    const { join } = await import('node:path')
+    const sleeveData = exportSleeve(ctx.projectDir)
+    const sleevePath = join(ctx.projectDir, '.netrunner', 'sleeve.json')
+    mkdirSync(join(ctx.projectDir, '.netrunner'), { recursive: true })
+    writeFileSync(sleevePath, JSON.stringify(sleeveData, null, 2))
+    ctx.emit({ ...sleeveData, exportedTo: sleevePath }, ctx.human)
   }
   process.exit(0)
 }

@@ -62,6 +62,42 @@ export async function graphReport(ctx: HandlerContext): Promise<void> {
   process.exit(0)
 }
 
+/** rol: callers — quién llama a un símbolo (spec AC-5, issue #5: comando de primer nivel). */
+export async function callers(ctx: HandlerContext): Promise<void> {
+  const { callers } = await import('../../context/queries')
+  const symbol = ctx.args[0] ?? ''
+  if (!symbol) {
+    ctx.fail('MISSING_REQUIRED', 'callers requiere un símbolo', 'netrunner callers <sym>', 2)
+  }
+  const { explore } = await import('../../context/queries')
+  const res = await explore(symbol, ctx.projectDir)
+  const node = res.nodes?.find((n) => n.id.startsWith('def:')) ?? res.nodes?.[0]
+  if (!node) {
+    ctx.emit({ found: false, symbol }, ctx.human)
+  } else {
+    ctx.emit(await callers(node.id, ctx.projectDir), ctx.human)
+  }
+  process.exit(0)
+}
+
+/** rol: callees — a quién llama un símbolo (spec AC-5, comando de primer nivel). */
+export async function callees(ctx: HandlerContext): Promise<void> {
+  const { callees } = await import('../../context/queries')
+  const symbol = ctx.args[0] ?? ''
+  if (!symbol) {
+    ctx.fail('MISSING_REQUIRED', 'callees requiere un símbolo', 'netrunner callees <sym>', 2)
+  }
+  const { explore } = await import('../../context/queries')
+  const res = await explore(symbol, ctx.projectDir)
+  const node = res.nodes?.find((n) => n.id.startsWith('def:')) ?? res.nodes?.[0]
+  if (!node) {
+    ctx.emit({ found: false, symbol }, ctx.human)
+  } else {
+    ctx.emit(await callees(node.id, ctx.projectDir), ctx.human)
+  }
+  process.exit(0)
+}
+
 /** rol: escaneo del proyecto. */
 export async function scan(ctx: HandlerContext): Promise<void> {
   const { scanProject } = await import('../../scan/index')

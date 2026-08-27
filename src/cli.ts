@@ -122,6 +122,8 @@ const HANDLERS: Record<string, (ctx: HandlerContext) => Promise<void>> = {
   uninstall: integration.uninstall,
   explore: context.explore,
   path: context.path,
+  callers: context.callers,
+  callees: context.callees,
   'god-nodes': context.godNodes,
   'graph-report': context.graphReport,
   'mcp-orchestrate': orchestrate.orchestrate,
