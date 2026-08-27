@@ -120,6 +120,14 @@ export async function main(argv: string[]): Promise<never> {
       emit({ plan: await generatePlan(goal, projectDir) }, human)
       process.exit(0)
     }
+    case 'plugin': {
+      const { generatePlugin } = await import('./plugin/generate')
+      const name = args[0] ?? 'netrunner'
+      const version = args[1] ?? '1.0.0'
+      const result = generatePlugin(name, version, projectDir)
+      emit(result, human)
+      process.exit(0)
+    }
     case 'install': {
       const { install } = await import('./install')
       const target = args[0] ?? 'mcp'

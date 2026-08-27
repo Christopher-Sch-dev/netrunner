@@ -20,12 +20,17 @@
 import { mkdirSync, writeFileSync, readFileSync, existsSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 
-/** Config de cada target: qué archivo MCP escribe. */
+/** Config de cada target: qué archivo MCP escribe (matrix de agentes, w4a2). */
 const TARGET_CONFIG: Record<string, string> = {
   mcp: '.mcp.json',
   opencode: 'opencode.json',
   claude: '.claude/settings.json',
   cursor: '.cursor/mcp.json',
+  codex: '.codex/mcp.json',
+  gemini: '.gemini/mcp.json',
+  hermes: '.hermes/mcp.json',
+  dsh: '.dsh/mcp.json',
+  fx: '.fx/mcp.json',
 }
 
 /** rol: contenido del SKILL.md (formato Agent Skills, DEC-006). */

@@ -50,4 +50,14 @@ describe('netrunner install', () => {
   it('target inválido → error (AC-5)', async () => {
     expect(() => install('nope', dir)).toThrow(/target/i)
   })
+
+  it('matrix de targets (w4a2): escribe config MCP por cada agente', async () => {
+    const targets = ['mcp', 'opencode', 'claude', 'cursor', 'codex', 'gemini', 'hermes']
+    for (const t of targets) {
+      const r = await install(t, dir)
+      expect(r.written).toContain('SKILL.md')
+      // r.mcpConfig ya es ruta absoluta; verifico que existe
+      expect(existsSync(r.mcpConfig)).toBe(true)
+    }
+  })
 })
