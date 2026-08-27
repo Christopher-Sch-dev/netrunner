@@ -81,10 +81,20 @@ export async function mode(ctx: HandlerContext): Promise<void> {
 export async function daemon(ctx: HandlerContext): Promise<void> {
   const { daemonTick } = await import('../../daemon/index')
   if (ctx.flags['watch'] === 'true' || ctx.flags['watch'] === '1') {
-    const { daemonWatch } = await import('../../daemon/watch')
-    const intervalMs = Number(ctx.args[0] ?? 5000)
-    const results = await daemonWatch(ctx.projectDir, { intervalMs })
-    ctx.emit({ watched: results.length, last: results[results.length - 1] }, ctx.human)
+    // fix auditor agéntico: usar el fs.watch REAL (watchProject) en vez de polling.
+    // El watcher emite señal 'cambio' en tiempo real al modificar archivos.
+    const { watchProject } = await import('../../watchdog/index')
+    const { daemonTick } = await import('../../daemon/index')
+    const debounceMs = Number(ctx.args[0] ?? 100)
+    const handle = watchProject(ctx.projectDir, { debounceMs })
+    // correr un tick inicial (baseline) y luego esperar cambios
+    const baseline = await daemonTick(ctx.projectDir)
+    ctx.emit({ watching: true, baseline, debounceMs }, ctx.human)
+    // mantener el proceso vivo hasta que el watcher cierre (Ctrl+C)
+    await new Promise<void>((resolve) => {
+      process.once('SIGINT', () => { handle.close(); resolve() })
+      process.once('SIGTERM', () => { handle.close(); resolve() })
+    })
   } else {
     ctx.emit(await daemonTick(ctx.projectDir), ctx.human)
   }
