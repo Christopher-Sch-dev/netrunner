@@ -36,6 +36,18 @@ export async function depth(ctx: HandlerContext): Promise<void> {
   process.exit(0)
 }
 
+/** rol: shortest-path entre dos símbolos (gap Graphify: graphify path A B). */
+export async function path(ctx: HandlerContext): Promise<void> {
+  const { shortestPath } = await import('../../path/index')
+  const from = ctx.args[0]
+  const to = ctx.args[1]
+  if (!from || !to) {
+    ctx.fail('MISSING_REQUIRED', 'path requiere dos símbolos', 'netrunner path <from> <to>', 2)
+  }
+  ctx.emit({ from, to, path: await shortestPath(ctx.projectDir, from, to) }, ctx.human)
+  process.exit(0)
+}
+
 /** rol: escaneo del proyecto. */
 export async function scan(ctx: HandlerContext): Promise<void> {
   const { scanProject } = await import('../../scan/index')

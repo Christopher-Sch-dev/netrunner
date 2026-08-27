@@ -120,6 +120,7 @@ const HANDLERS: Record<string, (ctx: HandlerContext) => Promise<void>> = {
   install: integration.install,
   uninstall: integration.uninstall,
   explore: context.explore,
+  path: context.path,
 }
 
 /** rol: binary entrypoint — router que delega en handlers por dominio. */
