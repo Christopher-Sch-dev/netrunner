@@ -37,4 +37,13 @@ describe('MCP resources (net://meta/*)', () => {
     const snap = await buildSnapshot(dir)
     expect(snap.git.branch).toBe('develop')
   })
+
+  it('net://meta/stack devuelve el stack real, no remoteUrl (mata el mutante M10)', async () => {
+    const { buildSnapshot } = await import('../src/context/snapshot')
+    const snap = await buildSnapshot(dir)
+    // el stack es un objeto con language/framework, NO la URL del remoto
+    expect(snap.stack).toBeDefined()
+    expect(typeof snap.stack.language).toBe('string')
+    expect(snap.stack.language).not.toContain('github.com')
+  })
 })
