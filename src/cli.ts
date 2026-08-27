@@ -152,6 +152,13 @@ export async function main(argv: string[]): Promise<never> {
   }
 
   switch (subcommand) {
+    case 'lint': {
+      const { lintSnapshot } = await import('./auto/lint')
+      const { buildSnapshot } = await import('./context/snapshot')
+      const snap = await buildSnapshot(projectDir)
+      emit(lintSnapshot(snap as never), human)
+      process.exit(0)
+    }
     case 'dump': {
       const { dumpContract } = await import('./discovery/index')
       const { buildNetrunnerRegistry } = await import('./core/registry-factory')
