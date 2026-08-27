@@ -92,7 +92,7 @@ function vToZod(v: unknown): z.ZodType {
  * projectDir es el proyecto a operar. Expone progressive disclosure.
  */
 export async function createServer(projectDir: string): Promise<McpServer> {
-  const server = new McpServer({ name: 'netrunner', version: '0.2.0' })
+  const server = new McpServer({ name: 'netrunner', version: '0.3.1' })
   const registry = buildNetrunnerRegistry()
   const stack = await detectStack(projectDir)
   const available = toolsetsFor(stack)

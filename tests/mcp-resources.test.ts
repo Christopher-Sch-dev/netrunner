@@ -22,14 +22,14 @@ describe('MCP resources (net://meta/*)', () => {
   })
 
   it('registra los recursos meta (AC-1)', () => {
-    const server = new McpServer({ name: 'netrunner', version: '0.1.0' })
+    const server = new McpServer({ name: 'netrunner', version: '0.3.1' })
     registerMetaResources(server, dir)
     // no lanza → registró los recursos
     expect(true).toBe(true)
   })
 
   it('el recurso net://meta/branch devuelve la rama (AC-2/4)', async () => {
-    const server = new McpServer({ name: 'netrunner', version: '0.1.0' })
+    const server = new McpServer({ name: 'netrunner', version: '0.3.1' })
     registerMetaResources(server, dir)
 
     // lee el recurso vía el callback registrado (accedemos al snapshot directamente)
