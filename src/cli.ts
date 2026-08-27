@@ -113,11 +113,23 @@ export async function main(argv: string[]): Promise<never> {
   }
 
   if (flags['help'] || subcommand === 'help') {
+    // si --help viene con un subcommand que es una tool, imprime su schema
+    if (subcommand && subcommand !== 'help') {
+      const { toolHelp } = await import('./discovery/index')
+      const { buildNetrunnerRegistry } = await import('./core/registry-factory')
+      const registry = buildNetrunnerRegistry()
+      // mapea subcommand → id de tool (explore → graph.explore, etc.)
+      const toolId = registry.listIds().find((id) => id.endsWith(`.${subcommand}`))
+      if (toolId) {
+        emit(toolHelp(registry, toolId), human)
+        process.exit(0)
+      }
+    }
     emit({
       name: 'netrunner',
       version: '0.3.1',
       usage: 'netrunner <cmd> [args] [--dir <path>] [--human]',
-      commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'install', 'plugin', '--mcp'],
+      commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'install', 'plugin', 'dump', '--mcp'],
     }, human)
     process.exit(0)
   }
@@ -138,6 +150,12 @@ export async function main(argv: string[]): Promise<never> {
   }
 
   switch (subcommand) {
+    case 'dump': {
+      const { dumpContract } = await import('./discovery/index')
+      const { buildNetrunnerRegistry } = await import('./core/registry-factory')
+      emit(dumpContract(buildNetrunnerRegistry()), human)
+      process.exit(0)
+    }
     case 'map': {
       const { exportMap } = await import('./map/index')
       const { syncIfNeeded } = await import('./context/sync')

@@ -78,4 +78,9 @@ export class ToolRegistry {
   unregister(id: string): void {
     this.tools.delete(id)
   }
+
+  /** devuelve una tool por id (auto-descubrimiento). undefined si no existe. */
+  get(id: string): ToolSpec | undefined {
+    return this.tools.get(id)
+  }
 }
