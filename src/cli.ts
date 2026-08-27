@@ -266,11 +266,18 @@ export async function main(argv: string[]): Promise<never> {
       emit(snap, human)
       process.exit(0)
     }
+    case 'history': {
+      const { history } = await import('./history/index')
+      emit(history(projectDir), human)
+      process.exit(0)
+    }
     case 'init': {
       const dir = args[0] ?? projectDir
       // vision (AC-1): init indexa Y genera el conectable layer (mcp.json + SKILL.md + AGENTS.md)
       const { initProject } = await import('./init')
+      const { logOperation } = await import('./history/index')
       const result = await initProject(dir)
+      logOperation(projectDir, 'init')
       emit({ indexed: dir, counts: result.counts, written: result.written }, human)
       process.exit(0)
     }
@@ -294,6 +301,17 @@ export async function main(argv: string[]): Promise<never> {
       const target = args[0] ?? 'mcp'
       try {
         const result = install(target, projectDir)
+        emit(result, human)
+      } catch (e) {
+        fail('UNKNOWN_TARGET', String((e as Error).message), 'usa: mcp | opencode | claude | cursor', 2)
+      }
+      process.exit(0)
+    }
+    case 'uninstall': {
+      const { uninstall } = await import('./install')
+      const target = args[0] ?? 'mcp'
+      try {
+        const result = uninstall(target, projectDir)
         emit(result, human)
       } catch (e) {
         fail('UNKNOWN_TARGET', String((e as Error).message), 'usa: mcp | opencode | claude | cursor', 2)

@@ -2,7 +2,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest'
 import { mkdtempSync, existsSync, readFileSync, rmSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
-import { install } from '../src/install'
+import { install, uninstall } from '../src/install'
 
 // role: tests for netrunner install (AC-1..5 of features/install.feature, DEC-006).
 
@@ -59,5 +59,16 @@ describe('netrunner install', () => {
       // r.mcpConfig is already an absolute path; verify it exists
       expect(existsSync(r.mcpConfig)).toBe(true)
     }
+  })
+
+  it('uninstall revierte el wiring (AC-8 reversible, fix juez de producto)', async () => {
+    // instala primero
+    const inst = await install('mcp', dir)
+    expect(existsSync(inst.mcpConfig)).toBe(true)
+
+    // desinstala
+    const result = await uninstall('mcp', dir)
+    expect(result.removed.length).toBeGreaterThan(0)
+    expect(existsSync(inst.mcpConfig)).toBe(false) // config MCP borrada
   })
 })
