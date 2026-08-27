@@ -68,9 +68,20 @@ export async function sleeve(ctx: HandlerContext): Promise<void> {
   const { exportSleeve, importSleeve } = await import('../../sleeve/index')
   const action = ctx.args[0] ?? 'export'
   if (action === 'import' && ctx.args[1]) {
-    // import desde un archivo JSON
-    const { readFileSync } = await import('node:fs')
-    const sleeve = JSON.parse(readFileSync(ctx.args[1], 'utf8'))
+    // import desde un archivo JSON (fix auditor M3: restringir a paths dentro del proyecto)
+    const { readFileSync, existsSync } = await import('node:fs')
+    const { join, resolve } = await import('node:path')
+    const importPath = resolve(ctx.args[1])
+    const projectRoot = resolve(ctx.projectDir)
+    if (!importPath.startsWith(projectRoot + '/') && importPath !== projectRoot) {
+      ctx.emit({ imported: false, error: 'sleeve import solo acepta archivos dentro del proyecto' }, ctx.human)
+      process.exit(1)
+    }
+    if (!existsSync(importPath)) {
+      ctx.emit({ imported: false, error: `archivo no existe: ${importPath}` }, ctx.human)
+      process.exit(1)
+    }
+    const sleeve = JSON.parse(readFileSync(importPath, 'utf8'))
     importSleeve(ctx.projectDir, sleeve)
     ctx.emit({ imported: true }, ctx.human)
   } else {
