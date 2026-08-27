@@ -259,11 +259,14 @@ export async function main(argv: string[]): Promise<never> {
     case 'status': {
       const { buildSnapshot } = await import('./context/snapshot')
       const { generateDocs } = await import('./generate/index')
+      const { canonStale } = await import('./canon/stale')
       const snap = await buildSnapshot(projectDir)
       if (flags['docs'] === 'true' || flags['docs'] === '1') {
         await generateDocs(projectDir)
       }
-      emit(snap, human)
+      // canon-vivo señal (AC-4): el agente ve si el canon está desactualizado (edita él, no el sistema)
+      const out = { ...snap, canonStale: canonStale(projectDir) }
+      emit(out, human)
       process.exit(0)
     }
     case 'ops':
