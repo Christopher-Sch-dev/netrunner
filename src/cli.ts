@@ -52,13 +52,16 @@ function parseArgs(argv: string[]): { subcommand: string; flags: Record<string, 
   return { subcommand, flags, args }
 }
 
+/** rol: tool actual (subcommand) para _meta.tool — fix juez: el agente debe saber qué tool respondió. */
+let currentTool = ''
+
 /** rol: prints stable JSON to stdout (agent). --human produces plain text. */
 export function emit(data: unknown, human: boolean, tool = ''): void {
   if (human) {
     console.log(typeof data === 'string' ? data : JSON.stringify(data, null, 2))
   } else {
     // _meta: schema version + tool (validator #4 — the LLM knows what to expect)
-    const withMeta = { _meta: { schemaVersion: '1.0', tool }, ...(data as Record<string, unknown>) }
+    const withMeta = { _meta: { schemaVersion: '1.0', tool: tool || currentTool }, ...(data as Record<string, unknown>) }
     console.log(JSON.stringify(withMeta))
   }
 }
@@ -105,6 +108,8 @@ async function dashboard(projectDir: string): Promise<Record<string, unknown>> {
 /** rol: binary entrypoint. */
 export async function main(argv: string[]): Promise<never> {
   const { subcommand, flags, args } = parseArgs(argv)
+  // fix juez: _meta.tool debe reflejar el subcommand (el agente sabe qué tool respondió)
+  currentTool = subcommand ?? ''
   const human = flags.human === 'true' || flags.human === '1'
   // Bug cwd (auditor): --dir <path> takes precedence over process.cwd().
   // The agent may not be in the correct cwd → it would index the wrong directory.
