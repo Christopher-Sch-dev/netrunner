@@ -23,6 +23,9 @@ netrc
 *.log
 .DS_Store
 
+# Herramientas de orquestación (no se commitean)
+.atl/
+
 # Testing
 .nyc_output/
 stryker.conf.json.results/

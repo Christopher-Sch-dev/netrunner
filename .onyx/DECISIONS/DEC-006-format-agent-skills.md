@@ -33,5 +33,5 @@
 - **SLI custom** → duplica SKILL.md estándar.
 
 #### Veredicto
-`install` = escribve SKILL.md (formato Agent Skills) + wiring `mcpServers` per target. El binario queda
+`install` = escribe SKILL.md (formato Agent Skills) + wiring `mcpServers` per target. El binario queda
 instalable en el proyecto Y controlable por el agente (lo que Cris pidió).
