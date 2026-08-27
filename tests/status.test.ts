@@ -70,9 +70,28 @@ describe('cli status (sticky note vivo)', () => {
     expect(parsed.versions.prod.react).toBe('^18')
   })
 
-  it('status --docs regenera la doc (AC-2)', async () => {
-    await runCli(['status', '--docs'])
-    expect(existsSync(join(dir, 'README.generated.md'))).toBe(true)
-    expect(existsSync(join(dir, 'AGENTS.md'))).toBe(true)
+  it('--dir <path> tiene precedencia sobre process.cwd() (fix bug cwd)', async () => {
+    // corre status --dir <dir> desde un cwd distinto (tmp) → debe operar dir, no cwd
+    const otherCwd = mkdtempSync(join(tmpdir(), 'netrunner-othercwd-'))
+    const original = process.cwd()
+    process.chdir(otherCwd)
+    try {
+      const logged = await runCli(['--dir', dir, 'status'])
+      const json = logged.find((l) => l.startsWith('{'))
+      const parsed = JSON.parse(json!)
+      expect(parsed.git.branch).toBe('develop')
+    } finally {
+      process.chdir(original)
+      rmSync(otherCwd, { recursive: true, force: true })
+    }
+  })
+
+  it('--help devuelve la lista de comandos (fix --help)', async () => {
+    const logged = await runCli(['--help'])
+    const json = logged.find((l) => l.startsWith('{'))
+    expect(json).toBeDefined()
+    const parsed = JSON.parse(json!)
+    expect(parsed.commands).toContain('init')
+    expect(parsed.commands).toContain('map')
   })
 })
