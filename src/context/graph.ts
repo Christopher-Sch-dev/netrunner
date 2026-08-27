@@ -90,6 +90,11 @@ function ensureSchema(db: Database): void {
     CREATE INDEX IF NOT EXISTS idx_edges_from ON edges("from");
     CREATE INDEX IF NOT EXISTS idx_edges_to ON edges("to");
   `)
+  // DEC-011: columna `file` en edges para stale-edge pruning (patrón Graphify source_file).
+  // Idempotente: si ya existe, ALTER falla y se ignora (migración de DBs previas).
+  try {
+    db.exec('ALTER TABLE edges ADD COLUMN file TEXT')
+  } catch { /* columna ya existe */ }
 }
 
 /** rol: persists defs/imports/calls of a parsed file into the graph (AC-G2/G3). */
@@ -112,14 +117,14 @@ function applyParsed(
     nodeInsert.run(impId, imp.name, 'import', rel, 0, 0)
     nodes.push({ id: impId, name: imp.name, kind: 'import', file: rel, line: 0, endLine: 0 })
     const toId = `mod:${imp.source}`
-    edgeInsert.run(impId, toId, 'imports', 'EXTRACTED')
+    edgeInsert.run(impId, toId, 'imports', 'EXTRACTED', rel)
     edges.push({ from: impId, to: toId, kind: 'imports', provenance: 'EXTRACTED' })
   }
   for (const call of parsed.calls) {
     if (!call.caller) continue
     const from = `rel:${rel}:${call.caller}`
     const to = `rel:${call.callee}`
-    edgeInsert.run(from, to, 'calls', 'EXTRACTED')
+    edgeInsert.run(from, to, 'calls', 'EXTRACTED', rel)
     edges.push({ from, to, kind: 'calls', provenance: 'EXTRACTED' })
   }
 }
@@ -128,11 +133,19 @@ function applyParsed(
  * rol: indexes the project and persists the graph in <project>/.netrunner/index.db.
  * incremental=true: only re-indexes files whose mtime changed (index_meta table).
  * Idempotent: re-running does not duplicate.
+ *
+ * DEC-011 (Wave F1 — incremental edge-level update):
+ *  - Stale node/edge pruning: al re-extraer un archivo cambiado, borra sus nodos/edges
+ *    ANTES de re-insertar (evicta símbolos/llamadas eliminados — patrón Graphify source_file).
+ *  - Deleted-file eviction: archivos en index_meta que ya no existen en el filesystem
+ *    → se borran sus nodos/edges/meta (patrón CodeGraph delete_file_entities).
+ *  - Retorno aditivo: `{ nodes, edges }` = total indexado (no rompe callers existentes);
+ *    `changed: { nodes, edges }` = delta de la corrida (solo archivos afectados).
  */
 export async function indexProject(
   projectDir: string,
   options: { incremental?: boolean } = {},
-): Promise<{ nodes: GraphNode[]; edges: GraphEdge[] }> {
+): Promise<{ nodes: GraphNode[]; edges: GraphEdge[]; changed: { nodes: GraphNode[]; edges: GraphEdge[] } }> {
   const { incremental = false } = options
   const dbDir = join(projectDir, '.netrunner')
   const { mkdirSync } = await import('node:fs')
@@ -146,15 +159,20 @@ export async function indexProject(
   const upsertMeta = db.prepare(
     'INSERT INTO index_meta (file, mtime) VALUES (?, ?) ON CONFLICT(file) DO UPDATE SET mtime = excluded.mtime',
   )
+  const deleteMeta = db.prepare('DELETE FROM index_meta WHERE file = ?')
+  const deleteNodesByFile = db.prepare('DELETE FROM nodes WHERE file = ?')
+  const deleteEdgesByFile = db.prepare('DELETE FROM edges WHERE file = ?')
 
   const files = sourceFiles(projectDir)
   const nodes: GraphNode[] = []
   const edges: GraphEdge[] = []
+  const changedNodes: GraphNode[] = []
+  const changedEdges: GraphEdge[] = []
   const nodeInsert = db.prepare(
     'INSERT OR REPLACE INTO nodes (id, name, kind, file, line, endLine) VALUES (?, ?, ?, ?, ?, ?)',
   )
   const edgeInsert = db.prepare(
-    'INSERT OR IGNORE INTO edges ("from", "to", kind, provenance) VALUES (?, ?, ?, ?)',
+    'INSERT OR IGNORE INTO edges ("from", "to", kind, provenance, file) VALUES (?, ?, ?, ?, ?)',
   )
 
   for (const abs of files) {
@@ -171,10 +189,34 @@ export async function indexProject(
     const code = readFileSync(abs, 'utf8')
     const parsed = await parseFile(code, lang)
 
+    // DEC-011: stale pruning — evicta nodos/edges del archivo antes de re-insertar
+    // (patrón Graphify source_file: evita phantom dependencies y símbolos eliminados).
+    deleteNodesByFile.run(rel)
+    deleteEdgesByFile.run(rel)
+
+    const nodesBefore = nodes.length
+    const edgesBefore = edges.length
     applyParsed(parsed, rel, nodeInsert, edgeInsert, nodes, edges)
+    changedNodes.push(...nodes.slice(nodesBefore))
+    changedEdges.push(...edges.slice(edgesBefore))
     upsertMeta.run(abs, mtime)
   }
 
+  // DEC-011: deleted-file eviction — archivos indexados que ya no existen en el filesystem
+  // (patrón CodeGraph delete_file_entities). Solo en incremental (full re-indexa todo).
+  if (incremental) {
+    const allMeta = db.query('SELECT file FROM index_meta').all() as { file: string }[]
+    const live = new Set(files)
+    for (const row of allMeta) {
+      if (!live.has(row.file)) {
+        const rel = relative(projectDir, row.file)
+        deleteNodesByFile.run(rel)
+        deleteEdgesByFile.run(rel)
+        deleteMeta.run(row.file)
+      }
+    }
+  }
+
   db.close()
-  return { nodes, edges }
+  return { nodes, edges, changed: { nodes: changedNodes, edges: changedEdges } }
 }
