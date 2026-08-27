@@ -34,7 +34,7 @@ function detectPkg(dir: string): string {
 }
 
 /** rol: ejecuta la operación y devuelve { ok, exitCode, output } (señal externa real). */
-export function runOp(kind: string, projectDir: string): Promise<{ ok: boolean; exitCode: number; output: string }> {
+export function runOp(kind: string, projectDir: string, timeoutMs = 30000): Promise<{ ok: boolean; exitCode: number; output: string }> {
   return new Promise((resolve, reject) => {
     if (!(OPS as readonly string[]).includes(kind)) {
       reject(new Error(`operación no soportada: '${kind}' (usa: ${OPS.join(', ')})`))
@@ -43,12 +43,23 @@ export function runOp(kind: string, projectDir: string): Promise<{ ok: boolean; 
     const pkg = detectPkg(projectDir)
     const cmd = pkg
     const args = ['run', kind]
-    const child = spawn(cmd, args, { cwd: projectDir, stdio: ['ignore', 'pipe', 'pipe'] })
+    // detached: true → el proceso corre en su propio grupo; kill(-pid) mata el grupo completo
+    const child = spawn(cmd, args, { cwd: projectDir, stdio: ['ignore', 'pipe', 'pipe'], detached: true })
     let output = ''
+    let timedOut = false
+    const timer = setTimeout(() => {
+      timedOut = true
+      try { process.kill(-child.pid!, 'SIGKILL') } catch { child.kill('SIGKILL') } // mata el grupo (pnpm + sleep)
+    }, timeoutMs)
     child.stdout.on('data', (c) => { output += c })
     child.stderr.on('data', (c) => { output += c })
     child.on('close', (code) => {
-      resolve({ ok: code === 0, exitCode: code ?? -1, output })
+      clearTimeout(timer)
+      if (timedOut) {
+        resolve({ ok: false, exitCode: -1, output: `${output}\n[timeout] operación excedió ${timeoutMs}ms` })
+      } else {
+        resolve({ ok: code === 0, exitCode: code ?? -1, output })
+      }
     })
   })
 }

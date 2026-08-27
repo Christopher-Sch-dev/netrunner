@@ -52,11 +52,13 @@ function parseArgs(argv: string[]): { subcommand: string; flags: Record<string, 
 }
 
 /** rol: imprime JSON estable a stdout (agente). --human produce texto simple. */
-function emit(data: unknown, human: boolean): void {
+export function emit(data: unknown, human: boolean, tool = ''): void {
   if (human) {
     console.log(typeof data === 'string' ? data : JSON.stringify(data, null, 2))
   } else {
-    console.log(JSON.stringify(data))
+    // _meta: schema version + tool (validador #4 — el LLM sabe qué esperar)
+    const withMeta = { _meta: { schemaVersion: '1.0', tool }, ...(data as Record<string, unknown>) }
+    console.log(JSON.stringify(withMeta))
   }
 }
 
@@ -113,11 +115,23 @@ export async function main(argv: string[]): Promise<never> {
   }
 
   if (flags['help'] || subcommand === 'help') {
+    // si --help viene con un subcommand que es una tool, imprime su schema
+    if (subcommand && subcommand !== 'help') {
+      const { toolHelp } = await import('./discovery/index')
+      const { buildNetrunnerRegistry } = await import('./core/registry-factory')
+      const registry = buildNetrunnerRegistry()
+      // mapea subcommand → id de tool (explore → graph.explore, etc.)
+      const toolId = registry.listIds().find((id) => id.endsWith(`.${subcommand}`))
+      if (toolId) {
+        emit(toolHelp(registry, toolId), human)
+        process.exit(0)
+      }
+    }
     emit({
       name: 'netrunner',
       version: '0.3.1',
       usage: 'netrunner <cmd> [args] [--dir <path>] [--human]',
-      commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'install', 'plugin', '--mcp'],
+      commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'install', 'plugin', 'dump', '--mcp'],
     }, human)
     process.exit(0)
   }
@@ -138,6 +152,19 @@ export async function main(argv: string[]): Promise<never> {
   }
 
   switch (subcommand) {
+    case 'lint': {
+      const { lintSnapshot } = await import('./auto/lint')
+      const { buildSnapshot } = await import('./context/snapshot')
+      const snap = await buildSnapshot(projectDir)
+      emit(lintSnapshot(snap as never), human)
+      process.exit(0)
+    }
+    case 'dump': {
+      const { dumpContract } = await import('./discovery/index')
+      const { buildNetrunnerRegistry } = await import('./core/registry-factory')
+      emit(dumpContract(buildNetrunnerRegistry()), human)
+      process.exit(0)
+    }
     case 'map': {
       const { exportMap } = await import('./map/index')
       const { syncIfNeeded } = await import('./context/sync')
