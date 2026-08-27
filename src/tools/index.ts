@@ -13,6 +13,7 @@ import type { ToolSpec, ToolContext } from '../core/registry'
 import { explore, callers, callees, impact } from '../context/queries'
 import { detectStack } from '../context/detect'
 import { rgTool } from './rg'
+import { opTool } from './ops'
 
 /** rol: serializa el resultado a un objeto estable para la respuesta de la tool. */
 function toText(result: unknown): { ok: true; data: unknown } {
@@ -84,7 +85,10 @@ function stackTool(): ToolSpec {
   }
 }
 
-/** rol: devuelve el array completo de specs de las tools del grafo/stack/rg. */
+/** rol: devuelve el array completo de specs de las tools del grafo/stack/rg/ops. */
 export function graphAndStackTools(): ToolSpec[] {
-  return [exploreTool(), callersTool(), calleesTool(), impactTool(), stackTool(), rgTool()]
+  return [
+    exploreTool(), callersTool(), calleesTool(), impactTool(), stackTool(), rgTool(),
+    opTool('test'), opTool('build'), opTool('lint'),
+  ]
 }
