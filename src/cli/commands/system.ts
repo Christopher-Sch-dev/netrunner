@@ -57,6 +57,22 @@ export async function resume(ctx: HandlerContext): Promise<void> {
   process.exit(0)
 }
 
+/** rol: net sleeve — exporta/importa el deck portable (W6, Construct). */
+export async function sleeve(ctx: HandlerContext): Promise<void> {
+  const { exportSleeve, importSleeve } = await import('../../sleeve/index')
+  const action = ctx.args[0] ?? 'export'
+  if (action === 'import' && ctx.args[1]) {
+    // import desde un archivo JSON
+    const { readFileSync } = await import('node:fs')
+    const sleeve = JSON.parse(readFileSync(ctx.args[1], 'utf8'))
+    importSleeve(ctx.projectDir, sleeve)
+    ctx.emit({ imported: true }, ctx.human)
+  } else {
+    ctx.emit(exportSleeve(ctx.projectDir), ctx.human)
+  }
+  process.exit(0)
+}
+
 /** rol: content-first project dashboard (AC-4). */
 export async function dashboard(ctx: HandlerContext): Promise<void> {
   const { detectStack } = await import('../../context/detect')

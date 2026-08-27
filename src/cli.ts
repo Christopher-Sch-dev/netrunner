@@ -112,6 +112,7 @@ const HANDLERS: Record<string, (ctx: HandlerContext) => Promise<void>> = {
   breach: security.breach,
   doctor: ops.doctor,
   resume: system.resume,
+  sleeve: system.sleeve,
   history: persistence.history,
   init: context.init,
   plan: context.plan,
