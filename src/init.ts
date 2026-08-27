@@ -68,5 +68,10 @@ export async function initProject(projectDir: string): Promise<{
   const docs = await generateDocs(projectDir)
   written.push(...docs.written)
 
+  // 5. program.md — el contrato del programa (W6, el agente lee qué puede hacer)
+  const { writeProgram } = await import('./program/index')
+  const program = writeProgram(projectDir)
+  written.push(program)
+
   return { counts, written }
 }
