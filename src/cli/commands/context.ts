@@ -55,6 +55,13 @@ export async function godNodes(ctx: HandlerContext): Promise<void> {
   process.exit(0)
 }
 
+/** rol: graph-report — dashboard humano del grafo (gap Graphify: GRAPH_REPORT.md). */
+export async function graphReport(ctx: HandlerContext): Promise<void> {
+  const { graphReport } = await import('../../graph-report/index')
+  ctx.emit({ report: await graphReport(ctx.projectDir) }, ctx.human)
+  process.exit(0)
+}
+
 /** rol: escaneo del proyecto. */
 export async function scan(ctx: HandlerContext): Promise<void> {
   const { scanProject } = await import('../../scan/index')

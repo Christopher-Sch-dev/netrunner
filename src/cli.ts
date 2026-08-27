@@ -122,6 +122,7 @@ const HANDLERS: Record<string, (ctx: HandlerContext) => Promise<void>> = {
   explore: context.explore,
   path: context.path,
   'god-nodes': context.godNodes,
+  'graph-report': context.graphReport,
 }
 
 /** rol: binary entrypoint — router que delega en handlers por dominio. */
