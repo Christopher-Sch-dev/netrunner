@@ -19,6 +19,7 @@ import { syncIfNeeded } from '../context/sync'
 import { lintSnapshot } from '../auto/lint'
 import { curate } from '../auto/curator'
 import { buildSnapshot } from '../context/snapshot'
+import { harvest } from './harvest'
 
 /** Resultado de una pasada del daemon. */
 export interface DaemonResult {
@@ -36,8 +37,9 @@ export async function daemonTick(projectDir: string): Promise<DaemonResult> {
   const snap = await buildSnapshot(projectDir)
   const lint = lintSnapshot(snap as never)
 
-  // 3. curator (auto-mejora con señal externa) — sin observaciones → no-op
-  const actions = curate([])
+  // 3. curator (auto-mejora con señal externa REAL — harvest de events.log, fix W2.C2.1)
+  const observations = harvest(projectDir)
+  const actions = curate(observations)
 
   return { synced: sync.synced, issues: lint.issues, actions }
 }
