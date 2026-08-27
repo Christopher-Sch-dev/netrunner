@@ -177,7 +177,15 @@ export async function main(argv: string[]): Promise<never> {
     }
     case 'daemon': {
       const { daemonTick } = await import('./daemon/index')
-      emit(await daemonTick(projectDir), human)
+      // --watch: daemon residente (corre en bucle con intervalos, W2.C2.2)
+      if (flags['watch'] === 'true' || flags['watch'] === '1') {
+        const { daemonWatch } = await import('./daemon/watch')
+        const intervalMs = Number(args[0] ?? 5000)
+        const results = await daemonWatch(projectDir, { intervalMs })
+        emit({ watched: results.length, last: results[results.length - 1] }, human)
+      } else {
+        emit(await daemonTick(projectDir), human)
+      }
       process.exit(0)
     }
     case 'lint': {
