@@ -28,33 +28,26 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import { detectStack } from '../context/detect'
 import { buildNetrunnerRegistry } from '../core/registry-factory'
+import { toolsetsForStack, STACK_TOOLSETS } from './toolsets'
 import type { ToolRegistry, ToolSpec, ToolContext } from '../core/registry'
 
 /** Un toolset: grupo de tools activadas por stack del proyecto (determinista). */
 interface Toolset {
   id: string
   description: string
-  /** stack.language o stack.framework que activa este toolset. */
-  triggers: string[]
 }
 
-/** Catálogo determinista de toolsets (agrupación de tools del registry). */
-const TOOLSETS: Toolset[] = [
-  {
-    id: 'graph',
-    description: 'Grafo de conocimiento del proyecto (explore/callers/callees/impact)',
-    triggers: ['typescript', 'javascript', 'python', 'go', 'rust', 'unknown'],
-  },
-  {
-    id: 'stack',
-    description: 'Información del stack detectado del proyecto',
-    triggers: ['typescript', 'javascript', 'python', 'go', 'rust', 'unknown'],
-  },
-]
+/** Descripciones de los toolsets (para la vista MCP). */
+const TOOLSET_DESCRIPTIONS: Record<string, string> = {
+  graph: 'Grafo de conocimiento del proyecto (explore/callers/callees/impact)',
+  stack: 'Información del stack detectado del proyecto',
+  ops: 'Operaciones deterministas del proyecto (test/build/lint)',
+}
 
-/** rol: decide qué toolsets están disponibles según el stack (determinista). */
+/** rol: decide qué toolsets están disponibles según el stack (matriz declarativa). */
 export function toolsetsFor(stack: { language: string; framework: string }): Toolset[] {
-  return TOOLSETS.filter((t) => t.triggers.includes(stack.language) || t.triggers.includes(stack.framework))
+  const ids = toolsetsForStack(stack)
+  return ids.map((id) => ({ id, description: TOOLSET_DESCRIPTIONS[id] ?? id }))
 }
 
 /** rol: mapea una family del contrato al id de toolset que la proyecta. */
@@ -122,7 +115,7 @@ export async function createServer(projectDir: string): Promise<McpServer> {
     'net_enable_toolset',
     {
       description: 'Habilita un toolset del proyecto, registrando dinámicamente sus tools. Idempotente.',
-      inputSchema: { toolset: z.enum(TOOLSETS.map((t) => t.id) as [string, ...string[]]) },
+      inputSchema: { toolset: z.enum(STACK_TOOLSETS.flatMap((r) => r.toolsets) as [string, ...string[]]) },
     },
     async ({ toolset }) => {
       if (!available.some((t) => t.id === toolset)) {
