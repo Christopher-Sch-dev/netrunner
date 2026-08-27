@@ -295,6 +295,12 @@ export async function main(argv: string[]): Promise<never> {
       emit(r, human)
       process.exit(0)
     }
+    case 'doctor': {
+      // self-check del deck (fix juez de producto: lint invisible)
+      const { doctor } = await import('./doctor/index')
+      emit(await doctor(projectDir), human)
+      process.exit(0)
+    }
     case 'resume': {
       // vision (W1): el recuerdo que se re-adhiere al reconectar (virus persiste tras Jack-Out)
       const { resume } = await import('./resume/index')
