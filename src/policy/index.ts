@@ -17,6 +17,9 @@
  *   AC-4 sin contexto → deny (fail-closed).
  */
 
+import { existsSync, readFileSync } from 'node:fs'
+import { join } from 'node:path'
+
 /** Contexto de la llamada (lo que la policy evalúa, independiente del agente). */
 export interface PolicyContext {
   readOnly: boolean
@@ -35,4 +38,16 @@ export function evaluatePolicy(_intent: Intent, ctx: PolicyContext): Decision {
   if (ctx.readOnly) return 'allow' // lectura siempre permitida (AC-2)
   // mutating: requiere approval explícito
   return ctx.approval ? 'allow' : 'deny' // (AC-2/3)
+}
+
+/** rol: devuelve los secrets scopeados SOLO a la tool (nunca al LLM, Mandamiento 7). */
+export function resolveSecrets(projectDir: string, toolId: string): Record<string, string> {
+  try {
+    const path = join(projectDir, '.netrunner', 'secrets.json')
+    if (!existsSync(path)) return {}
+    const all = JSON.parse(readFileSync(path, 'utf8')) as Record<string, Record<string, string>>
+    return all[toolId] ?? {}
+  } catch {
+    return {} // fail-closed: sin secrets si no se puede leer
+  }
 }
