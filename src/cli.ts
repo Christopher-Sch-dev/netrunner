@@ -120,6 +120,17 @@ export async function main(argv: string[]): Promise<never> {
       emit({ plan: await generatePlan(goal, projectDir) }, human)
       process.exit(0)
     }
+    case 'install': {
+      const { install } = await import('./install')
+      const target = args[0] ?? 'mcp'
+      try {
+        const result = install(target, projectDir)
+        emit(result, human)
+      } catch (e) {
+        fail('UNKNOWN_TARGET', String((e as Error).message), 'usa: mcp | opencode | claude | cursor', 2)
+      }
+      process.exit(0)
+    }
     case 'explore': {
       const { explore } = await import('./context/queries')
       const name = args[0]
