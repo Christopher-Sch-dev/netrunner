@@ -6,7 +6,7 @@
 ## Convenciones
 - **Lenguaje**: TypeScript + Bun + pnpm (DEC-001). Target hosting: T0 (local, sin servidores).
 - **Commits**: conventional commits (`feat:`, `fix:`, `docs:`, `refactor:`, `test:`).
-- **Estructura**: monorepo pnpm (`packages/*`), un solo binario `netrunner`.
+- **Estructura**: paquete único `netrunner` (un solo `package.json`, un solo binario). Núcleo-contrato en `src/core/` + vistas como módulos en `src/` (MCP, ACP, CLI, plugin) + grafo en `src/context/` + auto-mejora en `src/auto/` + policy en `src/policy/`.
 - **Ramas**: GitFlow (main protegida → develop → feature/* / release/* / hotfix/*).
 
 ## Flujo de verificación (los que SIEMPRE se corren)
