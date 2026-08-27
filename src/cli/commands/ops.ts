@@ -14,10 +14,12 @@ export async function ops(ctx: HandlerContext): Promise<void> {
   const { evaluatePolicy } = await import('../../policy/index')
   const kind = ctx.args[0] ?? 'test'
   const timeout = Number(ctx.args[1] ?? 30000)
-  // fix auditor (A1): policy fail-closed en CLI — ops es mutating, requiere approval
-  const decision = evaluatePolicy('edit', { readOnly: false, approval: false })
+  // fix auditor (A1 + CTO): policy fail-closed en CLI — ops es mutating, requiere approval
+  // explícito (--approval=true). Por defecto deny (seguro); el agente autoriza con el flag.
+  const approval = ctx.flags['approval'] === 'true' || ctx.flags['approval'] === '1'
+  const decision = evaluatePolicy('edit', { readOnly: false, approval })
   if (decision === 'deny') {
-    ctx.emit({ ok: false, error: 'policy deny: mutating op requiere approval' }, ctx.human)
+    ctx.emit({ ok: false, error: 'policy deny: mutating op requiere --approval=true' }, ctx.human)
     process.exit(1)
   }
   const start = Date.now()
