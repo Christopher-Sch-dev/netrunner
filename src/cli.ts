@@ -103,7 +103,7 @@ export async function main(argv: string[]): Promise<never> {
     // --mcp arranca el servidor MCP por stdio (no responde JSON de vuelta).
     const { serveMCP } = await import('./transport/mcp-server')
     await serveMCP(projectDir)
-    process.exit(0)
+    // NO process.exit(0) aquí: serveMCP mantiene el proceso vivo escuchando stdin (Bug B).
   }
 
   switch (subcommand) {

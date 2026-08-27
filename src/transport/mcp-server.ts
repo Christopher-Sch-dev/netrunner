@@ -150,4 +150,8 @@ export async function serveMCP(projectDir: string): Promise<void> {
   const server = await createServer(projectDir)
   const transport = new StdioServerTransport()
   await server.connect(transport)
+  // Bug B: mantener el proceso vivo escuchando stdin (connect() resuelve y el
+  // proceso saldría con exit 0 sin responder al initialize). El transport stdio
+  // necesita que el event loop quede activo.
+  await new Promise<void>(() => {}) // nunca resuelve → el proceso queda vivo
 }
