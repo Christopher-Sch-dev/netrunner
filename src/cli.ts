@@ -120,6 +120,12 @@ export async function main(argv: string[]): Promise<never> {
     fail('INVALID_DIR', `directorio no existe: '${projectDir}'`, 'usa un path válido con --dir', 2)
   }
 
+  // fix juez hacker (#8): bloquear directorios de sistema en --dir (no filtrar estructura del OS)
+  const FORBIDDEN_DIRS = ['/etc', '/usr', '/var', '/proc', '/sys', '/boot', '/bin', '/sbin', '/lib', '/lib64', '/root', '/dev']
+  if (flags.dir && FORBIDDEN_DIRS.some((d) => projectDir === d || projectDir.startsWith(d + '/'))) {
+    fail('FORBIDDEN_DIR', `directorio de sistema no operable: '${projectDir}'`, 'usa un directorio de proyecto (código), no del sistema', 2)
+  }
+
   if (flags['version'] || subcommand === 'version') {
     emit({ name: 'netrunner', version: '0.3.1' }, human)
     process.exit(0)
