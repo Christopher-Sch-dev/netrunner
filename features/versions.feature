@@ -4,7 +4,7 @@
 **Como** un agente que opera un proyecto Netrunner,
 **quiero** conocer las versiones de las dependencias instaladas (separadas y ordenadas),
 **para** que la skill auto-generante documente qué versiones se usan (prod vs dev),
-como Cris pidió: "las versiones de lo que tenemos instalado separado y ordenado".
+como pidió: "las versiones de lo que tenemos instalado separado y ordenado".
 
 ## Acceptance Criteria (Wave 6 — skill auto-generante)
 - **AC-1**: `versionsInfo(projectDir)` devuelve { prod: Record<string,string>, dev: Record<string,string> }.

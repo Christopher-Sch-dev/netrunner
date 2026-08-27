@@ -1,7 +1,7 @@
 /**
  * rol: Detector de pendientes (TODO/FIXME) de Netrunner (Wave 6 — skill auto-generante).
  * Escanea los comentarios TODO/FIXME en el código fuente del proyecto. Es la base
- * de la feature de Cris: "pendientes".
+ * de la feature de pendientes.
  *
  * SPEC (Mandamiento 0):
  *   Como un agente que opera un proyecto Netrunner,

@@ -4,7 +4,7 @@
 **Como** un agente que opera un proyecto Netrunner,
 **quiero** conocer el estado git del proyecto (rama, remoto, commits recientes),
 **para** que la skill auto-generante documente en qué rama está, si está conectado
-a GitHub, y los últimos cambios (la feature de documentación que Cris quiere).
+a GitHub, y los últimos cambios (la feature de documentación git).
 
 ## Acceptance Criteria (Wave 6 — skill auto-generante)
 - **AC-1**: `gitInfo(projectDir)` devuelve { branch, remote, remoteUrl, lastCommits }.

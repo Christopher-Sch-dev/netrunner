@@ -4,7 +4,7 @@
 **Como** un agente que opera un proyecto Netrunner,
 **quiero** conocer los servicios conectados (frontend/backend/urls/puertos),
 **para** que la skill auto-generante documente si el proyecto está conectado a
-servicios de infraestructura (la feature de Cris: "detectar los servicios de
+servicios de infraestructura (la feature de servicios).
 infraestructura").
 
 ## Acceptance Criteria (Wave 6 — skill auto-generante)

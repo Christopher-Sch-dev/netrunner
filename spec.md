@@ -1,47 +1,47 @@
 # Spec — Netrunner: Universal Agent SDK
 
-> Especificación raíz del motor-unificado. Destraba el target-check. Se implementa en fases posteriores.
-> Arquitectura validada por auditorías (DEC-001): un solo núcleo (contrato de tools) + formatos proyectados (MCP server, harness-adapter, Agent Plugin, CLI/AXI).
+> Root specification of the unified engine. Unlocks the target-check. Implemented in later phases.
+> Architecture validated by audits (DEC-001): a single core (tool contract) + projected formats (MCP server, harness-adapter, Agent Plugin, CLI/AXI).
 
-## Como / quiero / para
+## As / I want / so that
 
-**Como** desarrollador/creador con cualquier proyecto, app o demo (cualquier stack),
-**quiero** un solo binario `netrunner` que, al conectarse a mi proyecto, le dé a cualquier agente (Claude Code, Codex, Hermes, OpenCode, Cursor, MCP) el **contexto** (grafo de conocimiento), el **uso** (operaciones deterministas) y el **control agéntico** del proyecto,
-**para** poder enchufar cualquier proyecto a cualquier agente sin reinventar protocolo, sin fragmentar en N herramientas, y con auto-mejora interna.
+**As** a developer/creator with any project, app or demo (any stack),
+**I want** a single `netrunner` binary that, when connected to my project, gives any agent (Claude Code, Codex, Hermes, OpenCode, Cursor, MCP) the **context** (knowledge graph), the **usage** (deterministic operations) and the **agentic control** of the project,
+**so that** I can plug any project into any agent without reinventing protocol, without fragmenting into N tools, and with internal self-improvement.
 
 ## Target
 
-**T0** — CLI open-source gratuito, un binario standalone local, sin servidores obligatorios. (Despliegue opcional de MCP server en T1/T2.)
+**T0** — free open-source CLI, a single standalone local binary, no mandatory servers. (Optional MCP server deployment in T1/T2.)
 
 ## Acceptance Criteria (AC)
 
-### Motor-unificado
-- **AC-1**: `netrunner init` sobre un proyecto existente indexa el proyecto (grafo de conocimiento) y genera la capa de conectividad agente-operable: `mcp.json`/server MCP, `plugin.json` + `skills/` (Agent Plugins 1.0), un archivo `SKILL` markdown legible por cualquier agente, y `AGENTS.md`.
-- **AC-2**: `netrunner init` es idempotente: re-ejecutarlo no duplica artefactos ni rompe lo generado.
-- **AC-3**: Un solo binario `netrunner` expone los formatos (MCP server, harness-adapter, Agent Plugin, CLI) como vistas del MISMO contrato de tools (`src/core`) — sin duplicar handlers.
+### Unified engine
+- **AC-1**: `netrunner init` on an existing project indexes the project (knowledge graph) and generates the agent-operable connectivity layer: `mcp.json`/MCP server, `plugin.json` + `skills/` (Agent Plugins 1.0), a `SKILL` markdown file readable by any agent, and `AGENTS.md`.
+- **AC-2**: `netrunner init` is idempotent: re-running it does not duplicate artifacts or break what was generated.
+- **AC-3**: A single `netrunner` binary exposes the formats (MCP server, harness-adapter, Agent Plugin, CLI) as views of the SAME tool contract (`src/core`) — without duplicating handlers.
 
-### Entender y controlar
-- **AC-4**: `netrunner` (sin argumentos) devuelve un dashboard content-first del proyecto: stack, capabilities, conteo de símbolos/archivos/tests, próximos pasos.
-- **AC-5**: `netrunner query/callers/callees/impact` exponen el grafo de conocimiento del proyecto (símbolos, call paths, blast radius) — el agente responde en pocas llamadas, sin grep/read masivo.
-- **AC-6**: `netrunner <acción>` ejecuta operaciones deterministas del proyecto (test, build, lint, config, ops de negocio) con exit codes estándar, idempotencia y separación read vs mutate.
+### Understand and control
+- **AC-4**: `netrunner` (no args) returns a content-first dashboard of the project: stack, capabilities, symbol/file/test counts, next steps.
+- **AC-5**: `netrunner query/callers/callees/impact` expose the project's knowledge graph (symbols, call paths, blast radius) — the agent answers in a few calls, without massive grep/read.
+- **AC-6**: `netrunner <action>` runs deterministic project operations (test, build, lint, config, business ops) with standard exit codes, idempotency and read vs mutate separation.
 
-### Conectar agentes
-- **AC-7**: `netrunner install [--target=claude,codex,...]` conecta el proyecto a agentes concretos (Claude Code, Codex, Hermes, OpenCode, Cursor, MCP) emitiendo la config específica de cada uno (MCP/ACP/harness/plugin).
-- **AC-8**: `netrunner install` es reversible (puede deshacer la conexión sin dejar residuos).
+### Connect agents
+- **AC-7**: `netrunner install [--target=claude,codex,...]` connects the project to concrete agents (Claude Code, Codex, Hermes, OpenCode, Cursor, MCP) emitting each one's specific config (MCP/ACP/harness/plugin).
+- **AC-8**: `netrunner install` is reversible (can undo the connection without leaving residue).
 
-### Determinismo por contexto/objetivo
-- **AC-9**: El motor expone solo las tools relevantes al contexto del proyecto y al objetivo declarado (progressive disclosure), no un menú de 500 tools.
+### Context/target determinism
+- **AC-9**: The engine exposes only the tools relevant to the project's context and the declared target (progressive disclosure), not a menu of 500 tools.
 
-### Policy cross-client
-- **AC-10**: `netrunner policy` aplica/lee una misma policy (intención) en distintos agentes de forma consistente, sin duplicar la definición.
+### Cross-client policy
+- **AC-10**: `netrunner policy` applies/reads the same policy (intent) across different agents consistently, without duplicating the definition.
 
-### Auto-mejora
-- **AC-11**: El motor expone un fork de auto-revisión (background review) con curator determinista, cuyas mejoras quedan ancladas a señal externa (resultado real), NO a auto-crítica.
-- **AC-12**: Las mejoras se materializan como Memento-Skills (skills en markdown + router/writer) versionadas en el proyecto.
+### Self-improvement
+- **AC-11**: The engine exposes a self-review fork (background review) with a deterministic curator, whose improvements are anchored to external signal (real result), NOT to self-criticism.
+- **AC-12**: Improvements materialize as Memento-Skills (markdown skills + router/writer) versioned in the project.
 
-### Calidad/estándar
-- **AC-13**: Todo comando del motor sigue el pipeline PRO (spec → gherkin → TDD → mutation) con al menos 1 test por AC.
-- **AC-14**: El CLI es agent-friendly y sigue la guía de CLIs para agentes (ai-native-cli).
+### Quality/standard
+- **AC-13**: Every engine command follows the PRO pipeline (spec → gherkin → TDD → mutation) with at least 1 test per AC.
+- **AC-14**: The CLI is agent-friendly and follows the agent-CLI guide (ai-native-cli).
 
-## Fuera de scope (fase posterior)
-- El código fuente del motor (se construye en fases). Esta spec es el contrato raíz.
+## Out of scope (later phase)
+- The engine's source code (built in phases). This spec is the root contract.

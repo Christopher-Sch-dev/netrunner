@@ -1,7 +1,7 @@
 /**
  * rol: Generador de doc viva de Netrunner (Wave 6 — skill auto-generante).
  * Genera/actualiza README.generated.md y AGENTS.md desde el snapshot del proyecto
- * (rama, versiones, cobertura, servicios, pendientes). Es la feature de Cris:
+ * (rama, versiones, cobertura, servicios, pendientes). Es la feature de documentación:
  * "forzar la creación de documentación del proyecto, con el agente y automáticamente".
  *
  * SPEC (Mandamiento 0):

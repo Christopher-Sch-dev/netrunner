@@ -2,7 +2,7 @@
  * rol: ops — control determinista del proyecto (AC-6, P0-2 del validador de scope).
  * Ejecuta operaciones del stack (test/build/lint) con señal externa real (exit code),
  * respetando el packageManager detectado (pnpm/npm/bun/yarn). Es el "control autónomo"
- * que Cris quiere: el agente opera el proyecto de forma determinista y segura.
+ * que el agente opera el proyecto de forma determinista y segura.
  *
  * SPEC (Mandamiento 0):
  *   Como un agente que opera un proyecto Netrunner,

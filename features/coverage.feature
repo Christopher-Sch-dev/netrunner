@@ -4,7 +4,7 @@
 **Como** un agente que opera un proyecto Netrunner,
 **quiero** conocer el % de cobertura de tests del proyecto,
 **para** que la skill auto-generante documente qué porcentaje del proyecto está
-cubierto por tests (la feature de Cris: "qué porcentaje del proyecto completo
+cubierto por tests (la feature de cobertura: "qué porcentaje del proyecto completo
 y los tests rellenados o actuales").
 
 ## Acceptance Criteria (Wave 6 — skill auto-generante)

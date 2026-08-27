@@ -2,7 +2,7 @@
  * rol: Snapshot store de Netrunner (Wave 6 — skill auto-generante).
  * Une los detectores (git, versions, coverage, services, dirs, todos) en un
  * ProjectSnapshot persistido en `.netrunner/state/project.json`. Es el "sticky
- * note" vivo y progresivo del proyecto que Cris quiere: la skill auto-generante
+ * note" vivo y progresivo del proyecto: la skill auto-generante
  * lee este snapshot para documentar todo al día.
  *
  * SPEC (Mandamiento 0):

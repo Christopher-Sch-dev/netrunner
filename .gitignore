@@ -39,3 +39,6 @@ coverage/
 
 # Metadata interna del sistema
 .engram/
+.onyx/
+.mcp.json
+.netrunner/
