@@ -34,13 +34,18 @@ export async function deck(ctx: HandlerContext): Promise<void> {
   const { deckState } = await import('../../naming/index')
   const { canonStale } = await import('../../canon/stale')
   const { history } = await import('../../history/index')
+  const { detectStack } = await import('../../context/detect')
+  const { disclosureFor } = await import('../../disclosure/index')
   const h = history(ctx.projectDir)
+  const stack = await detectStack(ctx.projectDir)
   const state = deckState({
     quickhacks: ['test', 'build', 'lint'],
     daemons: ['curator', 'sync'],
     canonStale: canonStale(ctx.projectDir),
   })
-  ctx.emit({ ...state, lastOps: h.operations.slice(0, 5) }, ctx.human)
+  // progressive disclosure (W6): expone las tools del framework detectado
+  const tools = disclosureFor({ language: stack.language, framework: stack.framework })
+  ctx.emit({ ...state, tools, lastOps: h.operations.slice(0, 5) }, ctx.human)
   process.exit(0)
 }
 
