@@ -9,10 +9,13 @@ export async function ops(ctx: HandlerContext): Promise<void> {
   const { runOp } = await import('../../tools/ops')
   const { logOperation } = await import('../../history/index')
   const { emitEvent } = await import('../../context/events')
+  const { recordLatency } = await import('../../metrics/index')
   const kind = ctx.args[0] ?? 'test'
   const timeout = Number(ctx.args[1] ?? 30000)
+  const start = Date.now()
   emitEvent(ctx.projectDir, { type: 'op/start', tool: `op.${kind}` })
   const r = await runOp(kind, ctx.projectDir, timeout)
+  recordLatency(ctx.projectDir, `op.${kind}`, Date.now() - start) // m4-metrics (W5.F5.3)
   emitEvent(ctx.projectDir, { type: r.ok ? 'op/result' : 'op/error', tool: `op.${kind}`, ok: r.ok })
   logOperation(ctx.projectDir, `ops ${kind}`, r.ok ? 'ok' : 'fail')
   ctx.emit(r, ctx.human)
