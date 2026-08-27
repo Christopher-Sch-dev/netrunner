@@ -292,6 +292,12 @@ export async function main(argv: string[]): Promise<never> {
       emit(r, human)
       process.exit(0)
     }
+    case 'resume': {
+      // vision (W1): el recuerdo que se re-adhiere al reconectar (virus persiste tras Jack-Out)
+      const { resume } = await import('./resume/index')
+      emit(await resume(projectDir), human)
+      process.exit(0)
+    }
     case 'history': {
       const { history } = await import('./history/index')
       emit(history(projectDir), human)
