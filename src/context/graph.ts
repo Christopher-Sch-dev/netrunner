@@ -35,6 +35,11 @@ const EXT_TO_LANG: Record<string, string> = {
   '.py': 'python',
   '.go': 'go',
   '.rs': 'rust',
+  // Wave E2: más lenguajes de grafo (Java/C#/PHP/Ruby)
+  '.java': 'java',
+  '.cs': 'c_sharp',
+  '.php': 'php',
+  '.rb': 'ruby',
 }
 
 /** Paths/dirs to ignore when indexing (deterministic, avoids noise). */
