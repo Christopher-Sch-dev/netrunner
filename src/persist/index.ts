@@ -18,9 +18,11 @@
 import { mkdirSync, writeFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 
-/** rol: deriva un slug seguro del texto de la decisión (AC-3). */
+/** rol: deriva un slug seguro del texto de la decisión (AC-3, fix juez: no truncar a 8 chars). */
 function slugify(text: string): string {
-  return text.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60)
+  // normaliza unicode (ñ→n, á→a) antes de limpiar — fix: 'decisión' no debe quedar 'decisi-n'
+  const normalized = text.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+  return normalized.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 60) || 'decision'
 }
 
 /** rol: persiste una decisión durable con provenance (AC-1/2/4). */

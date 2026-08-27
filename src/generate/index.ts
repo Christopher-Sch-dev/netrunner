@@ -15,7 +15,7 @@
  *   AC-3 sin snapshot → genera con defaults (no falla).
  *   AC-4 idempotente (sobreescribe).
  */
-import { mkdirSync, writeFileSync } from 'node:fs'
+import { mkdirSync, writeFileSync, existsSync, readFileSync } from 'node:fs'
 import { join, dirname } from 'node:path'
 import { buildSnapshot } from '../context/snapshot'
 
@@ -46,8 +46,9 @@ function readmeContent(snap: Awaited<ReturnType<typeof buildSnapshot>>): string 
   return lines.join('\n')
 }
 
-/** rol: genera AGENTS.md (instrucciones para agentes). */
-function agentsContent(): string {
+/** rol: genera AGENTS.md SOLO si no existe (no pisar AGENTS.md rico del usuario o de init — fix auditor de visión). */
+function agentsContent(existing: string | null): string | null {
+  if (existing) return null // respeta AGENTS.md existente (init escribe uno rico)
   return `# AGENTS.md (generado por Netrunner)
 
 Este proyecto es operable por agentes de IA vía Netrunner. Conecta el server MCP (netrunner --mcp) y usa sus tools (explore/callers/callees/impact/rg/ops) para entender y operar el proyecto sin leer archivos masivamente.
@@ -59,8 +60,15 @@ export async function generateDocs(projectDir: string): Promise<{ written: strin
   const snap = await buildSnapshot(projectDir)
   const readmePath = join(projectDir, 'README.generated.md')
   const agentsPath = join(projectDir, 'AGENTS.md')
+  const existingAgents = existsSync(agentsPath) ? readFileSync(agentsPath, 'utf8') : null
   mkdirSync(dirname(readmePath), { recursive: true })
   writeFileSync(readmePath, readmeContent(snap))
-  writeFileSync(agentsPath, agentsContent())
-  return { written: ['README.generated.md', 'AGENTS.md'] }
+  const written: string[] = ['README.generated.md']
+  // solo escribe AGENTS.md si NO existe (no pisar uno rico — fix auditor de visión)
+  const agents = agentsContent(existingAgents)
+  if (agents) {
+    writeFileSync(agentsPath, agents)
+    written.push('AGENTS.md')
+  }
+  return { written }
 }

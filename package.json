@@ -29,6 +29,7 @@
     "vitest": "^3.0.0"
   },
   "dependencies": {
+    "@a2a-js/sdk": "1.1.0",
     "@agentclientprotocol/sdk": "^1.4.0",
     "@modelcontextprotocol/sdk": "^1.30.0",
     "tree-sitter-wasms": "^0.1.13",

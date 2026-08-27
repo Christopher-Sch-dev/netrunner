@@ -22,7 +22,7 @@ const IGNORED = new Set(['node_modules', '.git', '.netrunner', 'dist', 'build', 
 const SENSITIVE = new Set(['.env', '.pem', '.key', '.p12', '.credentials', 'id_rsa', 'id_ed25519', 'config.json'])
 
 /** Un snapshot del estado. */
-export interface SnapshotEntry { id: string; files: Record<string, string>; mtime: number }
+export interface SnapshotEntry { id: string; files: Record<string, string>; decisions: Record<string, string>; mtime: number }
 
 /** rol: recolecta los archivos fuente del proyecto (determinista, sin secrets). */
 function collectFiles(projectDir: string): Record<string, string> {
@@ -48,10 +48,25 @@ function collectFiles(projectDir: string): Record<string, string> {
   return files
 }
 
+/** rol: recolecta las decisiones open de .netrunner/decisions/ (ciclo persist→rollback, fix juez #4). */
+function collectDecisions(projectDir: string): Record<string, string> {
+  const decisions: Record<string, string> = {}
+  const dir = join(projectDir, '.netrunner', 'decisions')
+  if (!existsSync(dir)) return decisions
+  try {
+    for (const f of readdirSync(dir)) {
+      if (f.endsWith('.md')) {
+        try { decisions[f] = readFileSync(join(dir, f), 'utf8') } catch { /* skip */ }
+      }
+    }
+  } catch { /* skip */ }
+  return decisions
+}
+
 /** rol: crea un snapshot del estado (AC-1). */
 export function createSnapshot(projectDir: string): SnapshotEntry {
   const id = `snap-${Date.now()}`
-  const entry: SnapshotEntry = { id, files: collectFiles(projectDir), mtime: Date.now() }
+  const entry: SnapshotEntry = { id, files: collectFiles(projectDir), decisions: collectDecisions(projectDir), mtime: Date.now() }
   const path = join(projectDir, '.netrunner', 'backups', `${id}.json`)
   mkdirSync(dirname(path), { recursive: true })
   writeFileSync(path, JSON.stringify(entry))
@@ -108,5 +123,13 @@ export function restoreSnapshot(projectDir: string, id: string): void {
     }
     mkdirSync(dirname(abs), { recursive: true })
     writeFileSync(abs, content)
+  }
+  // restaurar decisiones (ciclo persist→rollback, fix juez #4)
+  if (entry.decisions) {
+    const decDir = join(root, '.netrunner', 'decisions')
+    mkdirSync(decDir, { recursive: true })
+    for (const [name, content] of Object.entries(entry.decisions)) {
+      writeFileSync(join(decDir, name), content)
+    }
   }
 }
