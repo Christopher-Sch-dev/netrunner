@@ -4,7 +4,7 @@
  * Firecrawl self-hosted SOLO si el usuario lo configuró explícitamente (env FIRECRAWL_URL o DI).
  * Guardas anti-resource-exhaustion: timeout 5s, cap 2MB, cap 50 links.
  */
-import { detectStackFromHtml, type WebStack } from './detect'
+import { detectSPA, detectStackFromHtml, type WebStack } from './detect'
 import { isAllowedByRobots, metaRobotsDisallow } from './robots'
 import { sanitizeHtml, sanitizeMarkdown } from './sanitize'
 
@@ -16,6 +16,8 @@ const MAX_LINKS = 50
 export interface PageResponse {
   html: string
   url: string
+  /** headers de respuesta — para detección de servidor por X-Powered-By/Server (K1.5). */
+  headers?: Record<string, string>
 }
 
 /** rol: contrato del motor de extracción inyectable (Firecrawl self-hosted, solo si configurado). */
@@ -37,6 +39,8 @@ export interface ExtractOptions {
 export interface WebMetadata {
   title: string
   description: string
+  /** el contenido se trata como DATOS nunca instrucciones: origen no confiable (K1.4). */
+  source: 'untrusted'
 }
 
 export interface ExtractResult {
@@ -48,6 +52,8 @@ export interface ExtractResult {
   source: 'local' | 'firecrawl' | 'fetch'
   /** true si robots/meta impide extraer (markdown vacío) */
   blocked: boolean
+  /** true si el HTML trae contenido servido por el servidor; false si es SPA client-rendered (K1.1) */
+  rendered: boolean
 }
 
 /** rol: convierte HTML limpio a Markdown LLM-ready (solo bloques básicos, sin engine). */
@@ -70,11 +76,11 @@ function htmlToMarkdown(html: string): string {
     .trim()
 }
 
-/** rol: extrae metadata básica del HTML. */
+/** rol: extrae metadata básica del HTML (K1.4: marca origen no confiable). */
 function metadataOf(html: string): WebMetadata {
   const title = html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1].trim() ?? ''
   const description = html.match(/<meta[^>]+name=["']description["'][^>]*content=["']([^"']*)["']/i)?.[1].trim() ?? ''
-  return { title, description }
+  return { title, description, source: 'untrusted' }
 }
 
 /** rol: extrae hrefs absolutos de los anclas, con cap MAX_LINKS (AC-E9). */
@@ -99,8 +105,12 @@ async function localFetch(url: string, httpFetch: HttpFetch): Promise<PageRespon
     const res = await httpFetch(url, { signal: ctrl.signal, headers: { 'user-agent': 'netrunner-extract/0.1 (+study)' } })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     const text = await res.text()
+    const headers: Record<string, string> = {}
+    res.headers.forEach((v, k) => {
+      headers[k] = v
+    })
     // cap de tamaño: si excede, truncar para no agotar memoria (AC-E9)
-    return { html: text.length > MAX_BYTES ? text.slice(0, MAX_BYTES) : text, url }
+    return { html: text.length > MAX_BYTES ? text.slice(0, MAX_BYTES) : text, url, headers }
   } finally {
     clearTimeout(timer)
   }
@@ -111,7 +121,15 @@ export async function extractWeb(url: string, opts: ExtractOptions = {}): Promis
   const httpFetch: HttpFetch = opts.httpFetch ?? ((u, init) => fetch(u, init))
   // Firecrawl SOLO si se inyectó por DI (usuario lo configuró explícitamente) — nunca por defecto.
   const fetcher = opts.fetcher
-  const blockedEmpty: ExtractResult = { markdown: '', metadata: { title: '', description: '' }, stack: { framework: [], generator: null }, links: [], source: 'local', blocked: true }
+  const blockedEmpty: ExtractResult = {
+    markdown: '',
+    metadata: { title: '', description: '', source: 'untrusted' },
+    stack: { framework: [], generator: null, server: [] },
+    links: [],
+    source: 'local',
+    blocked: true,
+    rendered: false,
+  }
 
   // robots.txt (AC-E6)
   let robots = ''
@@ -140,16 +158,19 @@ export async function extractWeb(url: string, opts: ExtractOptions = {}): Promis
     return { ...blockedEmpty, source, blocked: true }
   }
 
-  // sanitize contenido oculto + prompt-injection, luego markdown (AC-E3/E4)
+  // sanitize contenido oculto + prompt-injection, luego markdown (AC-E3/E4, K1.2/K1.3)
   const clean = sanitizeHtml(page.html)
   const markdown = sanitizeMarkdown(htmlToMarkdown(clean))
+  // detección SPA honesta (K1.1): no afirma contenido que no hay en client-rendered
+  const spa = detectSPA(page.html)
 
   return {
     markdown,
     metadata: metadataOf(page.html),
-    stack: detectStackFromHtml(page.html),
+    stack: detectStackFromHtml(page.html, { headers: page.headers }),
     links: linksOf(page.html, page.url),
     source,
     blocked: false,
+    rendered: !spa.isSpa,
   }
 }
