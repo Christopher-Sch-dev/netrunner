@@ -31,6 +31,7 @@ import * as integration from './cli/commands/integration'
 import * as system from './cli/commands/system'
 import * as orchestrate from './cli/commands/orchestrate'
 import * as web from './cli/commands/web'
+import * as setup from './cli/commands/setup'
 import { estimateTokens } from './tokens/index'
 
 /** rol: parses argv (flags --flag, --flag=val, --dir <path>). Returns {subcommand, flags, args}. */
@@ -130,6 +131,7 @@ const HANDLERS: Record<string, (ctx: HandlerContext) => Promise<void>> = {
   'mcp-orchestrate': orchestrate.orchestrate,
   extract: web.extract,
   dna: web.dna,
+  setup: setup.setup,
 }
 
 /** rol: binary entrypoint — router que delega en handlers por dominio. */
