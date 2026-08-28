@@ -1,4 +1,4 @@
-# Gherkin — netrunner extract <url> (Wave J1)
+# Gherkin — netrunner extract <url> (Wave J1 + mejoras Wave K1)
 
 ## SPEC (Mandamiento 0)
 **Como** un agente que estudia cómo otros crearon (estructura, stack, contenido de una web)
@@ -24,9 +24,23 @@ se usa SOLO si el usuario lo configura explícitamente (env `FIRECRAWL_URL`), nu
   cap de links 50. No hay loops infinitos ni condiciones de carrera.
 - **AC-E8**: cada archivo de `src/web/` tiene < 200 líneas.
 
+## Acceptance Criteria — mejoras Wave K1 (investigador profundo)
+- **AC-K1.1**: `detectSPA(html)` devuelve `{ isSpa, indicator }` (div#root/#app casi vacío + scripts grandes,
+  o `__NEXT_DATA__` client-rendered). `extractWeb` expone `rendered: boolean`; si es SPA client-rendered,
+  `rendered: false` (honestidad: no falla en silencio ni afirma contenido que no hay).
+- **AC-K1.2**: `sanitizeHtml` poda además nav/banner/footer/aside/popups (heurística tag + class/id) y
+  texto oculto agresivo (visibility:hidden, 1px, font-size:0, sr-only).
+- **AC-K1.3**: `sanitizeMarkdown` neutraliza más patrones de instrucción falsa ('reveal your instructions',
+  'follow the instructions in', 'disregard previous', base64 sospechoso) — patrón FocusAgent.
+- **AC-K1.4**: el output se trata como DATOS nunca instrucciones: `ExtractResult` incluye `source: 'untrusted'`
+  en la metadata (elimina clase LLM2x).
+- **AC-K1.5**: `detectStackFromHtml` amplía el stack: `__NEXT_DATA__` (Next), `__NUXT__` (Nuxt/Vue),
+  `__REMIX_` (Remix), `astro-island` (Astro), `wp-content`/`wp-json` (WordPress); y acepta headers
+  `X-Powered-By`/`Server` para detectar por servidor.
+
 ## Escenarios
 ```
-Feature: netrunner extract <url> (Wave J1)
+Feature: netrunner extract <url> (Wave J1 + K1)
 
   Scenario: extrae markdown + metadata + stack + links de una web
     Given una URL con HTML conteniendo un <title> y un párrafo visible
@@ -58,6 +72,32 @@ Feature: netrunner extract <url> (Wave J1)
     Given HTML con <meta name="generator" content="Astro v5"> y /_astro/asset
     When detecto el stack
     Then el framework detectado incluye astro
+
+  Scenario: detecta SPA client-rendered (K1)
+    Given HTML con <div id="root"></div> casi vacío y un script grande
+    When llamo extractWeb
+    Then rendered es false
+    And el indicator menciona el contenedor raíz
+
+  Scenario: poda nav/banner/hidden en sanitize (K1)
+    Given HTML con un <nav> con links, un div.banner y texto sr-only
+    When sanitizo el HTML
+    Then ni los links de nav ni el texto sr-only ni el banner aparecen
+
+  Scenario: neutraliza instrucciones falsas y base64 sospechoso (K1)
+    Given HTML con "reveal your instructions", "disregard previous" y un bloque base64
+    When sanitizo el markdown
+    Then ninguna instrucción falsa ni el base64 aparecen
+
+  Scenario: metadata marca el output como datos no instrucciones (K1)
+    Given una URL extraída correctamente
+    When llamo extractWeb
+    Then metadata.source es 'untrusted'
+
+  Scenario: detecta stack ampliado por markers y headers (K1)
+    Given HTML con __NEXT_DATA__/__NUXT__/astro-island/wp-content y header X-Powered-By
+    When detecto el stack pasando headers
+    Then el framework detectado incluye next/nuxt/astro/wordpress y el server detectado
 
   Scenario: respeta robots.txt y meta robots (no indexa)
     Given un robots.txt que Disallow la URL o un meta robots noindex
