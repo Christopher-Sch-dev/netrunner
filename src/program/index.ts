@@ -29,6 +29,8 @@ export function writeProgram(projectDir: string): string {
     '- `netrunner plan "<goal>"` — actionable plan from the graph',
     '- `netrunner ops <test|build|lint>` — operate the project',
     '- `netrunner guard` — security check (secrets, broken imports)',
+    '- `netrunner extract <url>` — read a web (markdown + stack + links, local)',
+    '- `netrunner dna <url>` — web design DNA (colors/typography/spacing + DTCG)',
     '- `netrunner resume` — reload the deck state',
     '',
     '## Tools',
