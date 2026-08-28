@@ -23,6 +23,7 @@ const PROTECTED_FILES = new Set(['.env', '.env.local', '.pem', '.key', '.p12', '
 const SECRET_PATTERNS = [
   /ghp_[A-Za-z0-9]{20,}/,
   /sk-[A-Za-z0-9]{20,}/,
+  /sk-(proj|live|ant|svcacct)-[A-Za-z0-9_-]{20,}/,
   /token\s*=\s*[A-Za-z0-9]{16,}/i,
   /token\s*=\s*['"][^'"]{8,}['"]/i,
   /AKIA[0-9A-Z]{16}/,

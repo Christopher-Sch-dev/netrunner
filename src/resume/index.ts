@@ -18,7 +18,7 @@
  */
 import { readdirSync, readFileSync, existsSync } from 'node:fs'
 import { join } from 'node:path'
-import { loadSnapshot } from '../context/snapshot'
+import { loadSnapshot, buildSnapshot } from '../context/snapshot'
 import { history } from '../history/index'
 import { canonStale } from '../canon/stale'
 
@@ -50,8 +50,14 @@ export async function resume(projectDir: string): Promise<{
   history: ReturnType<typeof history>
   canonStale: boolean
 }> {
+  // fix auditor implante (gap 1): si no hay snapshot persistido, construirlo on-the-fly
+  // (el implante anti-amnesia SIEMPRE da el contexto del proyecto, aunque nunca se guardó)
+  let snap = loadSnapshot(projectDir)
+  if (!snap) {
+    snap = await buildSnapshot(projectDir)
+  }
   return {
-    snapshot: loadSnapshot(projectDir),
+    snapshot: snap,
     decisions: loadOpenDecisions(projectDir),
     history: history(projectDir),
     canonStale: canonStale(projectDir),

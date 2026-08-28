@@ -6,7 +6,7 @@ import type { HandlerContext } from './types'
 
 /** rol: --version / version. */
 export async function version(ctx: HandlerContext): Promise<void> {
-  ctx.emit({ name: 'netrunner', version: '0.7.2' }, ctx.human)
+  ctx.emit({ name: 'netrunner', version: '0.7.5' }, ctx.human)
   process.exit(0)
 }
 
@@ -24,7 +24,7 @@ export async function help(ctx: HandlerContext): Promise<void> {
   }
   ctx.emit({
     name: 'netrunner',
-    version: '0.7.2',
+    version: '0.7.5',
     usage: 'netrunner <cmd> [args] [--dir <path>] [--human]',
     commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'path', 'god-nodes', 'graph-report', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'uninstall', 'plugin', 'breach', 'deck', 'mode', 'quickhacks', 'resume', 'sleeve', 'doctor', 'history', 'mcp-orchestrate', '--mcp', '--acp', '--a2a'],
   }, ctx.human)
@@ -68,21 +68,29 @@ export async function sleeve(ctx: HandlerContext): Promise<void> {
   const { exportSleeve, importSleeve } = await import('../../sleeve/index')
   const action = ctx.args[0] ?? 'export'
   if (action === 'import' && ctx.args[1]) {
-    // import desde un archivo JSON (fix auditor M3: restringir a paths dentro del proyecto)
+    // import desde un archivo JSON (fix auditor M3 + implante gap 3: permitir import de
+    // cualquier path — portabilidad cross-proyecto — PERO validar que sea un sleeve válido)
     const { readFileSync, existsSync } = await import('node:fs')
-    const { join, resolve } = await import('node:path')
+    const { resolve } = await import('node:path')
     const importPath = resolve(ctx.args[1])
-    const projectRoot = resolve(ctx.projectDir)
-    if (!importPath.startsWith(projectRoot + '/') && importPath !== projectRoot) {
-      ctx.emit({ imported: false, error: 'sleeve import solo acepta archivos dentro del proyecto' }, ctx.human)
-      process.exit(1)
-    }
     if (!existsSync(importPath)) {
       ctx.emit({ imported: false, error: `archivo no existe: ${importPath}` }, ctx.human)
       process.exit(1)
     }
-    const sleeve = JSON.parse(readFileSync(importPath, 'utf8'))
-    importSleeve(ctx.projectDir, sleeve)
+    let sleeve: unknown
+    try {
+      sleeve = JSON.parse(readFileSync(importPath, 'utf8'))
+    } catch {
+      ctx.emit({ imported: false, error: 'el archivo no es un sleeve JSON válido' }, ctx.human)
+      process.exit(1)
+    }
+    // validar estructura de sleeve (no leer archivos arbitrarios sin propósito)
+    const s = sleeve as { decisions?: unknown; history?: unknown; snapshot?: unknown }
+    if (!s.decisions && !s.history && !s.snapshot) {
+      ctx.emit({ imported: false, error: 'el archivo no tiene estructura de sleeve (decisions/history/snapshot)' }, ctx.human)
+      process.exit(1)
+    }
+    importSleeve(ctx.projectDir, sleeve as Parameters<typeof importSleeve>[1])
     ctx.emit({ imported: true }, ctx.human)
   } else {
     // fix auditor (issue #3): export escribe el archivo .netrunner/sleeve.json (portable)

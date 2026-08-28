@@ -57,4 +57,16 @@ export function importSleeve(projectDir: string, sleeve: Sleeve): void {
     mkdirSync(decDir, { recursive: true })
     writeFileSync(join(decDir, `${d.slug}.md`), d.content)
   }
+  // fix auditor implante (gap 3): restaurar history y snapshot — el recuerdo viaja completo
+  if (sleeve.history?.operations?.length) {
+    const histPath = join(projectDir, '.netrunner', 'history.log')
+    mkdirSync(dirname(histPath), { recursive: true })
+    const lines = sleeve.history.operations.map((op) => `${op.command}\t${op.status}`)
+    writeFileSync(histPath, lines.join('\n') + '\n')
+  }
+  if (sleeve.snapshot) {
+    const snapPath = join(projectDir, '.netrunner', 'state', 'project.json')
+    mkdirSync(dirname(snapPath), { recursive: true })
+    writeFileSync(snapPath, JSON.stringify(sleeve.snapshot, null, 2))
+  }
 }

@@ -38,7 +38,8 @@ describe('resume (el recuerdo que se re-adhiere)', () => {
 
   it('sin estado → devuelve vacíos (AC-5)', async () => {
     const result = await resume(dir)
-    expect(result.snapshot).toBeNull()
+    // fix auditor implante (gap 1): resume SIEMPRE da snapshot (construido on-the-fly)
+    expect(result.snapshot).not.toBeNull()
     expect(result.decisions).toEqual([])
     expect(result.history.operations).toEqual([])
     expect(typeof result.canonStale).toBe('boolean')

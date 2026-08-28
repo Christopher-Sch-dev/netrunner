@@ -14,10 +14,12 @@ export async function ops(ctx: HandlerContext): Promise<void> {
   const { evaluatePolicy } = await import('../../policy/index')
   const kind = ctx.args[0] ?? 'test'
   const timeout = Number(ctx.args[1] ?? 30000)
-  // fix auditor (A1): policy fail-closed en CLI — ops es mutating, requiere approval
-  const decision = evaluatePolicy('edit', { readOnly: false, approval: false })
+  // fix auditor (A1 + CTO): policy fail-closed en CLI — ops es mutating, requiere approval
+  // explícito (--approval=true). Por defecto deny (seguro); el agente autoriza con el flag.
+  const approval = ctx.flags['approval'] === 'true' || ctx.flags['approval'] === '1'
+  const decision = evaluatePolicy('edit', { readOnly: false, approval })
   if (decision === 'deny') {
-    ctx.emit({ ok: false, error: 'policy deny: mutating op requiere approval' }, ctx.human)
+    ctx.emit({ ok: false, error: 'policy deny: mutating op requiere --approval=true' }, ctx.human)
     process.exit(1)
   }
   const start = Date.now()
@@ -81,10 +83,20 @@ export async function mode(ctx: HandlerContext): Promise<void> {
 export async function daemon(ctx: HandlerContext): Promise<void> {
   const { daemonTick } = await import('../../daemon/index')
   if (ctx.flags['watch'] === 'true' || ctx.flags['watch'] === '1') {
-    const { daemonWatch } = await import('../../daemon/watch')
-    const intervalMs = Number(ctx.args[0] ?? 5000)
-    const results = await daemonWatch(ctx.projectDir, { intervalMs })
-    ctx.emit({ watched: results.length, last: results[results.length - 1] }, ctx.human)
+    // fix auditor agéntico: usar el fs.watch REAL (watchProject) en vez de polling.
+    // El watcher emite señal 'cambio' en tiempo real al modificar archivos.
+    const { watchProject } = await import('../../watchdog/index')
+    const { daemonTick } = await import('../../daemon/index')
+    const debounceMs = Number(ctx.args[0] ?? 100)
+    const handle = watchProject(ctx.projectDir, { debounceMs })
+    // correr un tick inicial (baseline) y luego esperar cambios
+    const baseline = await daemonTick(ctx.projectDir)
+    ctx.emit({ watching: true, baseline, debounceMs }, ctx.human)
+    // mantener el proceso vivo hasta que el watcher cierre (Ctrl+C)
+    await new Promise<void>((resolve) => {
+      process.once('SIGINT', () => { handle.close(); resolve() })
+      process.once('SIGTERM', () => { handle.close(); resolve() })
+    })
   } else {
     ctx.emit(await daemonTick(ctx.projectDir), ctx.human)
   }
