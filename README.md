@@ -3,8 +3,8 @@
 **The universal jack.** Connect every project, every agent, one net.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.7.1-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
-[![Tests](https://img.shields.io/badge/tests-243%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
+[![Version](https://img.shields.io/badge/version-0.7.5-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
+[![Tests](https://img.shields.io/badge/tests-327%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 [![Coverage](https://img.shields.io/badge/coverage-84%25-yellow.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 
 Netrunner is an open-source, MIT-licensed **universal agent SDK**: a single binary that turns *any* project into something *any* AI agent can understand, operate, and control — with one command.
@@ -112,6 +112,8 @@ Every command returns **clean JSON** (agent-parseable, no hallucination) with st
 | `netrunner deck` | Deck state: quickhacks + daemons + tools (progressive disclosure) |
 | `netrunner mode <profile>` | Deck mode: explore / operate / audit (Wintermute/Neuromancer) |
 | `netrunner quickhacks` | List quickhacks with cost/cooldown |
+| `netrunner extract <url>` | Read a web: markdown + metadata + stack + links (local fetch, no deps) |
+| `netrunner dna <url>` | Extract a web's design DNA: colors/typography/spacing/shape + DTCG tokens |
 | `netrunner resume` | Reload the deck state (snapshot + decisions + history + signals) |
 | `netrunner sleeve [import <file>]` | Export/import the portable deck (Construct) |
 | `netrunner doctor` | Self-check: lint + guard + canonStale |
