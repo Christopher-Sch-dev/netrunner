@@ -30,6 +30,8 @@ This project is wired to **Netrunner**, the universal agent motor. Any agent can
 - \`netrunner explore <sym>\` — find a symbol and its callers
 - \`netrunner plan "<goal>"\` — generate a plan from the code graph
 - \`netrunner map\` — export the graph (D3/mermaid visualizable)
+- \`netrunner extract <url>\` — read a web: markdown + metadata + stack + links (local fetch)
+- \`netrunner dna <url>\` — extract a web's design DNA (colors/typography/spacing/shape + DTCG tokens)
 - \`netrunner dump\` — list every tool the agent can call
 
 Every command returns clean JSON (agent-parseable, no hallucination) with a \`_meta.schemaVersion\`.
