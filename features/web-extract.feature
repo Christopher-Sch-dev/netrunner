@@ -6,17 +6,22 @@
 junto con metadata, el stack/framework detectado y los links de la página,
 **para** estudiar cómo otros crearon sin robar — y sin LLM en el núcleo ni browser como dependencia dura.
 
-Determinista, sin browser de dependencia dura (fetch HTML+CSS primero). Firecrawl self-hosted
-vía DI con fallback a fetch plano (fundamento I3/Scrapling).
+NetRunner funciona **100% LOCAL** sin dependencias externas. El motor de extracción es el `fetch`
+nativo de Bun (ya existe en el binario) con parsing ligero por regex/tokenizer. Firecrawl self-hosted
+se usa SOLO si el usuario lo configura explícitamente (env `FIRECRAWL_URL`), nunca por defecto.
 
 ## Acceptance Criteria
 - **AC-E1**: `extractWeb(url)` devuelve `{ markdown, metadata, stack, links }`; `markdown` no vacío.
-- **AC-E2**: el motor Firecrawl se inyecta por DI (`new FirecrawlFetcher(api)`); si falla/está ausente, cae a `fetch` plano.
+- **AC-E2**: el motor por defecto es `fetch` nativo local (source `'local'`) — no depende de Firecrawl.
+- **AC-E2b**: Firecrawl se inyecta por DI (`WebFetcher`) solo si el usuario lo configuró explícitamente
+  (source `'firecrawl'`); si falla, cae a `fetch` plano (source `'fetch'`).
 - **AC-E3**: `sanitizeHtml` remueve contenido oculto (hidden/display:none/aria-hidden) y contenido no-visible.
-- **AC-E4**: `sanitizeMarkdown` neutraliza prompt-injection: remueve texto con `ignore previous instructions`, `system prompt`, y atributos `on*` / `javascript:` de los links.
-- **AC-E5**: `detectStackFromHtml(html, metadata)` detecta framework/CMS por meta generator, class hints, y links de assets (next/astro/wordpress/astro/webflow/wix/ghost/gatsby).
-- **AC-E6**: `robots` respeta robots.txt y meta robots: si `Disallow` cubre la URL o el meta dice `noindex`/`nofollow`, `extractWeb` NO extrae (devuelve `{ blocked: true }`).
-- **AC-E7**: un HTML con meta generator y assets detecta el stack correctamente.
+- **AC-E4**: `sanitizeMarkdown` neutraliza prompt-injection y atributos `on*` / `javascript:`.
+- **AC-E5**: `detectStackFromHtml(html, metadata)` detecta framework/CMS (astro/next/wordpress/...).
+- **AC-E6**: `robots` respeta robots.txt y meta robots: si `Disallow` cubre la URL o el meta dice
+  `noindex`/`nofollow`, `extractWeb` NO extrae (devuelve `{ blocked: true }`).
+- **AC-E9**: guardas anti-resource-exhaustion: timeout de fetch 5s, cap de tamaño de respuesta 2MB,
+  cap de links 50. No hay loops infinitos ni condiciones de carrera.
 - **AC-E8**: cada archivo de `src/web/` tiene < 200 líneas.
 
 ## Escenarios
@@ -25,16 +30,18 @@ Feature: netrunner extract <url> (Wave J1)
 
   Scenario: extrae markdown + metadata + stack + links de una web
     Given una URL con HTML conteniendo un <title> y un párrafo visible
-    When llamo extractWeb(url, { fetcher })
+    When llamo extractWeb(url) con fetch nativo local
     Then markdown no está vacío
     And metadata.title es el del <title>
     And stack no está vacío
     And links contiene al menos el href de un ancla
+    And source es 'local'
 
-  Scenario: Firecrawl se inyecta por DI y cae a fetch si falla
-    Given un FirecrawlFetcher mock que lanza
+  Scenario: Firecrawl se inyecta por DI solo si se configuró, y cae a fetch si falla
+    Given un WebFetcher inyectado explícitamente
     When llamo extractWeb(url, { fetcher })
-    Then se usa el fetch plano como fallback y markdown no está vacío
+    Then source es 'firecrawl'
+    And si el fetcher lanza, cae a fetch plano con source 'fetch'
 
   Scenario: sanitize remueve contenido oculto
     Given HTML con un <div style="display:none"> con texto secreto
@@ -53,7 +60,12 @@ Feature: netrunner extract <url> (Wave J1)
     Then el framework detectado incluye astro
 
   Scenario: respeta robots.txt y meta robots (no indexa)
-    Given un fetcher mock que responde Disallow para la URL
+    Given un robots.txt que Disallow la URL o un meta robots noindex
     When llamo extractWeb
     Then devuelve blocked: true y markdown vacío
+
+  Scenario: cap de links anti-exhaustion
+    Given un HTML con más de 50 anclas
+    When llamo extractWeb
+    Then links no supera los 50 elementos
 ```
