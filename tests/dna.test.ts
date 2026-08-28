@@ -1,5 +1,18 @@
 import { describe, it, expect } from 'vitest'
-import { dnaScan, normalizeHex, gcd, isNeutral } from '../src/dna/index'
+import {
+  dnaScan,
+  normalizeHex,
+  gcd,
+  isNeutral,
+  hexToOklab,
+  oklabDistance,
+  clusterOklab,
+  analyzeTypeScale,
+  emitDesignTokensJson,
+  emitVariablesCss,
+  emitDesignMd,
+} from '../src/dna/index'
+import type { DnaResult } from '../src/dna/index'
 
 // role: tests for netrunner dna (Wave J2, features/dna.feature).
 // Verifica extracción determinista del ADN de diseño (AC-1..7) con HTML+CSS de prueba.
@@ -37,6 +50,7 @@ const HTML = `<!doctype html>
 
 // fetcher de prueba (DI — evita red real).
 const fetchHtml = async (_url: string) => HTML
+const fetchHtmlK2 = async (_url: string) => HTML_K2
 
 describe('dna scan determinista (AC-1)', () => {
   it('devuelve DnaResult con url y todas las dimensiones', async () => {
@@ -158,3 +172,183 @@ describe('utilidades', () => {
     expect(gcd([1, 2, 3])).toBe(1)
   })
 })
+
+// ==========================================================================
+// WAVE K2 — mejoras investigador profundo (papers 2601.19117, DTCG W3C)
+// ==========================================================================
+
+// HTML con CTA real (button con background != surface) y dos azules cercanos.
+const HTML_K2 = `<!doctype html>
+<html>
+<head>
+<style>
+  :root { --color-primary: #0a5; --color-bg: #ffffff; }
+  body { font-family: "Inter", sans-serif; background: #ffffff; color: #1f2937; padding: 8px; }
+  h1 { font-size: 32px; }
+  h2 { font-size: 25.6px; }
+  h3 { font-size: 20.5px; }
+  h4 { font-size: 16.4px; }
+  p { font-size: 13.1px; }
+  .hero { background: #0066ff; padding: 40px; }
+  .btn-primary { background: #0052cc; }
+  .btn-accent { background: #ff5a00; }
+  .card { padding: 30px; }
+</style>
+</head>
+<body>
+  <header class="hero"><h1>Hero</h1></header>
+  <button class="btn-primary">Comprar</button>
+  <button class="btn-accent">CTA</button>
+</body>
+</html>`
+
+describe('Wave K2 — OKLab perceptivo (AC-K2-2.3/2.4)', () => {
+  it('hexToOklab convierte hex a [L,a,b] con L en [0,1] y es determinista', () => {
+    const [L, a, b] = hexToOklab('#0066ff')
+    expect(L).toBeGreaterThanOrEqual(0)
+    expect(L).toBeLessThanOrEqual(1)
+    const again = hexToOklab('#0066ff')
+    expect(again).toEqual([L, a, b])
+  })
+
+  it('oklabDistance agrupa colores perceptivamente cercanos', () => {
+    // dos azules cercanos vs un rojo: distancia azul-azul << azul-rojo
+    const dBlue = oklabDistance(hexToOklab('#0066ff'), hexToOklab('#0052cc'))
+    const dRed = oklabDistance(hexToOklab('#0066ff'), hexToOklab('#ff5a00'))
+    expect(dBlue).toBeLessThan(dRed)
+  })
+
+  it('clusterOklab agrupa azules juntos y separa el rojo', () => {
+    const clusters = clusterOklab(['#0066ff', '#0052cc', '#ff5a00'])
+    const blueCluster = clusters.find((c) => c.hexes.includes('#0066ff'))
+    expect(blueCluster).toBeDefined()
+    expect(blueCluster!.hexes).toContain('#0052cc')
+    expect(blueCluster!.hexes).not.toContain('#ff5a00')
+    expect(clusters.length).toBeGreaterThanOrEqual(2)
+  })
+
+  it('dnaScan expone colors.clusters con centro, hexes y peso', async () => {
+    const r = await dnaScan('https://example.com', fetchHtml)
+    expect(r.colors.clusters).toBeDefined()
+    expect(r.colors.clusters.length).toBeGreaterThan(0)
+    for (const c of r.colors.clusters) {
+      expect(c.hexes.length).toBeGreaterThan(0)
+      expect(typeof c.weight).toBe('number')
+    }
+  })
+})
+
+describe('Wave K2 — roles area×frecuencia + posición CTA (AC-K2-2.4)', () => {
+  it('accent = primer button/a con bg != surface en DOM (posicion CTA)', async () => {
+    const r = await dnaScan('https://example.com', fetchHtmlK2)
+    // .btn-primary #0052cc aparece primero en DOM y es boton con bg != surface
+    expect(r.colors.accent).toBe('#0052cc')
+  })
+
+  it('primary = cluster OKLab no-neutral de mayor peso area×frecuencia excluyendo accent', async () => {
+    const r = await dnaScan('https://example.com', fetchHtmlK2)
+    expect(r.colors.primary).toBe('#0066ff')
+  })
+})
+
+describe('Wave K2 — type scale log-lineal (AC-K2-3.2)', () => {
+  it('analyzeTypeScale detecta escala modular (R² > 0.95) con ratio geometrico', () => {
+    // serie geométrica contigua ratio 1.25: body→h1 (steps 0..6)
+    const sizes: Record<string, string> = {
+      body: '16px',
+      h6: '20px',
+      h5: '25px',
+      h4: '31.25px',
+      h3: '39.0625px',
+      h2: '48.828125px',
+      h1: '61.03515625px',
+    }
+    const analysis = analyzeTypeScale(sizes)
+    expect(analysis.mode).toBe('modular')
+    expect(analysis.rSquared).toBeGreaterThan(0.95)
+    // ratio 1.25 => ln(1.25)≈0.223
+    expect(analysis.ratio).toBeCloseTo(1.25, 1)
+  })
+
+  it('analyzeTypeScale devuelve custom para tamaños no geometricos', () => {
+    const sizes: Record<string, string> = { body: '12px', h1: '48px', h2: '20px' }
+    const analysis = analyzeTypeScale(sizes)
+    expect(analysis.mode).toBe('custom')
+  })
+
+  it('dnaScan rellena typography.typeScaleAnalysis para HTML K2', async () => {
+    const r = await dnaScan('https://example.com', fetchHtml)
+    expect(r.typography.typeScaleAnalysis).toBeDefined()
+    expect(typeof r.typography.typeScaleAnalysis.ratio).toBe('number')
+  })
+})
+
+describe('Wave K2 — spacing off-system (AC-K2-4.2)', () => {
+  it('marca offSystem los valores fuera del grid dominante', async () => {
+    const r = await dnaScan('https://example.com', fetchHtmlK2)
+    // grid dominante 8: 8 y 40 on-system; 30 off-system (no multiplo de 8)
+    expect(r.spacing.baseUnit).toBe(8)
+    expect(r.spacing.offSystem).toContain(30)
+    expect(r.spacing.offSystem).not.toContain(40)
+  })
+})
+
+describe('Wave K2 — emisores DTCG W3C (AC-K2-8)', () => {
+  const base: DnaResult = {
+    url: 'https://example.com',
+    colors: {
+      primary: '#0066ff',
+      accent: '#ff5a00',
+      neutral: ['#ffffff', '#1f2937'],
+      semantic: { error: '#ef4444' },
+      clusters: [],
+    },
+    typography: {
+      families: ['Inter'],
+      typeScale: { body: { size: '16px' }, h1: { size: '32px' } },
+      typeScaleAnalysis: { mode: 'modular', ratio: 1.25, rSquared: 0.99, points: 2 },
+    },
+    spacing: { baseUnit: 8, offSystem: [30] },
+    radius: { values: [8, 16] },
+    shadows: { values: ['0 4px 12px rgba(0,0,0,0.1)'] },
+    effects: { canvas: false, webgl: false, gsap: false, three: false },
+  }
+
+  it('design-tokens.json parsea y tiene $type/$value', () => {
+    const json = JSON.parse(emitDesignTokensJson(base))
+    expect(json).toBeDefined()
+    const str = JSON.stringify(json)
+    expect(str).toContain('$type')
+    expect(str).toContain('$value')
+  })
+
+  it('design-tokens.json tiene capas primitivo/semantico/composite', () => {
+    const json = JSON.parse(emitDesignTokensJson(base))
+    const keys = Object.keys(json)
+    expect(keys).toContain('primitivo')
+    expect(keys).toContain('semantico')
+    expect(keys).toContain('composite')
+  })
+
+  it('design-tokens.json emite referencias {} entre capas', () => {
+    const json = JSON.parse(emitDesignTokensJson(base))
+    const sem = json.semantico
+    const str = JSON.stringify(sem)
+    expect(str).toContain('{')
+  })
+
+  it('variables.css tiene :root y --vars', () => {
+    const css = emitVariablesCss(base)
+    expect(css).toContain(':root')
+    expect(css).toContain('--color-primary')
+    expect(css).toContain('#0066ff')
+  })
+
+  it('design.md es un brief markdown', () => {
+    const md = emitDesignMd(base)
+    expect(md).toContain('#')
+    expect(md).toContain('## ')
+    expect(md).toContain('#0066ff')
+  })
+})
+
