@@ -3,8 +3,8 @@
 **The universal jack.** Connect every project, every agent, one net.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.7.7-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
-[![Tests](https://img.shields.io/badge/tests-346%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
+[![Version](https://img.shields.io/badge/version-0.7.8-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
+[![Tests](https://img.shields.io/badge/tests-348%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 [![Coverage](https://img.shields.io/badge/coverage-84%25-yellow.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 
 Netrunner is an open-source, MIT-licensed **universal agent SDK**: a single binary that turns *any* project into something *any* AI agent can understand, operate, and control — with one command.
@@ -129,6 +129,22 @@ Every command returns **clean JSON** (agent-parseable, no hallucination) with st
 | `netrunner --help` | List commands (or `<tool> --help` for a tool's schema) |
 
 Global flags: `--dir <path>` (operate a specific project), `--human` (readable output).
+
+---
+
+## MCP: control the whole engine from 0 to 100
+
+`netrunner --mcp` serves as an MCP server. Beyond the graph tools (exposed per-stack via progressive disclosure), it ships **meta-tools** that let an agent drive the entire engine without restarting:
+
+| Meta-tool | What it does |
+|---|---|
+| `net_set_project <dir>` | Switch the project the server operates (navigate any repo without restarting) |
+| `net_init <dir>` | Initialize a project (index graph + generate the connectable layer: SKILL.md/AGENTS.md/program.md/.mcp.json) |
+| `net_run <command> [args]` | Run any CLI command as an MCP tool (allowlist of safe commands: status, guard, resume, extract, dna, inspect, plan, ...) |
+| `net_available_toolsets` | List the toolsets available for the current project (derived from its stack) |
+| `net_enable_toolset <toolset>` | Enable a toolset, dynamically registering its tools |
+
+Every command is **independent and complete** — an agent can initialize a project, explore its graph, run operations, and inspect web pages all through MCP, with clean JSON output.
 
 ---
 

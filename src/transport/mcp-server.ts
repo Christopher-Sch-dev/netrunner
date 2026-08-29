@@ -27,6 +27,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import { existsSync, statSync } from 'node:fs'
+import { spawn } from 'node:child_process'
 import { detectStack } from '../context/detect'
 import { buildNetrunnerRegistry } from '../core/registry-factory'
 import { toolsetsForStack, STACK_TOOLSETS } from './toolsets'
@@ -149,7 +150,7 @@ function applyStateless(server: McpServer, available: Toolset[]): void {
  * projectDir es el proyecto a operar. Expone progressive disclosure.
  */
 export async function createServer(projectDir: string): Promise<McpServer> {
-  const server = new McpServer({ name: 'netrunner', version: '0.7.7' })
+  const server = new McpServer({ name: 'netrunner', version: '0.7.8' })
   const registry = buildNetrunnerRegistry()
   let stack = await detectStack(projectDir)
   let available = toolsetsFor(stack)
@@ -192,42 +193,38 @@ export async function createServer(projectDir: string): Promise<McpServer> {
     },
   )
 
-  // --- META-TOOL: cascada completa designada (P6, features/mcp-0a100.feature AC-3..7) ---
-  // Ejecuta una secuencia de tools en orden (síncrona, en cascada lógica, sin saturar servicios).
-  const CASCADE_STEPS = ['init', 'status', 'explore', 'plan', 'ops', 'stack', 'god-nodes', 'graph-report']
+  // --- META-TOOL: ejecuta cualquier comando CLI como tool MCP (P7.1, features/net-run.feature) ---
+  // Permite al agente controlar TODO el motor por flujo agéntico (no solo el grafo).
+  // Allowlist de comandos seguros (read-only + no destructivos) — un comando fuera de
+  // la lista NO se ejecuta (fail-closed, AC-3).
+  const ALLOWED_RUN = new Set([
+    'status', 'explore', 'callers', 'callees', 'impact', 'path', 'god-nodes', 'graph-report',
+    'plan', 'guard', 'policy', 'persist', 'rollback', 'snapshot', 'resume', 'sleeve', 'history',
+    'curate', 'lint', 'extract', 'dna', 'inspect', 'stack', 'map', 'depth', 'scan', 'mesh',
+    'dump', 'doctor', 'deck', 'mode', 'quickhacks', 'breach', 'mcp-orchestrate',
+  ])
   server.registerTool(
-    'net_cascade',
+    'net_run',
     {
-      description: 'Ejecuta una cascada designada de tools en orden (síncrona, en cascada lógica). Steps: init,status,explore,plan,ops,stack,god-nodes,graph-report.',
-      inputSchema: { dir: z.string(), steps: z.array(z.string()) },
+      description: 'Ejecuta un comando CLI de NetRunner como tool MCP (allowlist de comandos seguros). Commands: status,explore,callers,callees,impact,path,god-nodes,graph-report,plan,guard,policy,persist,rollback,snapshot,resume,sleeve,history,curate,lint,extract,dna,inspect,stack,map,depth,scan,mesh,dump,doctor,deck,mode,quickhacks,breach,mcp-orchestrate.',
+      inputSchema: { command: z.string(), args: z.array(z.string()).optional() },
     },
-    async ({ dir, steps }) => {
-      if (!steps || steps.length === 0) {
-        return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: 'MISSING_STEPS: steps vacío' }) }] }
+    async ({ command, args }) => {
+      if (!ALLOWED_RUN.has(command)) {
+        return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: `FORBIDDEN_COMMAND: '${command}' no está en la allowlist` }) }] }
       }
-      for (const s of steps) {
-        if (!CASCADE_STEPS.includes(s)) {
-          return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: `UNKNOWN_STEP: '${s}' (usa: ${CASCADE_STEPS.join(',')})` }) }] }
-        }
-      }
-      if (!existsSync(dir) || !statSync(dir).isDirectory()) {
-        return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: `INVALID_DIR: '${dir}'` }) }] }
-      }
-      // ejecuta en secuencia (síncrono, AC-7) — cada paso usa el resultado del anterior
-      const results: Record<string, unknown> = {}
-      for (const s of steps) {
-        if (s === 'init') {
-          results[s] = await initProject(dir)
-        } else if (s === 'stack') {
-          results[s] = await detectStack(dir)
-        } else if (s === 'status' || s === 'explore' || s === 'plan' || s === 'ops' || s === 'god-nodes' || s === 'graph-report') {
-          // steps que requieren el registry — se delegan al registry con el ctx actual
-          const spec = registry.discover('explore').find((t) => t.id === `graph.${s}` || t.id === `stack.${s}` || t.id === `op.${s}`)
-          if (spec) results[s] = await registry.call(spec.id, {}, ctx)
-          else results[s] = { ok: false, error: `step '${s}' no disponible como tool` }
-        }
-      }
-      return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: true, results }) }] }
+      const out = await new Promise<string>((resolve, reject) => {
+        // bun compile: process.execPath = binario real; process.argv[1] es un path virtual
+        // (/$bunfs/root/netrunner) no ejecutable. Spawn del binario con el subcomando.
+        const child = spawn(process.execPath, [command, '--dir', ctx.projectDir, ...(args ?? [])], { stdio: ['ignore', 'pipe', 'pipe'] })
+        let stdout = ''
+        let stderr = ''
+        child.stdout.on('data', (d) => (stdout += d))
+        child.stderr.on('data', (d) => (stderr += d))
+        child.on('close', (code) => (code === 0 ? resolve(stdout) : reject(new Error(stderr || `exit ${code}`))))
+        child.on('error', reject)
+      })
+      return { content: [{ type: 'text' as const, text: out }] }
     },
   )
 

@@ -31,6 +31,9 @@ export function writeProgram(projectDir: string): string {
     '- `netrunner guard` — security check (secrets, broken imports)',
     '- `netrunner extract <url>` — read a web (markdown + stack + links, local)',
     '- `netrunner dna <url>` — web design DNA (colors/typography/spacing + DTCG)',
+    '- `netrunner dna <url> --brief|--css|--json` — design tokens (markdown/css/DTCG)',
+    '- `netrunner inspect <url>` — web console/network/perf/a11y (CDP DI or local)',
+    '- `netrunner setup` — agentic one-command installer (detect SO/agents, configure)',
     '- `netrunner resume` — reload the deck state',
     '',
     '## Tools',
@@ -38,6 +41,7 @@ export function writeProgram(projectDir: string): string {
     '- stack.info, search.rg',
     '- ops.test, ops.build, ops.lint',
     '- guard, policy',
+    '- MCP: net_init, net_run, net_set_project, net_available_toolsets, net_enable_toolset',
     '',
   ].join('\n')
   const path = join(projectDir, 'program.md')
