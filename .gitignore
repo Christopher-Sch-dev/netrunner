@@ -42,3 +42,12 @@ coverage/
 .onyx/
 .mcp.json
 .netrunner/
+
+# Configs de agentes generadas por `netrunner setup` (locales, no se commitean)
+.opencode/
+.claude/
+.codex/
+.hermes/
+opencode.json
+program.md
+README.generated.md
