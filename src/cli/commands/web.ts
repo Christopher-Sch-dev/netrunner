@@ -57,7 +57,21 @@ export async function dna(ctx: HandlerContext): Promise<void> {
       }
     }
     const result = await dnaScan(url, fetcher)
-    ctx.emit(result, ctx.human)
+    // P7.2: emisores DTCG — --brief (design.md), --css (variables.css), --json (design-tokens.json)
+    // markdown/css son TEXTO PLANO (no JSON) — emitir con human=true para no esparcir el string
+    // en caracteres (bug: JSON.stringify(string) → {"0":"#","1":" "...}).
+    if (ctx.flags?.brief) {
+      const { emitDesignMd } = await import('../../dna/dtcg')
+      ctx.emit(emitDesignMd(result), true)
+    } else if (ctx.flags?.css) {
+      const { emitVariablesCss } = await import('../../dna/dtcg')
+      ctx.emit(emitVariablesCss(result), true)
+    } else if (ctx.flags?.json) {
+      const { emitDesignTokensJson } = await import('../../dna/dtcg')
+      ctx.emit(emitDesignTokensJson(result), ctx.human)
+    } else {
+      ctx.emit(result, ctx.human)
+    }
     process.exit(0)
   } catch (e) {
     ctx.fail('DNA_FAILED', `no se pudo extraer el ADN: ${(e as Error).message}`, 'verifica la URL y la conexión', 1)
