@@ -26,6 +26,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
+import { existsSync, statSync } from 'node:fs'
 import { detectStack } from '../context/detect'
 import { buildNetrunnerRegistry } from '../core/registry-factory'
 import { toolsetsForStack, STACK_TOOLSETS } from './toolsets'
@@ -149,10 +150,29 @@ function applyStateless(server: McpServer, available: Toolset[]): void {
 export async function createServer(projectDir: string): Promise<McpServer> {
   const server = new McpServer({ name: 'netrunner', version: '0.7.6' })
   const registry = buildNetrunnerRegistry()
-  const stack = await detectStack(projectDir)
-  const available = toolsetsFor(stack)
+  let stack = await detectStack(projectDir)
+  let available = toolsetsFor(stack)
   const enabled = new Set<string>()
   const ctx: ToolContext = { projectDir, secrets: {}, profile: 'explore' }
+
+  // --- META-TOOL: cambia el proyecto en runtime (net_set_project, features/net-set-project.feature) ---
+  // Permite al agente navegar CUALQUIER repo TS/JS sin reiniciar el server MCP.
+  server.registerTool(
+    'net_set_project',
+    {
+      description: 'Cambia el proyecto que opera el server en runtime (valida el dir, re-detecta stack). Idempotente.',
+      inputSchema: { dir: z.string() },
+    },
+    async ({ dir }) => {
+      if (!existsSync(dir) || !statSync(dir).isDirectory()) {
+        return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: `INVALID_DIR: '${dir}' no existe o no es un directorio` }) }] }
+      }
+      ctx.projectDir = dir
+      stack = await detectStack(dir)
+      available = toolsetsFor(stack)
+      return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: true, projectDir: dir, stack }) }] }
+    },
+  )
 
   // --- META-TOOL: lista toolsets disponibles (por stack del proyecto) ---
   server.registerTool(

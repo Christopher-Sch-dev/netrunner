@@ -56,7 +56,7 @@ describe('mcp-server (progressive disclosure)', () => {
     const names = list.tools.map((t) => t.name).sort()
 
     // only meta-tools at the start — NOT the graph tools (net_explore etc)
-    expect(names).toEqual(['net_available_toolsets', 'net_enable_toolset'])
+    expect(names).toEqual(['net_available_toolsets', 'net_enable_toolset', 'net_set_project'])
     expect(names).not.toContain('net_explore')
     expect(names).not.toContain('net_stack')
 
@@ -95,6 +95,30 @@ describe('mcp-server (progressive disclosure)', () => {
     const list = await client.listTools()
     const names = list.tools.map((t) => t.name)
     expect(names.filter((n) => n === 'net_explore')).toHaveLength(1)
+
+    await client.close()
+  })
+
+  it('net_set_project: cambia el proyecto en runtime (AC-1..5)', async () => {
+    const server = await createServer(dir)
+    const client = new Client({ name: 'test-client', version: '1.0.0' })
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+    await Promise.all([client.connect(clientTransport), server.connect(serverTransport)])
+
+    // dir inválido → error estructurado, no cambia nada (AC-2)
+    const bad = await client.callTool({ name: 'net_set_project', arguments: { dir: '/no/existe' } })
+    const badText = (bad.content as unknown as Array<{ text?: string }>)[0]?.text ?? ''
+    expect(badText).toContain('INVALID_DIR')
+
+    // dir válido → ok + stack (AC-3, AC-4)
+    const good = await client.callTool({ name: 'net_set_project', arguments: { dir } })
+    const goodText = (good.content as unknown as Array<{ text?: string }>)[0]?.text ?? ''
+    expect(goodText).toContain('"ok":true')
+    expect(goodText).toContain('"projectDir"')
+
+    // idempotente: setear el mismo dir no rompe (AC-5)
+    const again = await client.callTool({ name: 'net_set_project', arguments: { dir } })
+    expect((again.content as unknown as Array<{ text?: string }>)[0]?.text ?? '').toContain('"ok":true')
 
     await client.close()
   })
