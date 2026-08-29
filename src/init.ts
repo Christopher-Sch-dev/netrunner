@@ -32,6 +32,9 @@ This project is wired to **Netrunner**, the universal agent motor. Any agent can
 - \`netrunner map\` — export the graph (D3/mermaid visualizable)
 - \`netrunner extract <url>\` — read a web: markdown + metadata + stack + links (local fetch)
 - \`netrunner dna <url>\` — extract a web's design DNA (colors/typography/spacing/shape + DTCG tokens)
+- \`netrunner dna <url> --brief|--css|--json\` — design tokens (markdown/css/DTCG)
+- \`netrunner inspect <url>\` — web console/network/perf/a11y (CDP DI or local)
+- \`netrunner setup\` — agentic one-command installer (detect SO/agents, configure)
 - \`netrunner dump\` — list every tool the agent can call
 
 Every command returns clean JSON (agent-parseable, no hallucination) with a \`_meta.schemaVersion\`.
