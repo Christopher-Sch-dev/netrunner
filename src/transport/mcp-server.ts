@@ -150,7 +150,7 @@ function applyStateless(server: McpServer, available: Toolset[]): void {
  * projectDir es el proyecto a operar. Expone progressive disclosure.
  */
 export async function createServer(projectDir: string): Promise<McpServer> {
-  const server = new McpServer({ name: 'netrunner', version: '0.7.8' })
+  const server = new McpServer({ name: 'netrunner', version: '0.7.9' })
   const registry = buildNetrunnerRegistry()
   let stack = await detectStack(projectDir)
   let available = toolsetsFor(stack)
@@ -200,7 +200,7 @@ export async function createServer(projectDir: string): Promise<McpServer> {
   const ALLOWED_RUN = new Set([
     'status', 'explore', 'callers', 'callees', 'impact', 'path', 'god-nodes', 'graph-report',
     'plan', 'guard', 'policy', 'persist', 'rollback', 'snapshot', 'resume', 'sleeve', 'history',
-    'curate', 'lint', 'extract', 'dna', 'inspect', 'stack', 'map', 'depth', 'scan', 'mesh',
+    'curate', 'lint', 'extract', 'dna', 'inspect', 'stack', 'map', 'depth', 'mesh',
     'dump', 'doctor', 'deck', 'mode', 'quickhacks', 'breach', 'mcp-orchestrate',
   ])
   server.registerTool(

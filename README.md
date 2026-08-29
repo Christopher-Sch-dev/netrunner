@@ -3,8 +3,8 @@
 **The universal jack.** Connect every project, every agent, one net.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.7.8-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
-[![Tests](https://img.shields.io/badge/tests-348%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
+[![Version](https://img.shields.io/badge/version-0.7.9-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
+[![Tests](https://img.shields.io/badge/tests-346%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 [![Coverage](https://img.shields.io/badge/coverage-84%25-yellow.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 
 Netrunner is an open-source, MIT-licensed **universal agent SDK**: a single binary that turns *any* project into something *any* AI agent can understand, operate, and control — with one command.
@@ -45,8 +45,16 @@ One binary, all seven. No 500-tool menu: Netrunner exposes **only what's relevan
 ## Quickstart
 
 ```bash
-# Install (Linux/macOS) — downloads the prebuilt binary from GitHub Releases
+# Install — one command, cross-platform (Windows/macOS/Linux)
+
+# macOS / Linux — downloads the prebuilt binary from GitHub Releases
 curl -fsSL https://raw.githubusercontent.com/Christopher-Sch-dev/netrunner/main/install.sh | sh
+
+# Windows (PowerShell) — downloads the prebuilt .exe from GitHub Releases
+irm https://raw.githubusercontent.com/Christopher-Sch-dev/netrunner/main/install.ps1 | iex
+
+# Or via npm (works on every platform)
+npm i -g netrunner
 
 # Or build from source (requires Bun)
 git clone https://github.com/Christopher-Sch-dev/netrunner.git
@@ -88,7 +96,7 @@ Every command returns **clean JSON** (agent-parseable, no hallucination) with st
 | `netrunner init [dir]` | Index the project into a knowledge graph + generate the connectable layer (mcp.json, SKILL.md, AGENTS.md, program.md) |
 | `netrunner init <owner/repo>` | Jack a remote GitHub repo (clone + init) |
 | `netrunner status [--docs]` | Live snapshot + regenerate README.generated.md / AGENTS.md |
-| `netrunner scan` | Unified overlay: stack + git + versions + coverage + services + TODOs |
+| `netrunner status` | Unified overlay: stack + git + versions + coverage + services + TODOs |
 | `netrunner map` | Export the graph as JSON (D3/mermaid visualizable) with provenance |
 | `netrunner depth <sym> <level>` | Query a symbol by depth (L0 basic → L3 blast radius) |
 | `netrunner explore <sym>` | Search symbols by name |
