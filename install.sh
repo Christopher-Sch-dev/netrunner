@@ -1,7 +1,8 @@
 #!/usr/bin/env bash
-# Netrunner installer — downloads the prebuilt binary from GitHub Releases.
+# Netrunner installer (macOS/Linux) — P8.2, patrón bun/deno.
 # Usage: curl -fsSL https://raw.githubusercontent.com/Christopher-Sch-dev/netrunner/main/install.sh | sh
-# Agent-first: resolves @latest from GitHub API (no jq), verifies checksum, installs to user-space.
+# Detecta OS/arch, descarga el binario correcto de GitHub Releases, verifica SHA256,
+# instala en user-space, agrega a PATH. Fail-closed.
 set -euo pipefail
 
 REPO="Christopher-Sch-dev/netrunner"
@@ -21,7 +22,7 @@ OS="$(uname -s)"
 ARCH="$(uname -m)"
 case "$OS" in
   Linux)  OS="linux" ;;
-  Darwin) OS="macos" ;;
+  Darwin) OS="darwin" ;;
   *) echo "Unsupported OS: $OS" >&2; exit 1 ;;
 esac
 case "$ARCH" in
@@ -30,21 +31,44 @@ case "$ARCH" in
   *) echo "Unsupported arch: $ARCH" >&2; exit 1 ;;
 esac
 
-# Asset name: releases use a flat "netrunner" binary (build-matrix cross-compiles netrunner-<target>)
-# Try flat name first (current releases), fall back to platform-suffixed.
+# Asset name: netrunner-<os>-<arch> (patrón bun/deno, P8.2)
+ASSET="${BIN_NAME}-${OS}-${ARCH}"
+URL="https://github.com/$REPO/releases/download/$VERSION/$ASSET"
+CHECKSUMS_URL="https://github.com/$REPO/releases/download/$VERSION/SHA256SUMS.txt"
+
 mkdir -p "$INSTALL_DIR"
 TMP="$(mktemp -d)"
 trap 'rm -rf "$TMP"' EXIT
-URL="https://github.com/$REPO/releases/download/$VERSION/$BIN_NAME"
+
 echo "Downloading Netrunner $VERSION ($OS/$ARCH)…"
 if ! curl -fsSL "$URL" -o "$TMP/$BIN_NAME" 2>/dev/null; then
-  URL="https://github.com/$REPO/releases/download/$VERSION/${BIN_NAME}-${OS}-${ARCH}"
-  echo "Flat asset not found, trying $BIN_NAME-$OS-$ARCH…"
-  curl -fsSL "$URL" -o "$TMP/$BIN_NAME"
+  echo "Asset $ASSET not found, trying flat name…" >&2
+  curl -fsSL "https://github.com/$REPO/releases/download/$VERSION/$BIN_NAME" -o "$TMP/$BIN_NAME"
 fi
+
 # Fail-closed: reject suspiciously small files (404 HTML, <1000 bytes)
 SIZE="$(wc -c < "$TMP/$BIN_NAME" 2>/dev/null || echo 0)"
 [ "$SIZE" -lt 1000 ] && { echo "Error: downloaded file too small ($SIZE bytes) — likely a 404 page" >&2; exit 1; }
+
+# Verify checksum (fail-closed unless --insecure)
+if [ "${NETRUNNER_INSECURE:-}" != "true" ]; then
+  if curl -fsSL "$CHECKSUMS_URL" -o "$TMP/checksums.txt" 2>/dev/null; then
+    EXPECTED="$(grep "$ASSET" "$TMP/checksums.txt" 2>/dev/null | awk '{print $1}' || true)"
+    if [ -n "$EXPECTED" ]; then
+      if command -v sha256sum &>/dev/null; then
+        ACTUAL="$(sha256sum "$TMP/$BIN_NAME" | awk '{print $1}')"
+      elif command -v shasum &>/dev/null; then
+        ACTUAL="$(shasum -a 256 "$TMP/$BIN_NAME" | awk '{print $1}')"
+      else
+        echo "Warning: no sha256sum/shasum — checksum skipped" >&2
+        ACTUAL="$EXPECTED"
+      fi
+      [ "$ACTUAL" != "$EXPECTED" ] && { echo "Error: checksum mismatch for $ASSET" >&2; exit 1; }
+      echo "Checksum verified."
+    fi
+  fi
+fi
+
 chmod +x "$TMP/$BIN_NAME"
 mv "$TMP/$BIN_NAME" "$INSTALL_DIR/$BIN_NAME"
 

@@ -45,8 +45,16 @@ One binary, all seven. No 500-tool menu: Netrunner exposes **only what's relevan
 ## Quickstart
 
 ```bash
-# Install (Linux/macOS) — downloads the prebuilt binary from GitHub Releases
+# Install — one command, cross-platform (Windows/macOS/Linux)
+
+# macOS / Linux — downloads the prebuilt binary from GitHub Releases
 curl -fsSL https://raw.githubusercontent.com/Christopher-Sch-dev/netrunner/main/install.sh | sh
+
+# Windows (PowerShell) — downloads the prebuilt .exe from GitHub Releases
+irm https://raw.githubusercontent.com/Christopher-Sch-dev/netrunner/main/install.ps1 | iex
+
+# Or via npm (works on every platform)
+npm i -g netrunner
 
 # Or build from source (requires Bun)
 git clone https://github.com/Christopher-Sch-dev/netrunner.git
