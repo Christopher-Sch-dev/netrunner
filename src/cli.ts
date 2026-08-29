@@ -99,7 +99,6 @@ const HANDLERS: Record<string, (ctx: HandlerContext) => Promise<void>> = {
   dump: context.dump,
   map: context.map,
   depth: context.depth,
-  scan: context.scan,
   guard: security.guard,
   persist: persistence.persist,
   rollback: persistence.rollback,
@@ -197,7 +196,7 @@ export async function main(argv: string[]): Promise<void> {
     await handler(ctx)
   } else if (cmd === 'help' || cmd === '--help') {
     // dead code (flags['help']/subcommand==='help' ya sale antes) — preservado por comportamiento.
-    emit({ help: 'netrunner — plug any project into any agent', commands: ['init', 'status', 'scan', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'plugin', '--mcp', '--acp', '--a2a', '--version'] }, true)
+    emit({ help: 'netrunner — plug any project into any agent', commands: ['init', 'status', 'map', 'depth', 'explore', 'plan', 'guard', 'persist', 'rollback', 'snapshot', 'policy', 'curate', 'lint', 'daemon', 'mesh', 'dump', 'install', 'plugin', '--mcp', '--acp', '--a2a', '--version'] }, true)
     process.exit(0)
   } else {
     // no subcommand → dashboard (AC-4). Unknown subcommand → error (fix juez de casos borde).

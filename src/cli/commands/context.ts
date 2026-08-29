@@ -98,13 +98,6 @@ export async function callees(ctx: HandlerContext): Promise<void> {
   process.exit(0)
 }
 
-/** rol: escaneo del proyecto. */
-export async function scan(ctx: HandlerContext): Promise<void> {
-  const { scanProject } = await import('../../scan/index')
-  ctx.emit(await scanProject(ctx.projectDir), ctx.human)
-  process.exit(0)
-}
-
 /** rol: explora un símbolo del grafo (auto-indexa si stale). */
 export async function explore(ctx: HandlerContext): Promise<void> {
   const { explore } = await import('../../context/queries')
