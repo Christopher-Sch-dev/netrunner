@@ -46,4 +46,23 @@ describe('guard (Black ICE: protecciones)', () => {
     expect(result.ok).toBe(true)
     expect(result.issues).toEqual([])
   })
+
+  it('detecta sintaxis inválida (delimitador sin cerrar) (P3.2)', () => {
+    mkdirSync(join(dir, 'src'), { recursive: true })
+    writeFileSync(join(dir, 'src', 'broken.ts'), 'export function a() {\n  return 1\n')
+
+    const result = guardCheck(dir)
+
+    expect(result.ok).toBe(false)
+    expect(result.issues.some((i) => i.reason.includes('sintaxis inválida'))).toBe(true)
+  })
+
+  it('no marca sintaxis válida con strings/llaves balanceadas (P3.2)', () => {
+    mkdirSync(join(dir, 'src'), { recursive: true })
+    writeFileSync(join(dir, 'src', 'ok.ts'), 'export const s = "}";\nexport function a() { return { x: 1 } }\n')
+
+    const result = guardCheck(dir)
+
+    expect(result.issues.filter((i) => i.reason.includes('sintaxis inválida'))).toEqual([])
+  })
 })

@@ -57,6 +57,15 @@ pub const MAX: u32 = 10;`,
     expect(f.calls).toContainEqual({ caller: 'login', callee: 'authenticate' })
   })
 
+  it('rust: call con scoped_identifier (foo::bar) genera edge (P3.1)', async () => {
+    const f = await parseFile(
+      `mod utils;
+pub fn run() -> String { utils::helper() }`,
+      'rust',
+    )
+    expect(f.calls).toContainEqual({ caller: 'run', callee: 'utils::helper' })
+  })
+
   it('unsupported language returns empty', async () => {
     const f = await parseFile('x', 'cobol')
     expect(f).toEqual({ defs: [], imports: [], calls: [] })

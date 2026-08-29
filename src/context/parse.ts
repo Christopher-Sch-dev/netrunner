@@ -133,7 +133,9 @@ export async function parseCalls(code: string, language: string): Promise<Parsed
   const stack: string[] = []
 
   // Wave E2: el callee de PHP es un nodo `name` (no `identifier`); Ruby usa `identifier`.
-  const calleeTypes = language === 'php' ? ['name'] : ['identifier']
+  // P3.1 (auditor): Rust usa `scoped_identifier` para llamadas con path (ej: `foo::bar()`),
+  // no `identifier` — sin esto, las llamadas a funciones de módulos no generan edges.
+  const calleeTypes = language === 'php' ? ['name'] : language === 'rust' ? ['identifier', 'scoped_identifier'] : ['identifier']
 
   const walk = (n: SyntaxNode): void => {
     if (CALL_TYPES.has(n.type)) {
