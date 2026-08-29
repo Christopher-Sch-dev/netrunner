@@ -27,6 +27,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js'
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { z } from 'zod'
 import { existsSync, statSync } from 'node:fs'
+import { spawn } from 'node:child_process'
 import { detectStack } from '../context/detect'
 import { buildNetrunnerRegistry } from '../core/registry-factory'
 import { toolsetsForStack, STACK_TOOLSETS } from './toolsets'
@@ -228,6 +229,41 @@ export async function createServer(projectDir: string): Promise<McpServer> {
         }
       }
       return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: true, results }) }] }
+    },
+  )
+
+  // --- META-TOOL: ejecuta cualquier comando CLI como tool MCP (P7.1, features/net-run.feature) ---
+  // Permite al agente controlar TODO el motor por flujo agéntico (no solo el grafo).
+  // Allowlist de comandos seguros (read-only + no destructivos) — un comando fuera de
+  // la lista NO se ejecuta (fail-closed, AC-3).
+  const ALLOWED_RUN = new Set([
+    'status', 'explore', 'callers', 'callees', 'impact', 'path', 'god-nodes', 'graph-report',
+    'plan', 'guard', 'policy', 'persist', 'rollback', 'snapshot', 'resume', 'sleeve', 'history',
+    'curate', 'lint', 'extract', 'dna', 'inspect', 'stack', 'map', 'depth', 'scan', 'mesh',
+    'dump', 'doctor', 'deck', 'mode', 'quickhacks', 'breach', 'mcp-orchestrate',
+  ])
+  server.registerTool(
+    'net_run',
+    {
+      description: 'Ejecuta un comando CLI de NetRunner como tool MCP (allowlist de comandos seguros). Commands: status,explore,callers,callees,impact,path,god-nodes,graph-report,plan,guard,policy,persist,rollback,snapshot,resume,sleeve,history,curate,lint,extract,dna,inspect,stack,map,depth,scan,mesh,dump,doctor,deck,mode,quickhacks,breach,mcp-orchestrate.',
+      inputSchema: { command: z.string(), args: z.array(z.string()).optional() },
+    },
+    async ({ command, args }) => {
+      if (!ALLOWED_RUN.has(command)) {
+        return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: `FORBIDDEN_COMMAND: '${command}' no está en la allowlist` }) }] }
+      }
+      const out = await new Promise<string>((resolve, reject) => {
+        // bun compile: process.execPath = binario real; process.argv[1] es un path virtual
+        // (/$bunfs/root/netrunner) no ejecutable. Spawn del binario con el subcomando.
+        const child = spawn(process.execPath, [command, '--dir', ctx.projectDir, ...(args ?? [])], { stdio: ['ignore', 'pipe', 'pipe'] })
+        let stdout = ''
+        let stderr = ''
+        child.stdout.on('data', (d) => (stdout += d))
+        child.stderr.on('data', (d) => (stderr += d))
+        child.on('close', (code) => (code === 0 ? resolve(stdout) : reject(new Error(stderr || `exit ${code}`))))
+        child.on('error', reject)
+      })
+      return { content: [{ type: 'text' as const, text: out }] }
     },
   )
 

@@ -56,7 +56,7 @@ describe('mcp-server (progressive disclosure)', () => {
     const names = list.tools.map((t) => t.name).sort()
 
     // only meta-tools at the start — NOT the graph tools (net_explore etc)
-    expect(names).toEqual(['net_available_toolsets', 'net_cascade', 'net_enable_toolset', 'net_init', 'net_set_project'])
+    expect(names).toEqual(['net_available_toolsets', 'net_cascade', 'net_enable_toolset', 'net_init', 'net_run', 'net_set_project'])
     expect(names).not.toContain('net_explore')
     expect(names).not.toContain('net_stack')
 
@@ -162,6 +162,19 @@ describe('mcp-server (progressive disclosure)', () => {
     expect(goodText).toContain('"ok":true')
     expect(goodText).toContain('"init"')
     expect(goodText).toContain('"stack"')
+
+    await client.close()
+  })
+
+  it('net_run: comando fuera de allowlist se rechaza (P7.1 AC-3)', async () => {
+    const server = await createServer(dir)
+    const client = new Client({ name: 'test-client', version: '1.0.0' })
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+    await Promise.all([client.connect(clientTransport), server.connect(serverTransport)])
+
+    // comando fuera de allowlist → error estructurado, no ejecuta (AC-3)
+    const forbidden = await client.callTool({ name: 'net_run', arguments: { command: 'rm' } })
+    expect((forbidden.content as unknown as Array<{ text?: string }>)[0]?.text ?? '').toContain('FORBIDDEN_COMMAND')
 
     await client.close()
   })
