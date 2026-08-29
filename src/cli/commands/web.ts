@@ -20,6 +20,22 @@ export async function extract(ctx: HandlerContext): Promise<void> {
   }
 }
 
+/** rol: netrunner inspect <url> — consola/red/perf/a11y de una web (CDP DI o fetch local). */
+export async function inspect(ctx: HandlerContext): Promise<void> {
+  const { inspectWeb } = await import('../../web/inspect')
+  const url = ctx.args[0] ?? ''
+  if (!url) {
+    ctx.fail('MISSING_REQUIRED', 'inspect requiere una URL', 'netrunner inspect <url>', 2)
+  }
+  try {
+    const result = await inspectWeb(url)
+    ctx.emit(result, ctx.human)
+    process.exit(0)
+  } catch (e) {
+    ctx.fail('INSPECT_FAILED', `no se pudo inspeccionar: ${(e as Error).message}`, 'verifica la URL y la conexión', 1)
+  }
+}
+
 /** rol: netrunner dna <url> — extrae el ADN de diseño determinista de una web. */
 export async function dna(ctx: HandlerContext): Promise<void> {
   const { dnaScan } = await import('../../dna/index')
