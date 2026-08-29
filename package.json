@@ -8,7 +8,7 @@
     "netrunner": "./dist/netrunner"
   },
   "files": [
-    "dist"
+    "dist/netrunner"
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",

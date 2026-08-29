@@ -1,0 +1,9 @@
+# npm solo publica el binario de la plataforma actual (Linux x64).
+# Los binarios cross-platform (Windows/macOS/arm64) viven en GitHub Releases
+# (install.sh / install.ps1 los descargan) — no en el package npm.
+dist/netrunner-linux-x64
+dist/netrunner-linux-arm64
+dist/netrunner-darwin-x64
+dist/netrunner-darwin-arm64
+dist/netrunner-windows-x64.exe
+dist/SHA256SUMS.txt

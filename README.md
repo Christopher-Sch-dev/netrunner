@@ -95,8 +95,7 @@ Every command returns **clean JSON** (agent-parseable, no hallucination) with st
 | `netrunner` | Project dashboard (content-first) |
 | `netrunner init [dir]` | Index the project into a knowledge graph + generate the connectable layer (mcp.json, SKILL.md, AGENTS.md, program.md) |
 | `netrunner init <owner/repo>` | Jack a remote GitHub repo (clone + init) |
-| `netrunner status [--docs]` | Live snapshot + regenerate README.generated.md / AGENTS.md |
-| `netrunner status` | Unified overlay: stack + git + versions + coverage + services + TODOs |
+| `netrunner status [--docs]` | Live snapshot + regenerate README.generated.md / AGENTS.md (stack + git + versions + coverage + services + TODOs) |
 | `netrunner map` | Export the graph as JSON (D3/mermaid visualizable) with provenance |
 | `netrunner depth <sym> <level>` | Query a symbol by depth (L0 basic → L3 blast radius) |
 | `netrunner explore <sym>` | Search symbols by name |
