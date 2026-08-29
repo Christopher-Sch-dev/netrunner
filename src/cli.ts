@@ -131,6 +131,7 @@ const HANDLERS: Record<string, (ctx: HandlerContext) => Promise<void>> = {
   'mcp-orchestrate': orchestrate.orchestrate,
   extract: web.extract,
   dna: web.dna,
+  inspect: web.inspect,
   setup: setup.setup,
 }
 

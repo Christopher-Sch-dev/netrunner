@@ -56,7 +56,7 @@ describe('mcp-server (progressive disclosure)', () => {
     const names = list.tools.map((t) => t.name).sort()
 
     // only meta-tools at the start — NOT the graph tools (net_explore etc)
-    expect(names).toEqual(['net_available_toolsets', 'net_enable_toolset'])
+    expect(names).toEqual(['net_available_toolsets', 'net_cascade', 'net_enable_toolset', 'net_init', 'net_set_project'])
     expect(names).not.toContain('net_explore')
     expect(names).not.toContain('net_stack')
 
@@ -95,6 +95,73 @@ describe('mcp-server (progressive disclosure)', () => {
     const list = await client.listTools()
     const names = list.tools.map((t) => t.name)
     expect(names.filter((n) => n === 'net_explore')).toHaveLength(1)
+
+    await client.close()
+  })
+
+  it('net_set_project: cambia el proyecto en runtime (AC-1..5)', async () => {
+    const server = await createServer(dir)
+    const client = new Client({ name: 'test-client', version: '1.0.0' })
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+    await Promise.all([client.connect(clientTransport), server.connect(serverTransport)])
+
+    // dir inválido → error estructurado, no cambia nada (AC-2)
+    const bad = await client.callTool({ name: 'net_set_project', arguments: { dir: '/no/existe' } })
+    const badText = (bad.content as unknown as Array<{ text?: string }>)[0]?.text ?? ''
+    expect(badText).toContain('INVALID_DIR')
+
+    // dir válido → ok + stack (AC-3, AC-4)
+    const good = await client.callTool({ name: 'net_set_project', arguments: { dir } })
+    const goodText = (good.content as unknown as Array<{ text?: string }>)[0]?.text ?? ''
+    expect(goodText).toContain('"ok":true')
+    expect(goodText).toContain('"projectDir"')
+
+    // idempotente: setear el mismo dir no rompe (AC-5)
+    const again = await client.callTool({ name: 'net_set_project', arguments: { dir } })
+    expect((again.content as unknown as Array<{ text?: string }>)[0]?.text ?? '').toContain('"ok":true')
+
+    await client.close()
+  })
+
+  it('net_init: inicializa un proyecto (P6 AC-1..2)', async () => {
+    const server = await createServer(dir)
+    const client = new Client({ name: 'test-client', version: '1.0.0' })
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+    await Promise.all([client.connect(clientTransport), server.connect(serverTransport)])
+
+    // dir inválido → error estructurado (AC-2)
+    const bad = await client.callTool({ name: 'net_init', arguments: { dir: '/no/existe' } })
+    expect((bad.content as unknown as Array<{ text?: string }>)[0]?.text ?? '').toContain('INVALID_DIR')
+
+    // dir válido → ok + counts (AC-1)
+    const good = await client.callTool({ name: 'net_init', arguments: { dir } })
+    const goodText = (good.content as unknown as Array<{ text?: string }>)[0]?.text ?? ''
+    expect(goodText).toContain('"ok":true')
+    expect(goodText).toContain('"counts"')
+
+    await client.close()
+  })
+
+  it('net_cascade: ejecuta cascada designada en orden (P6 AC-3..7)', async () => {
+    const server = await createServer(dir)
+    const client = new Client({ name: 'test-client', version: '1.0.0' })
+    const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
+    await Promise.all([client.connect(clientTransport), server.connect(serverTransport)])
+
+    // steps vacíos → error (AC-4)
+    const empty = await client.callTool({ name: 'net_cascade', arguments: { dir, steps: [] } })
+    expect((empty.content as unknown as Array<{ text?: string }>)[0]?.text ?? '').toContain('MISSING_STEPS')
+
+    // step desconocido → error, no ejecuta nada (AC-5)
+    const unknown = await client.callTool({ name: 'net_cascade', arguments: { dir, steps: ['nope'] } })
+    expect((unknown.content as unknown as Array<{ text?: string }>)[0]?.text ?? '').toContain('UNKNOWN_STEP')
+
+    // cascada válida → ok + results en orden (AC-3, AC-6)
+    const good = await client.callTool({ name: 'net_cascade', arguments: { dir, steps: ['init', 'stack'] } })
+    const goodText = (good.content as unknown as Array<{ text?: string }>)[0]?.text ?? ''
+    expect(goodText).toContain('"ok":true')
+    expect(goodText).toContain('"init"')
+    expect(goodText).toContain('"stack"')
 
     await client.close()
   })

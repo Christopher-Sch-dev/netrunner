@@ -73,9 +73,24 @@ Motor universal: indexa el proyecto (grafo), consulta símbolos, busca texto, y 
 - net_rg: busca un patrón (ripgrep)
 - net_stack: stack del proyecto
 - net_available_toolsets / net_enable_toolset: progressive disclosure
+- net_set_project: cambia el proyecto en runtime (navegar otro repo sin reiniciar)
 
 ## Uso
 Conecta el server MCP netrunner (--mcp) y usa estas tools para entender y operar el proyecto sin leer archivos masivamente.
+
+## Cuándo usar (trigger)
+- **SÍ**: navegar un repo TS/JS con grafo de conocimiento (explore/callers/callees/impact), indexar un proyecto, conectar como MCP server.
+- **NO**: configs QML (Caelestia/Hyprland) — ahí read_file + search_files directo es mejor (el grafo es de JS, no de los QML).
+
+## Flujo recomendado
+1. \`net_available_toolsets\` → qué toolsets hay (por stack del proyecto).
+2. \`net_enable_toolset graph\` → habilita las tools del grafo.
+3. \`net_explore <sym>\` → encuentra un símbolo y sus callers/callees.
+4. \`net_impact <sym>\` → blast radius (qué se rompe si toco esto).
+5. \`net_set_project <dir>\` → cambia a otro repo sin reiniciar el server.
+
+## PITFALL
+El server MCP es **stateless** — las tools habilitadas NO persisten entre requests. Para navegar otro repo, usar \`net_set_project <dir>\` (no reiniciar).
 `
 }
 

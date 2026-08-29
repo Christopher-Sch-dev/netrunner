@@ -59,6 +59,27 @@ function checkImports(projectDir: string, fileAbs: string, content: string): Gua
   return issues
 }
 
+/** rol: detecta sintaxis inválida (delimitadores desbalanceados / string sin cerrar) en TS/JS (P3.2). */
+function checkSyntax(content: string): string | null {
+  // ignora strings y comentarios para no contar delimitadores dentro de ellos
+  const stripped = content
+    .replace(/\/\*[\s\S]*?\*\//g, '') // comentarios bloque
+    .replace(/\/\/[^\n]*/g, '') // comentarios línea
+    .replace(/`(?:[^`\\]|\\.)*`/g, '') // template literals
+    .replace(/'(?:[^'\\]|\\.)*'/g, '') // strings single
+    .replace(/"(?:[^"\\]|\\.)*"/g, '') // strings double
+  const stack: string[] = []
+  const pairs: Record<string, string> = { ')': '(', ']': '[', '}': '{' }
+  for (const ch of stripped) {
+    if (ch === '(' || ch === '[' || ch === '{') stack.push(ch)
+    else if (ch === ')' || ch === ']' || ch === '}') {
+      if (stack.pop() !== pairs[ch]) return `delimitador '${ch}' sin abrir`
+    }
+  }
+  if (stack.length) return `delimitador '${stack[stack.length - 1]}' sin cerrar`
+  return null
+}
+
 /** rol: verifica protecciones del repo (determinista, AC-1..4 + imports rotos). */
 export function guardCheck(projectDir: string): GuardResult {
   const issues: GuardIssue[] = []
@@ -85,6 +106,9 @@ export function guardCheck(projectDir: string): GuardResult {
           if (['.ts', '.tsx', '.js', '.jsx'].includes(extname(e.name))) {
             const importIssues = checkImports(projectDir, join(dir, e.name), content)
             issues.push(...importIssues)
+            // sintaxis inválida (P3.2 — delimitadores desbalanceados / string sin cerrar)
+            const syntaxErr = checkSyntax(content)
+            if (syntaxErr) issues.push({ file: rel, reason: `sintaxis inválida: ${syntaxErr}` })
           }
         } catch { /* binario/ilegible → skip */ }
       }
