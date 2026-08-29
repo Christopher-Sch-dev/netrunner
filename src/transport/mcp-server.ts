@@ -31,6 +31,7 @@ import { detectStack } from '../context/detect'
 import { buildNetrunnerRegistry } from '../core/registry-factory'
 import { toolsetsForStack, STACK_TOOLSETS } from './toolsets'
 import { registerMetaResources } from './mcp-resources'
+import { initProject } from '../init'
 import type { ToolRegistry, ToolSpec, ToolContext } from '../core/registry'
 
 /** Versión del protocolo MCP stateless que habla este server (2026-07-28). */
@@ -171,6 +172,62 @@ export async function createServer(projectDir: string): Promise<McpServer> {
       stack = await detectStack(dir)
       available = toolsetsFor(stack)
       return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: true, projectDir: dir, stack }) }] }
+    },
+  )
+
+  // --- META-TOOL: inicializa un proyecto (P6, features/mcp-0a100.feature AC-1..2) ---
+  // Permite al agente crear/inicializar un proyecto desde el MCP (de 0 a 100).
+  server.registerTool(
+    'net_init',
+    {
+      description: 'Inicializa un proyecto (indexa el grafo + genera conectable layer: SKILL.md/AGENTS.md/program.md/.mcp.json). Idempotente.',
+      inputSchema: { dir: z.string() },
+    },
+    async ({ dir }) => {
+      if (!existsSync(dir) || !statSync(dir).isDirectory()) {
+        return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: `INVALID_DIR: '${dir}' no existe o no es un directorio` }) }] }
+      }
+      const result = await initProject(dir)
+      return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: true, ...result }) }] }
+    },
+  )
+
+  // --- META-TOOL: cascada completa designada (P6, features/mcp-0a100.feature AC-3..7) ---
+  // Ejecuta una secuencia de tools en orden (síncrona, en cascada lógica, sin saturar servicios).
+  const CASCADE_STEPS = ['init', 'status', 'explore', 'plan', 'ops', 'stack', 'god-nodes', 'graph-report']
+  server.registerTool(
+    'net_cascade',
+    {
+      description: 'Ejecuta una cascada designada de tools en orden (síncrona, en cascada lógica). Steps: init,status,explore,plan,ops,stack,god-nodes,graph-report.',
+      inputSchema: { dir: z.string(), steps: z.array(z.string()) },
+    },
+    async ({ dir, steps }) => {
+      if (!steps || steps.length === 0) {
+        return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: 'MISSING_STEPS: steps vacío' }) }] }
+      }
+      for (const s of steps) {
+        if (!CASCADE_STEPS.includes(s)) {
+          return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: `UNKNOWN_STEP: '${s}' (usa: ${CASCADE_STEPS.join(',')})` }) }] }
+        }
+      }
+      if (!existsSync(dir) || !statSync(dir).isDirectory()) {
+        return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: false, error: `INVALID_DIR: '${dir}'` }) }] }
+      }
+      // ejecuta en secuencia (síncrono, AC-7) — cada paso usa el resultado del anterior
+      const results: Record<string, unknown> = {}
+      for (const s of steps) {
+        if (s === 'init') {
+          results[s] = await initProject(dir)
+        } else if (s === 'stack') {
+          results[s] = await detectStack(dir)
+        } else if (s === 'status' || s === 'explore' || s === 'plan' || s === 'ops' || s === 'god-nodes' || s === 'graph-report') {
+          // steps que requieren el registry — se delegan al registry con el ctx actual
+          const spec = registry.discover('explore').find((t) => t.id === `graph.${s}` || t.id === `stack.${s}` || t.id === `op.${s}`)
+          if (spec) results[s] = await registry.call(spec.id, {}, ctx)
+          else results[s] = { ok: false, error: `step '${s}' no disponible como tool` }
+        }
+      }
+      return { content: [{ type: 'text' as const, text: JSON.stringify({ ok: true, results }) }] }
     },
   )
 
