@@ -1,0 +1,54 @@
+name: 🐛 Bug report
+description: Report a bug in NetRunner so we can fix it
+title: "[bug]: "
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this! Please fill in as much as you can.
+  - type: input
+    id: version
+    attributes:
+      label: NetRunner version
+      description: What version are you running? (`netrunner --version`)
+      placeholder: "0.7.9"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options:
+        - Linux
+        - macOS
+        - Windows
+        - npm
+        - Other
+    validations:
+      required: true
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: What did you expect to happen, and what actually happened?
+      placeholder: "I ran `netrunner init` and it..."
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: Steps to reproduce
+      description: The exact commands / steps that trigger the bug
+      placeholder: |
+        1. `netrunner init`
+        2. `netrunner status`
+        3. ...
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output / logs
+      description: Paste the relevant output (JSON or error) here
+      render: shell

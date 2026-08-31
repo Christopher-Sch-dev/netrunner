@@ -1,0 +1,31 @@
+name: ✨ Feature request
+description: Suggest a new feature or improvement for NetRunner
+title: "[feat]: "
+labels: [enhancement]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for suggesting! Tell us what would make NetRunner better for you.
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem does this solve?
+      description: What are you trying to do that NetRunner can't do yet?
+      placeholder: "I want to..."
+    validations:
+      required: true
+  - type: textarea
+    id: solution
+    attributes:
+      label: Proposed solution
+      description: How would you like it to work?
+      placeholder: "A new command like `netrunner ...` that..."
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives you've considered
+      description: Any workarounds you're using today?
+      placeholder: "I currently do X manually..."
