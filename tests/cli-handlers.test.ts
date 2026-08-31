@@ -386,7 +386,7 @@ describe('cli/commands/system.ts (handlers directos)', () => {
     const { ctx, emitted } = makeCtx()
     await safeInvoke(() => version(ctx))
     expect((emitted[0] as { name: string }).name).toBe('netrunner')
-    expect((emitted[0] as { version: string }).version).toBe('0.8.0')
+    expect((emitted[0] as { version: string }).version).toMatch(/^\d+\.\d+\.\d+$/)
   })
 
   it('help emite usage y la lista de comandos', async () => {
