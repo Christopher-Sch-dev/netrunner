@@ -117,7 +117,7 @@ Every command returns **clean JSON** (agent-parseable, no hallucination) with st
 | `netrunner daemon [--watch]` | Daemon pass: sync + lint + curator + watchdog (resident with --watch) |
 | `netrunner mesh <dirs...>` | Connect N projects into a multi-repo graph |
 | `netrunner dump` | Print the full tool contract (auto-discovery) |
-| `netrunner install <target>` | Wire up agents (mcp/opencode/claude/cursor/codex/gemini/hermes) |
+| `netrunner install <target>` | Wire up agents (mcp/opencode/claude/cursor/codex/gemini/hermes/dsh/fx/copilot/aider/devin/agents) |
 | `netrunner uninstall <target>` | Revert the wiring |
 | `netrunner plugin <name>` | Generate an Agent Plugin 1.0 package |
 | `netrunner breach` | Decipher an unknown repo (stack → git → services → deck) |
@@ -204,14 +204,26 @@ Netrunner was tested end-to-end with an AI agent (OpenCode + Nemotron) against t
 
 ---
 
-## Roadmap
+## What's shipped
 
-**Shipped (v0.7.1):** knowledge graph, MCP (stateless 2026-07-28) + ACP + A2A + CLI + plugin views, self-generating skill, cyberpunk features (persist/map/scan/guard/depth/rollback/breach/deck/mode/quickhacks), policy + curator + validation gate, durable events + waterfall, daemon + watchdog, multi-repo mesh, real coverage, domain connectors, jack-remote (GitHub), m1-cli refactor, m4-metrics, progressive disclosure, token-counting, net sleeve, program.md, gitignore respected, hooks (signals to the connected agent).
+Everything below is implemented, tested (346 tests), and working:
 
-**Next:**
-1. **Orchestrator MCP real** — a real MCP orchestrator (not just the server).
-2. **More graph languages** — expand structural extraction to more ecosystems.
-3. **Community** — worked examples, benchmarks on more projects, conformance tests.
+- **Knowledge graph** — index any project into a symbol graph (explore/callers/callees/impact/path/god-nodes).
+- **MCP server** (stateless 2026-07-28) + **ACP agent** + **A2A agent** + **CLI** + **plugin** views — one contract, four formats.
+- **MCP orchestrator** — discover MCP servers, connect as client, aggregate their tools into one contract.
+- **Self-generating skill** — documents the project (git, versions, coverage, services, TODOs).
+- **Cyberpunk features** — persist/map/guard/depth/rollback/breach/deck/mode/quickhacks.
+- **Policy + curator + validation gate** — deterministic self-improvement with external signal.
+- **Daemon + watchdog + hooks** — resident sync/lint/curator, change detection, signals to the connected agent.
+- **Multi-repo mesh** — connect N projects into one graph.
+- **Web** — extract (markdown + stack + links), dna (design tokens + DTCG), inspect (console/network/perf/a11y).
+- **Jack-remote** — connect a remote GitHub repo.
+- **Progressive disclosure** — expose only what's relevant to the project and objective.
+- **Net sleeve** — portable deck (export/import).
+- **Setup** — agentic one-command installer (detect SO/agents, configure opencode→hermes→claude→codex).
+- **Cross-platform** — Windows/macOS/Linux (build-matrix + install.sh + install.ps1).
+
+**Graph languages:** TypeScript, TSX, JavaScript, Python, Go, Rust, Java, C#, PHP, Ruby.
 
 ---
 
