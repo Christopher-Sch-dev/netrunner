@@ -24,8 +24,8 @@ function pluginJson(name: string, version: string): string {
     $schema: 'https://agent-plugins.org/schemas/1.0.0/plugin.schema.json',
     name,
     version,
-    description: `Netrunner: motor universal que conecta este proyecto con cualquier agente (grafo + MCP).`,
-    skills: [{ name: 'netrunner', description: 'Opera el proyecto vía el grafo de conocimiento.' }],
+    description: `Netrunner: universal motor that plugs this project into any agent (graph + MCP).`,
+    skills: [{ name: 'netrunner', description: 'Operate the project via the knowledge graph.' }],
     mcpServers: { netrunner: { command: 'netrunner', args: ['--mcp'] } },
   }, null, 2)
 }
@@ -34,11 +34,11 @@ function pluginJson(name: string, version: string): string {
 function skillContent(name: string): string {
   return `---
 name: ${name}
-description: Motor universal que conecta este proyecto con cualquier agente. Usa las tools del grafo (explore/callers/callees/impact) y búsqueda.
+description: Universal motor that plugs this project into any agent. Uses the graph tools (explore/callers/callees/impact) and search.
 ---
 # ${name}
 
-Opera el proyecto de forma determinista. Conecta el server MCP (netrunner --mcp) y usa sus tools para entender/operar sin leer archivos masivamente.
+Operate the project deterministically. Connect the MCP server (netrunner --mcp) and use its tools to understand/operate without mass-reading files.
 `
 }
 

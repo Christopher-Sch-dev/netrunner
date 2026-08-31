@@ -24,7 +24,12 @@ export default defineConfig({
   maxTestRunnerReuse: 100,
   cleanTempDir: 'always',
   mutate: ['src/**/*.ts'],
-  timeoutMs: 30000,
+  // timeout amplio (2026-08-31 fix falso 100%): el dryrun del árbol grande tarda
+  // ~21-37s (bun:sqlite en muchos imports). Con 30000 (default) cada mutante
+  // expiraba → "killed 0 / timeout N / FAKE 100%". Con 60000 gate mata (24 killed)
+  // pero doctor (I/O orquestación + fixtures fs) raspaba → se requiere 120000 para
+  // que TODOS correlacionen perTest y maten de verdad. Medido: gate, doctor reales.
+  timeoutMs: 120000,
   // mutation incremental (DEC-002): solo lo cambiado, no todo el repo
   incremental: true,
   incrementalFile: '.stryker/inc.json',

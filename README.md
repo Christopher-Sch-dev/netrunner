@@ -3,8 +3,8 @@
 **The universal jack.** Connect every project, every agent, one net.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.8.0-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
-[![Tests](https://img.shields.io/badge/tests-346%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
+[![Version](https://img.shields.io/badge/version-0.8.1-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
+[![Tests](https://img.shields.io/badge/tests-406%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 [![Coverage](https://img.shields.io/badge/coverage-84%25-yellow.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 [![Stars](https://img.shields.io/github/stars/Christopher-Sch-dev/netrunner?style=social)](https://github.com/Christopher-Sch-dev/netrunner)
 
@@ -206,7 +206,7 @@ Netrunner was tested end-to-end with an AI agent (OpenCode + Nemotron) against t
 
 ## What's shipped
 
-Everything below is implemented, tested (346 tests), and working:
+Everything below is implemented, tested (406 tests), and working:
 
 - **Knowledge graph** — index any project into a symbol graph (explore/callers/callees/impact/path/god-nodes).
 - **MCP server** (stateless 2026-07-28) + **ACP agent** + **A2A agent** + **CLI** + **plugin** views — one contract, four formats.

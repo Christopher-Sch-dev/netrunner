@@ -37,7 +37,7 @@ export function registerMetaResources(server: McpServer, projectDir: string): vo
     server.registerResource(
       uri,
       uri,
-      { title: uri, description: `Snapshot del proyecto (${uri})`, mimeType: 'text/plain' },
+      { title: uri, description: `Project snapshot (${uri})`, mimeType: 'text/plain' },
       async () => ({ contents: [{ uri, mimeType: 'text/plain', text: await read(uri) }] }),
     )
   }
