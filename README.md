@@ -3,7 +3,7 @@
 **The universal jack.** Connect every project, every agent, one net.
 
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Version](https://img.shields.io/badge/version-0.7.9-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
+[![Version](https://img.shields.io/badge/version-0.8.0-brightgreen.svg)](https://github.com/Christopher-Sch-dev/netrunner/releases)
 [![Tests](https://img.shields.io/badge/tests-346%20passing-green.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 [![Coverage](https://img.shields.io/badge/coverage-84%25-yellow.svg)](https://github.com/Christopher-Sch-dev/netrunner/actions)
 [![Stars](https://img.shields.io/github/stars/Christopher-Sch-dev/netrunner?style=social)](https://github.com/Christopher-Sch-dev/netrunner)
