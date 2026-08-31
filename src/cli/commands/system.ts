@@ -74,20 +74,20 @@ export async function sleeve(ctx: HandlerContext): Promise<void> {
     const { resolve } = await import('node:path')
     const importPath = resolve(ctx.args[1])
     if (!existsSync(importPath)) {
-      ctx.emit({ imported: false, error: `archivo no existe: ${importPath}` }, ctx.human)
+      ctx.emit({ imported: false, error: `file does not exist: ${importPath}` }, ctx.human)
       process.exit(1)
     }
     let sleeve: unknown
     try {
       sleeve = JSON.parse(readFileSync(importPath, 'utf8'))
     } catch {
-      ctx.emit({ imported: false, error: 'el archivo no es un sleeve JSON válido' }, ctx.human)
+      ctx.emit({ imported: false, error: 'the file is not a valid sleeve JSON' }, ctx.human)
       process.exit(1)
     }
     // validar estructura de sleeve (no leer archivos arbitrarios sin propósito)
     const s = sleeve as { decisions?: unknown; history?: unknown; snapshot?: unknown }
     if (!s.decisions && !s.history && !s.snapshot) {
-      ctx.emit({ imported: false, error: 'el archivo no tiene estructura de sleeve (decisions/history/snapshot)' }, ctx.human)
+      ctx.emit({ imported: false, error: 'the file does not have a sleeve structure (decisions/history/snapshot)' }, ctx.human)
       process.exit(1)
     }
     importSleeve(ctx.projectDir, sleeve as Parameters<typeof importSleeve>[1])

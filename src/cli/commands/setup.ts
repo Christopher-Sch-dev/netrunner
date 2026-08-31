@@ -13,6 +13,6 @@ export async function setup(ctx: HandlerContext): Promise<void> {
     ctx.emit(result, ctx.human)
     process.exit(result.ok ? 0 : 1)
   } catch (e) {
-    ctx.fail('SETUP_FAILED', `setup falló: ${(e as Error).message}`, 'revisa los logs', 1)
+    ctx.fail('SETUP_FAILED', `setup failed: ${(e as Error).message}`, 'check the logs', 1)
   }
 }

@@ -19,7 +19,7 @@ export async function ops(ctx: HandlerContext): Promise<void> {
   const approval = ctx.flags['approval'] === 'true' || ctx.flags['approval'] === '1'
   const decision = evaluatePolicy('edit', { readOnly: false, approval })
   if (decision === 'deny') {
-    ctx.emit({ ok: false, error: 'policy deny: mutating op requiere --approval=true' }, ctx.human)
+    ctx.emit({ ok: false, error: 'policy deny: mutating op requires --approval=true' }, ctx.human)
     process.exit(1)
   }
   const start = Date.now()

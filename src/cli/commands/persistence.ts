@@ -20,7 +20,7 @@ export async function rollback(ctx: HandlerContext): Promise<void> {
   } else if (ctx.args[0] === 'restore') {
     const id = ctx.args[1]
     if (!id) {
-      ctx.emit({ error: true, code: 'MISSING_REQUIRED', message: 'rollback restore <id> requiere un id de snapshot' }, ctx.human)
+      ctx.emit({ error: true, code: 'MISSING_REQUIRED', message: 'rollback restore <id> requires a snapshot id' }, ctx.human)
       process.exit(2)
     }
     restoreSnapshot(ctx.projectDir, id)

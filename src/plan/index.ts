@@ -54,7 +54,7 @@ export async function generatePlan(goal: string, projectDir: string): Promise<{ 
         steps.push({ action: 'callers', target: `${main} (${callersR.nodes.length} callers)` })
       }
     }
-    steps.push({ action: 'map-deps', target: `${files} archivos, ${symbols.length} símbolos indexados` })
+    steps.push({ action: 'map-deps', target: `${files} files, ${symbols.length} symbols indexed` })
   } else {
     // goal genérico → explora el símbolo más conectado (hub) + su blast radius
     const hub = symbols.slice(0, 5).find((s) => s.kind === 'function') ?? symbols[0]
@@ -68,14 +68,14 @@ export async function generatePlan(goal: string, projectDir: string): Promise<{ 
           steps.push({ action: 'callers', target: `${hub.name} (${callersR.nodes.length} callers)` })
         }
       }
-      steps.push({ action: 'map-deps', target: `${files} archivos, ${symbols.length} símbolos indexados` })
+      steps.push({ action: 'map-deps', target: `${files} files, ${symbols.length} symbols indexed` })
     } else {
       steps.push({ action: 'index', target: projectDir })
     }
   }
 
   // operar: verificar con test/build (señal externa real)
-  steps.push({ action: 'op.test', target: 'verificar que no rompe' })
+  steps.push({ action: 'op.test', target: 'verify it doesn\'t break' })
   steps.push({ action: 'verify', target: goal })
   return { goal, steps }
 }
