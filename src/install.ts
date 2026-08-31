@@ -60,40 +60,40 @@ const TARGET_SKILL_DIR: Record<string, string> = {
 function skillContent(): string {
   return `---
 name: netrunner
-description: Motor universal que conecta este proyecto con cualquier agente. Usa las tools del grafo de conocimiento (explore/callers/callees/impact) y búsqueda (rg). Ejecuta el binario netrunner --mcp para operar el proyecto.
+description: Universal motor that plugs this project into any agent. Uses the knowledge graph tools (explore/callers/callees/impact) and search (rg). Runs the netrunner binary with --mcp to operate the project.
 ---
 # netrunner
 
-Motor universal: indexa el proyecto (grafo), consulta símbolos, busca texto, y opera de forma determinista.
+Universal motor: indexes the project (graph), queries symbols, searches text, and operates deterministically.
 
-## Tools disponibles (MCP)
-- net_explore: busca símbolos por nombre
-- net_callers / net_callees: quién llama / a quién llama
-- net_impact: blast radius de un símbolo
-- net_rg: busca un patrón (ripgrep)
-- net_stack: stack del proyecto
+## Available tools (MCP)
+- net_explore: find symbols by name
+- net_callers / net_callees: who calls / what it calls
+- net_impact: blast radius of a symbol
+- net_rg: search a pattern (ripgrep)
+- net_stack: project stack
 - net_available_toolsets / net_enable_toolset: progressive disclosure
-- net_set_project: cambia el proyecto en runtime (navegar otro repo sin reiniciar)
-- net_init: inicializa un proyecto (indexa grafo + conectable layer)
-- net_run: ejecuta cualquier comando CLI como tool MCP (allowlist segura)
+- net_set_project: change the project at runtime (navigate another repo without restarting)
+- net_init: initialize a project (index graph + conectable layer)
+- net_run: run any CLI command as an MCP tool (safe allowlist)
 
-## Uso
-Conecta el server MCP netrunner (--mcp) y usa estas tools para entender y operar el proyecto sin leer archivos masivamente.
+## Usage
+Connect the netrunner MCP server (--mcp) and use these tools to understand and operate the project without mass-reading files.
 
-## Cuándo usar (trigger)
-- **SÍ**: navegar un repo TS/JS con grafo de conocimiento (explore/callers/callees/impact), indexar un proyecto, conectar como MCP server, ejecutar comandos del motor (net_run).
-- **NO**: configs QML (Caelestia/Hyprland) — ahí read_file + search_files directo es mejor (el grafo es de JS, no de los QML).
+## When to use (trigger)
+- **YES**: navigate a TS/JS repo with a knowledge graph (explore/callers/callees/impact), index a project, connect as MCP server, run engine commands (net_run).
+- **NO**: QML configs (Caelestia/Hyprland) — there read_file + search_files directly is better (the graph is JS, not QML).
 
-## Flujo recomendado
-1. \`net_available_toolsets\` → qué toolsets hay (por stack del proyecto).
-2. \`net_enable_toolset graph\` → habilita las tools del grafo.
-3. \`net_explore <sym>\` → encuentra un símbolo y sus callers/callees.
-4. \`net_impact <sym>\` → blast radius (qué se rompe si toco esto).
-5. \`net_set_project <dir>\` → cambia a otro repo sin reiniciar el server.
-6. \`net_run <command>\` → ejecuta cualquier comando CLI (status, guard, resume, extract, dna, inspect...).
+## Recommended flow
+1. \`net_available_toolsets\` → what toolsets exist (by project stack).
+2. \`net_enable_toolset graph\` → enable the graph tools.
+3. \`net_explore <sym>\` → find a symbol and its callers/callees.
+4. \`net_impact <sym>\` → blast radius (what breaks if I touch this).
+5. \`net_set_project <dir>\` → switch to another repo without restarting the server.
+6. \`net_run <command>\` → run any CLI command (status, guard, resume, extract, dna, inspect...).
 
 ## PITFALL
-El server MCP es **stateless** — las tools habilitadas NO persisten entre requests. Para navegar otro repo, usar \`net_set_project <dir>\` (no reiniciar).
+The MCP server is **stateless** — enabled tools do NOT persist between requests. To navigate another repo, use \`net_set_project <dir>\` (not a restart).
 `
 }
 

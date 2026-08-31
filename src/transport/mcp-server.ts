@@ -63,9 +63,9 @@ interface Toolset {
 
 /** Descripciones de los toolsets (para la vista MCP). */
 const TOOLSET_DESCRIPTIONS: Record<string, string> = {
-  graph: 'Grafo de conocimiento del proyecto (explore/callers/callees/impact)',
-  stack: 'Información del stack detectado del proyecto',
-  ops: 'Operaciones deterministas del proyecto (test/build/lint)',
+  graph: 'Knowledge graph of the project (explore/callers/callees/impact)',
+  stack: 'Detected project stack info',
+  ops: 'Deterministic project operations (test/build/lint)',
 }
 
 /** rol: decide qué toolsets están disponibles según el stack (matriz declarativa). */
@@ -162,7 +162,7 @@ export async function createServer(projectDir: string): Promise<McpServer> {
   server.registerTool(
     'net_set_project',
     {
-      description: 'Cambia el proyecto que opera el server en runtime (valida el dir, re-detecta stack). Idempotente.',
+      description: 'Change the project the server operates at runtime (validates dir, re-detects stack). Idempotent.',
       inputSchema: { dir: z.string() },
     },
     async ({ dir }) => {
@@ -181,7 +181,7 @@ export async function createServer(projectDir: string): Promise<McpServer> {
   server.registerTool(
     'net_init',
     {
-      description: 'Inicializa un proyecto (indexa el grafo + genera conectable layer: SKILL.md/AGENTS.md/program.md/.mcp.json). Idempotente.',
+      description: 'Initialize a project (index graph + generate conectable layer: SKILL.md/AGENTS.md/program.md/.mcp.json). Idempotent.',
       inputSchema: { dir: z.string() },
     },
     async ({ dir }) => {
@@ -244,7 +244,7 @@ export async function createServer(projectDir: string): Promise<McpServer> {
   server.registerTool(
     'net_enable_toolset',
     {
-      description: 'Habilita un toolset del proyecto, registrando dinámicamente sus tools. Idempotente.',
+      description: 'Enable a project toolset, dynamically registering its tools. Idempotent.',
       inputSchema: { toolset: z.enum(STACK_TOOLSETS.flatMap((r) => r.toolsets) as [string, ...string[]]) },
     },
     async ({ toolset }) => {
