@@ -9,14 +9,14 @@ export async function extract(ctx: HandlerContext): Promise<void> {
   const { extractWeb } = await import('../../web/extract')
   const url = ctx.args[0] ?? ''
   if (!url) {
-    ctx.fail('MISSING_REQUIRED', 'extract requiere una URL', 'netrunner extract <url>', 2)
+    ctx.fail('MISSING_REQUIRED', 'extract requires a URL', 'netrunner extract <url>', 2)
   }
   try {
     const result = await extractWeb(url)
     ctx.emit(result, ctx.human)
     process.exit(0)
   } catch (e) {
-    ctx.fail('EXTRACT_FAILED', `no se pudo extraer: ${(e as Error).message}`, 'verifica la URL y la conexión', 1)
+    ctx.fail('EXTRACT_FAILED', `could not extract: ${(e as Error).message}`, 'check the URL and your connection', 1)
   }
 }
 
@@ -25,14 +25,14 @@ export async function inspect(ctx: HandlerContext): Promise<void> {
   const { inspectWeb } = await import('../../web/inspect')
   const url = ctx.args[0] ?? ''
   if (!url) {
-    ctx.fail('MISSING_REQUIRED', 'inspect requiere una URL', 'netrunner inspect <url>', 2)
+    ctx.fail('MISSING_REQUIRED', 'inspect requires a URL', 'netrunner inspect <url>', 2)
   }
   try {
     const result = await inspectWeb(url)
     ctx.emit(result, ctx.human)
     process.exit(0)
   } catch (e) {
-    ctx.fail('INSPECT_FAILED', `no se pudo inspeccionar: ${(e as Error).message}`, 'verifica la URL y la conexión', 1)
+    ctx.fail('INSPECT_FAILED', `could not inspect: ${(e as Error).message}`, 'check the URL and your connection', 1)
   }
 }
 
@@ -41,7 +41,7 @@ export async function dna(ctx: HandlerContext): Promise<void> {
   const { dnaScan } = await import('../../dna/index')
   const url = ctx.args[0] ?? ''
   if (!url) {
-    ctx.fail('MISSING_REQUIRED', 'dna requiere una URL', 'netrunner dna <url>', 2)
+    ctx.fail('MISSING_REQUIRED', 'dna requires a URL', 'netrunner dna <url>', 2)
   }
   try {
     // fetcher local con timeout (fetch nativo de Bun, determinista, sin browser)
@@ -74,6 +74,6 @@ export async function dna(ctx: HandlerContext): Promise<void> {
     }
     process.exit(0)
   } catch (e) {
-    ctx.fail('DNA_FAILED', `no se pudo extraer el ADN: ${(e as Error).message}`, 'verifica la URL y la conexión', 1)
+    ctx.fail('DNA_FAILED', `could not extract the DNA: ${(e as Error).message}`, 'check the URL and your connection', 1)
   }
 }

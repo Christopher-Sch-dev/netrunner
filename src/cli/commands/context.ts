@@ -42,7 +42,7 @@ export async function path(ctx: HandlerContext): Promise<void> {
   const from = ctx.args[0]
   const to = ctx.args[1]
   if (!from || !to) {
-    ctx.fail('MISSING_REQUIRED', 'path requiere dos símbolos', 'netrunner path <from> <to>', 2)
+    ctx.fail('MISSING_REQUIRED', 'path requires two symbols', 'netrunner path <from> <to>', 2)
   }
   ctx.emit({ from, to, path: await shortestPath(ctx.projectDir, from, to) }, ctx.human)
   process.exit(0)
@@ -67,7 +67,7 @@ export async function callers(ctx: HandlerContext): Promise<void> {
   const { callers } = await import('../../context/queries')
   const symbol = ctx.args[0] ?? ''
   if (!symbol) {
-    ctx.fail('MISSING_REQUIRED', 'callers requiere un símbolo', 'netrunner callers <sym>', 2)
+    ctx.fail('MISSING_REQUIRED', 'callers requires a symbol', 'netrunner callers <sym>', 2)
   }
   const { explore } = await import('../../context/queries')
   const res = await explore(symbol, ctx.projectDir)
@@ -85,7 +85,7 @@ export async function callees(ctx: HandlerContext): Promise<void> {
   const { callees } = await import('../../context/queries')
   const symbol = ctx.args[0] ?? ''
   if (!symbol) {
-    ctx.fail('MISSING_REQUIRED', 'callees requiere un símbolo', 'netrunner callees <sym>', 2)
+    ctx.fail('MISSING_REQUIRED', 'callees requires a symbol', 'netrunner callees <sym>', 2)
   }
   const { explore } = await import('../../context/queries')
   const res = await explore(symbol, ctx.projectDir)
@@ -102,7 +102,7 @@ export async function callees(ctx: HandlerContext): Promise<void> {
 export async function explore(ctx: HandlerContext): Promise<void> {
   const { explore } = await import('../../context/queries')
   const name = ctx.args[0]
-  if (!name) ctx.fail('MISSING_REQUIRED', 'explore requiere un nombre', 'netrunner explore <sym>', 2)
+  if (!name) ctx.fail('MISSING_REQUIRED', 'explore requires a name', 'netrunner explore <sym>', 2)
   const r = await explore(name, ctx.projectDir)
   ctx.emit(r, ctx.human)
   process.exit(0)
@@ -111,7 +111,7 @@ export async function explore(ctx: HandlerContext): Promise<void> {
 /** rol: plan real basado en el grafo (W1.B1.3). */
 export async function plan(ctx: HandlerContext): Promise<void> {
   const goal = ctx.args.join(' ').trim()
-  if (!goal) ctx.fail('MISSING_REQUIRED', 'plan requiere un goal', 'netrunner plan "<goal>"', 2)
+  if (!goal) ctx.fail('MISSING_REQUIRED', 'plan requires a goal', 'netrunner plan "<goal>"', 2)
   const { generatePlan } = await import('../../plan/index')
   ctx.emit({ plan: await generatePlan(goal, ctx.projectDir) }, ctx.human)
   process.exit(0)

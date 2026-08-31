@@ -30,7 +30,7 @@ export async function install(ctx: HandlerContext): Promise<void> {
     const result = install(target, ctx.projectDir)
     ctx.emit(result, ctx.human)
   } catch (e) {
-    ctx.fail('UNKNOWN_TARGET', String((e as Error).message), 'usa: mcp | opencode | claude | cursor', 2)
+    ctx.fail('UNKNOWN_TARGET', String((e as Error).message), 'usage: mcp | opencode | claude | cursor', 2)
   }
   process.exit(0)
 }
@@ -43,7 +43,7 @@ export async function uninstall(ctx: HandlerContext): Promise<void> {
     const result = uninstall(target, ctx.projectDir)
     ctx.emit(result, ctx.human)
   } catch (e) {
-    ctx.fail('UNKNOWN_TARGET', String((e as Error).message), 'usa: mcp | opencode | claude | cursor', 2)
+    ctx.fail('UNKNOWN_TARGET', String((e as Error).message), 'usage: mcp | opencode | claude | cursor', 2)
   }
   process.exit(0)
 }
